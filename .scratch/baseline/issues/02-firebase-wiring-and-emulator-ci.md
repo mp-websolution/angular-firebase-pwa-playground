@@ -9,13 +9,15 @@
 **Status:** ready-for-agent
 
 - [ ] The `firebase` package is the only Firebase dependency. There is no `@angular/fire`
+- [ ] `firebase-tools` is a devDependency pinned to an exact version (no `^` or `~`). Every npm script and the CI job call this local copy (e.g. via `npx firebase`), never a global install
 - [ ] One environment provider initialises the app and exposes Auth, Firestore and Storage through injection tokens
-- [ ] Firestore is initialised with persistent local cache (multi-tab)
+- [ ] Firestore is initialised with persistent local cache (multi-tab) by default. The provider accepts an option to use the memory cache instead, and the integration suite uses it, because IndexedDB is not reliably available in the test environment
 - [ ] The development environment connects to the emulators. The production environment never does, and it contains a placeholder for the production web config
 - [ ] The Firebase project config declares the Auth, Firestore, Storage and UI emulators, and a default project alias of `demo-playground`
 - [ ] Starter Firestore and Storage rules files exist and deny everything by default
 - [ ] One npm script starts the emulators and the dev server together
-- [ ] A separate npm script runs the integration suite inside `firebase emulators:exec`, kept apart from the component tests
+- [ ] The integration suite is a second configuration of Angular's unit-test builder (e.g. `ng test --configuration=integration`) with its own `include` pattern, so it shares the builder's compilation and follows Angular upgrades. It is not a standalone `vitest` setup
+- [ ] A separate npm script runs that configuration inside `firebase emulators:exec`. The default `npm test` excludes integration tests, and the integration configuration excludes component tests
 - [ ] At least one integration test proves each injected instance reaches its emulator
 - [ ] The PR workflow gains a job that sets up Java 21 and runs the integration suite
 - [ ] A seed-script mechanism exists that populates the emulators on local start. Real seed content arrives in later tickets

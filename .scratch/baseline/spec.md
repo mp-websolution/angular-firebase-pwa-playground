@@ -15,7 +15,7 @@ A **Playground**: a private GitHub template repository containing a **Baseline**
 - Offline use comes from Angular's service worker plus Firestore's local persistence, and a prompt appears when a new version is available.
 - All local development and CI run against the Firebase emulators using a `demo-*` project, seeded with demo data. No real Firebase project is needed to work on the code.
 - Tests use Vitest with Testing Library. Component tests fake the data-access services. A separate integration suite, including security-rules tests, runs against the emulators.
-- GitHub Actions checks every pull request and deploys on every merge to `main`, or manually for any release tag. The frontend goes over FTP to the existing webspace, and Firestore/Storage rules and indexes go to the production Firebase project in the same run.
+- GitHub Actions checks every pull request and deploys on every merge to `main`, or manually for any release tag. The frontend goes over FTP to the existing webspace, and Firestore/Storage rules go to the production Firebase project in the same run.
 - Dependabot proposes grouped updates. A human merges everything. Branch and tag rulesets enforce that for everyone, admins included.
 - Future projects start from the template. A Prototype can be copied out or deleted without touching the Baseline.
 
@@ -62,7 +62,7 @@ A **Playground**: a private GitHub template repository containing a **Baseline**
 28. As an end user, I want to upload an avatar image, so that my profile is recognisable.
 29. As an end user, I want to be told when an avatar is too large or not an image, so that I understand a rejected upload.
 30. As an end user, I want my profile edits to work while offline and sync later, so that flaky connections don't lose my changes.
-31. As an end user, I want to be unable to read or change other users' profiles or avatars, so that my data stays private.
+31. As an end user, I want my profile to be private and my avatar to be changeable only by me, so that no one else can read my profile or replace my picture. Avatars themselves are public images that anyone can view.
 
 ### End user: PWA behaviour
 
@@ -99,7 +99,7 @@ A **Playground**: a private GitHub template repository containing a **Baseline**
 53. As a developer, I want a merge to `main` to deploy automatically to production, so that the live Playground always reflects `main`.
 54. As a developer, I want to deploy any `vX.Y.Z` tag manually, so that I can ship from a release branch or roll back.
 55. As a developer, I want only myself to be able to create `v*` tags, so that no bot or workflow can create a deployable ref.
-56. As a developer, I want the frontend and the Firestore/Storage rules and indexes deployed together from the same commit, so that the client and rules never drift.
+56. As a developer, I want the frontend and the Firestore/Storage rules deployed together from the same commit, so that the client and rules never drift.
 57. As a developer, I want the FTP upload to transfer only changed files, so that deploys are fast on shared hosting.
 58. As a developer, I want FTP credentials and the Firebase service-account key stored as secrets of a `production` environment, so that they are scoped to deploy jobs only.
 59. As a developer, I want the build to include server config for SPA fallback and correct caching (never cache `index.html` or the service-worker manifest, cache hashed assets long-term), so that updates reach users reliably.
@@ -142,7 +142,7 @@ A Prototype adds its own service following the same shape. Route guards depend o
 ### Data model
 
 - Profiles are one document per user in a profiles collection, keyed by user ID. The user has read and write access to their own document only.
-- Avatars are stored at a per-user storage path. Only the owner can write. The rules limit uploads by size and require an image content type.
+- Avatars are stored at a per-user storage path. Anyone can read them, including signed-out visitors, which matches how Storage download URLs already behave. Only the owner can write. The rules limit uploads by size and require an image content type.
 - Notes are stored per user (either in a per-user subcollection or with an owner field enforced by rules). Access is owner-only.
 - The rules are split so that each Prototype's section is identifiable and removable.
 
@@ -166,7 +166,7 @@ A Prototype adds its own service following the same shape. Route guards depend o
 ### CI/CD
 
 - **PR workflow:** install, lint, component tests, emulator integration tests (Java set up in CI), production build.
-- **Deploy workflow:** triggered by a push to `main` (only reachable via merge) and by `workflow_dispatch` with a `vX.Y.Z` tag as input. Runs the same checks, then uploads over FTP with `SamKirkland/FTP-Deploy-Action` (plain FTP, state-file sync), then `firebase deploy --only firestore,storage` using a service-account key. Both use secrets of the `production` environment.
+- **Deploy workflow:** triggered by a push to `main` (only reachable via merge) and by `workflow_dispatch` with a `vX.Y.Z` tag as input. Runs the same checks, then uploads over FTP with `SamKirkland/FTP-Deploy-Action` (plain FTP, state-file sync), then `firebase deploy --only firestore:rules,storage` using a service-account key. Both use secrets of the `production` environment.
 - **Rulesets:** `main` and `release/*` require a PR and passing checks and forbid direct pushes and bypass, admins included. Creating `v*` tags is restricted to the owner.
 - **Dependabot:** npm updates grouped (`@angular/*`, `firebase`, others) plus GitHub Actions updates. No auto-merge.
 
@@ -179,7 +179,7 @@ A Prototype adds its own service following the same shape. Route guards depend o
   - These tests cover sign-in and sign-up forms and their errors, guard redirects including the return URL, profile editing and avatar validation messages, notes CRUD, and the update prompt.
 - **Seam B, integration tests** (Vitest against the emulators, run inside `firebase emulators:exec`):
   - The real data-access services run against `demo-playground`. This covers auth flows (email/password), profile read and write, avatar upload, and notes realtime updates.
-  - Security rules are tested with `@firebase/rules-unit-testing`: owner access allowed and cross-user access denied for profiles, avatars and notes, plus the avatar size and type limits.
+  - Security rules are tested with `@firebase/rules-unit-testing`: owner access allowed and cross-user access denied for profiles and notes; public read but owner-only write for avatars, plus the avatar size and type limits.
 - **Not tested automatically:** the Google popup flow (verified manually), FTP deploy and `.htaccess` behaviour (verified by the first deploy), and installability (checked in the browser).
 - **Prior art:** none. This is a greenfield repo. The notes Prototype's tests become the prior art future Prototypes copy.
 
