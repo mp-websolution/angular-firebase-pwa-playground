@@ -8,11 +8,11 @@
 
 **Status:** ready-for-agent
 
-- [ ] A new Angular 22 app (standalone, zoneless, no SSR, npm) exists at the repo root, alongside the existing `CONTEXT.md`, `AGENTS.md` and `docs/`, which are kept unchanged
-- [ ] Tailwind v4 is wired in with plain CSS. No SCSS anywhere, including component styles
-- [ ] angular-eslint and Prettier are configured, with npm scripts for lint and format check
-- [ ] Node 24 is pinned for local use and CI
-- [ ] Vitest runs through Angular's official unit-test builder, with `@testing-library/angular` installed
-- [ ] One component test renders the placeholder page through the router and asserts on visible content by role or text
-- [ ] A GitHub Actions workflow runs install, lint, unit tests and a production build on pull requests
-- [ ] `npm start`, `npm test`, lint and the production build all pass locally
+- [x] A new Angular 22 app (standalone, zoneless, no SSR, npm) exists at the repo root, alongside the existing `CONTEXT.md`, `AGENTS.md` and `docs/`, which are kept unchanged
+- [x] Tailwind v4 is wired in with plain CSS. No SCSS anywhere, including component styles
+- [x] angular-eslint and Prettier are configured, with npm scripts for lint and format check
+- [x] Node 24 is pinned for local use and CI
+- [x] Vitest runs through Angular's official unit-test builder, with `@testing-library/angular` installed
+- [x] One component test renders the placeholder page through the router and asserts on visible content by role or text
+- [x] A GitHub Actions workflow runs install, lint, unit tests and a production build on pull requests
+- [x] `npm start`, `npm test`, lint and the production build all pass locally
