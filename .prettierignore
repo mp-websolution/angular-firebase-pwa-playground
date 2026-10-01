@@ -1,0 +1,12 @@
+/dist
+/coverage
+/.angular
+/node_modules
+/.scratch
+package-lock.json
+
+# Planning docs, kept as written
+/README.md
+/CONTEXT.md
+/AGENTS.md
+/docs

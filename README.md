@@ -4,6 +4,9 @@ A template repo for trying out Angular and Firebase updates and prototyping futu
 
 **Status:** planning only. The code is built by working through the tickets in `.scratch/baseline/issues/`.
 
+## Project Setup
+  run `npx skills install` to add skills referenced in `skills-lock.json`
+
 ## How this repo was planned
 
 Planning was done in a conversation with Claude Code, using [Matt Pocock's agent skills](https://github.com/mattpocock/skills). Each step used one skill:
