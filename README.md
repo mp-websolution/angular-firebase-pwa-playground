@@ -7,6 +7,19 @@ A template repo for trying out Angular and Firebase updates and prototyping futu
 ## Project Setup
   run `npx skills install` to add skills referenced in `skills-lock.json`
 
+## Development
+
+Needs Node 24 (`.nvmrc`) and Java 21+ for the Firebase emulators. No Firebase project or credentials are needed: development runs against the `demo-playground` emulators.
+
+| Command | What it does |
+|---|---|
+| `npm start` | Starts the Auth, Firestore and Storage emulators with the Emulator UI (http://localhost:4000), seeds them, then serves the app (http://localhost:4200). |
+| `npm test` | Component tests. No emulators needed. |
+| `npm run test:integration` | Integration tests (`*.integration.spec.ts`) inside the emulators. |
+| `npm run seed` | Runs every seeder in `scripts/seed/`. Only works inside the emulators; `npm start` calls it. |
+
+Production builds need the production project's web config in `src/environments/environment.ts`. While it still holds the `REPLACE_ME` placeholder, the app throws at startup instead of failing later on its first Firebase call.
+
 ## How this repo was planned
 
 Planning was done in a conversation with Claude Code, using [Matt Pocock's agent skills](https://github.com/mattpocock/skills). Each step used one skill:
@@ -28,6 +41,7 @@ Next step: implement the tickets in order, e.g. with [`/tdd`](https://aihero.dev
 | `CONTEXT.md` | Domain glossary (**Playground**, **Template**, **Baseline**, **Prototype**). Terms only, no implementation details. |
 | `docs/adr/0001-native-firebase-sdk-instead-of-angularfire.md` | Why the native Firebase SDK is used instead of AngularFire: Angular updates shouldn't wait on a wrapper library. |
 | `docs/adr/0002-ftp-deploy-instead-of-firebase-hosting.md` | Why the app is deployed by FTP to existing webspace, and what that means (static build, `.htaccess`, Google sign-in by popup only). |
+| `docs/adr/0003-lazy-firestore-loader-token.md` | Why the `FIRESTORE` token gives a loader instead of an instance: the Firestore SDK stays out of the initial bundle. |
 | `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. |
 | `docs/agents/issue-tracker.md` | Issues are local markdown files under `.scratch/<feature>/`. |
 | `docs/agents/triage-labels.md` | The triage labels, stored on each issue's `Status:` line. |

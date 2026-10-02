@@ -3,9 +3,11 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "firebase emulators:exec --ui \"npm run seed && ng serve\"",
     "build": "ng build",
     "test": "ng test",
+    "test:integration": "firebase emulators:exec --only auth,firestore,storage \"ng test --configuration=integration --watch=false\"",
+    "seed": "node scripts/seed.mjs",
     "lint": "ng lint",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -19,6 +21,7 @@
     "@angular/forms": "^22.2.0",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "firebase": "^12.19.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -33,6 +36,8 @@
     "@testing-library/jest-dom": "^7.0.1",
     "angular-eslint": "22.5.0",
     "eslint": "^10.9.1",
+    "fake-indexeddb": "^6.2.5",
+    "firebase-tools": "15.32.1",
     "jsdom": "^30.0.0",
     "postcss": "^8.5.3",
     "prettier": "^3.8.1",

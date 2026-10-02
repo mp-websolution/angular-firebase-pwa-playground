@@ -11,6 +11,7 @@
 - [ ] A profile service exposes the current user's profile as a signal, plus a command to update the display name
 - [ ] Profiles are one document per user, keyed by user ID
 - [ ] A protected profile page, reachable from home, lets the user view and edit their display name with validation feedback
+- [ ] The profile page is a lazy-loaded route, and the profile service and anything else that imports values from `firebase/firestore` are only reachable from it. The service gets Firestore with `await inject(FIRESTORE)()`. The production build stays within the initial bundle budget
 - [ ] Firestore rules allow owner-only read and write on profiles, and deny everything else
 - [ ] `@firebase/rules-unit-testing` is set up in the integration suite. Rules tests prove owner access is allowed and cross-user and unauthenticated access is denied
 - [ ] The seed script creates a profile for the demo user

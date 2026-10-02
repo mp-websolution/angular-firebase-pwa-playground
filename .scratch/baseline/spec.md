@@ -120,6 +120,7 @@ A **Playground**: a private GitHub template repository containing a **Baseline**
 - The terms Playground, Baseline and Prototype are used as defined in the domain glossary.
 - ADR 0001: native Firebase SDK instead of AngularFire.
 - ADR 0002: FTP deploy to existing webspace instead of Firebase Hosting, with Google sign-in via popup only.
+- ADR 0003: lazy Firestore behind a loader token, to keep the Firestore SDK out of the initial bundle.
 - Angular 22, standalone, zoneless, signals-first. The npm package manager. No SSR and no prerendering: the build is a purely static client.
 - Styling is Tailwind v4 on plain CSS. SCSS is not used anywhere.
 
@@ -127,6 +128,7 @@ A **Playground**: a private GitHub template repository containing a **Baseline**
 
 - One environment provider initialises the Firebase app from environment config. It exposes Auth, Firestore and Storage through injection tokens, and in development it connects each of them to its emulator.
 - Firestore is initialised with persistent local cache (multi-tab).
+- Firestore loads lazily. Its SDK is most of Firebase's weight (about 560 kB raw), so the `FIRESTORE` token provides a loader (`() => Promise<Firestore>`) that downloads the SDK and initialises Firestore on first call. Code that imports values from `firebase/firestore` lives only behind lazy routes. The initial bundle budget (500 kB warning) catches the SDK slipping back into `main`.
 - Components never import from the Firebase SDK. Only data-access services do.
 
 ### Data-access services (the test seam)
