@@ -9,7 +9,7 @@
 **Status:** ready-for-agent
 
 - [ ] `@angular/pwa` is added: a web manifest, icons and Angular's service worker, registered in production only
-- [ ] The service-worker config caches the app shell and hashed assets
+- [ ] The service-worker config caches the app shell and hashed assets, and prefetches lazy chunks (including the Firestore SDK chunk) at install, so Firestore-backed pages and sign-out work offline on a later visit
 - [ ] An update prompt driven by Angular's service-worker update service. Reload happens only on user action. An unrecoverable service-worker state is handled with a reload notice
 - [ ] The production build output contains an `.htaccess` with a fallback to `index.html` for unknown routes, no-cache for `index.html` and the service-worker files, and long-term caching for hashed assets
 - [ ] Component tests (seam A) fake the update service and cover: no prompt by default, prompt shown on a ready version, and reload triggered only when the user confirms

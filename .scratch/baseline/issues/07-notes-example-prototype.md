@@ -9,7 +9,7 @@
 **Status:** ready-for-agent
 
 - [ ] A notes route area, lazily loaded and protected by the auth guard, and linked from home
-- [ ] A notes service exposing the current user's notes as a realtime signal, plus create, update and delete commands
+- [ ] A notes service exposing the current user's notes as a realtime signal, plus create, update and delete commands. It gets Firestore with `await inject(FIRESTORE)()` and, like the rest of the notes area, is only reachable from the lazy route
 - [ ] Notes are owner-only, following the per-user pattern from ticket 04
 - [ ] The Firestore rules section for notes is clearly delimited, so it can be removed on its own
 - [ ] The seed script adds sample notes for the demo user, in a notes-specific section
@@ -17,4 +17,4 @@
 - [ ] Component tests (seam A, faked notes service) cover the list, create, edit and delete
 - [ ] Integration tests (seam B) cover CRUD and realtime updates against the emulator
 - [ ] Deleting the notes Prototype (route entry, folder, rules section, seed section, tests) leaves the Baseline building and all remaining tests green. Verified once, then the deletion is reverted
-- [ ] A short developer note explains how to add or remove a Prototype
+- [ ] A short developer note explains how to add or remove a Prototype, including that Firestore code must stay behind the Prototype's lazy route
