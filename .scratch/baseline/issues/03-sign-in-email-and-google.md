@@ -9,6 +9,8 @@
 **Status:** ready-for-agent
 
 - [ ] An auth session service exposes the current user and an "auth resolved" state as signals, plus commands for email sign-up, email sign-in, Google popup sign-in and sign-out. No SDK types leak to components
+- [ ] Sign-out goes through `signOutAndClearCache(auth, loadFirestore)` (then reloads the page), so the next person on the device cannot read the previous user's cached documents. The auth session service injects the `FIRESTORE` loader but never calls it at startup, so Firestore stays out of the initial load; sign-out loads it if needed
+- [ ] When clearing the cache fails because another tab has the app open (`failed-precondition`), the user stays signed in and is asked to close their other tabs and try again
 - [ ] Public sign-in and sign-up page(s), and a protected home page showing who is signed in
 - [ ] A guard that depends only on the auth session service, which preserves the requested URL and redirects back after sign-in
 - [ ] Signed-in users visiting sign-in are redirected to home
