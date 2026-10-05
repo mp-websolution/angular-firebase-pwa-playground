@@ -4,7 +4,7 @@ import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import { signOut } from 'firebase/auth';
-import { disableNetwork, doc, enableNetwork, setDoc } from 'firebase/firestore';
+import { disableNetwork, doc, enableNetwork, getDoc, setDoc } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { AuthSession } from '../auth/auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
@@ -57,6 +57,15 @@ describe('ProfileData against the Firestore emulator', () => {
     return session.user()!.uid;
   }
 
+  /** What the server has, read past the rules. */
+  async function storedDisplayName(uid: string): Promise<unknown> {
+    let displayName: unknown;
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      displayName = (await getDoc(doc(context.firestore(), 'profiles', uid))).get('displayName');
+    });
+    return displayName;
+  }
+
   it("reads the signed-in user's stored profile", async () => {
     const uid = await signUp();
     await testEnv.withSecurityRulesDisabled(async (context) => {
@@ -77,20 +86,19 @@ describe('ProfileData against the Firestore emulator', () => {
   });
 
   it('changes the display name and syncs it to the server', async () => {
-    await signUp();
+    const uid = await signUp();
     const profileData = TestBed.inject(ProfileData);
     await vi.waitFor(() => expect(profileData.profile()).toBeDefined());
 
     await profileData.updateDisplayName('Ada');
 
-    await vi.waitFor(() => {
-      expect(profileData.profile()).toEqual({ displayName: 'Ada' });
-      expect(profileData.syncing()).toBe(false);
-    });
+    await vi.waitFor(() => expect(profileData.profile()).toEqual({ displayName: 'Ada' }));
+    expect(profileData.waitingToSync()).toBe(false);
+    await vi.waitFor(async () => expect(await storedDisplayName(uid)).toBe('Ada'));
   });
 
   it('shows a change made offline straight away and syncs it once back online', async () => {
-    await signUp();
+    const uid = await signUp();
     const profileData = TestBed.inject(ProfileData);
     await vi.waitFor(() => expect(profileData.profile()).toBeDefined());
     const firestore = await TestBed.inject(FIRESTORE)();
@@ -100,12 +108,13 @@ describe('ProfileData against the Firestore emulator', () => {
 
     await vi.waitFor(() => {
       expect(profileData.profile()).toEqual({ displayName: 'Ada' });
-      expect(profileData.syncing()).toBe(true);
+      expect(profileData.waitingToSync()).toBe(true);
     });
 
     await enableNetwork(firestore);
 
-    await vi.waitFor(() => expect(profileData.syncing()).toBe(false));
+    await vi.waitFor(() => expect(profileData.waitingToSync()).toBe(false));
+    expect(await storedDisplayName(uid)).toBe('Ada');
   });
 
   it('reports no failure when sign-out shuts Firestore down', async () => {

@@ -3,6 +3,10 @@ import { RouterLink } from '@angular/router';
 import { FormField, form, maxLength, submit, validate } from '@angular/forms/signals';
 import { ProfileData } from '../profile-data';
 
+interface ProfileForm {
+  displayName: string;
+}
+
 @Component({
   selector: 'app-edit-profile',
   imports: [FormField, RouterLink],
@@ -47,7 +51,7 @@ import { ProfileData } from '../profile-data';
           </button>
         </form>
         <p role="status" class="text-slate-600">
-          @if (profileData.syncing()) {
+          @if (profileData.waitingToSync()) {
             Saved on this device. It syncs to your account once you're online.
           } @else if (saved()) {
             Saved.
@@ -63,16 +67,27 @@ import { ProfileData } from '../profile-data';
 export class EditProfile {
   protected readonly profileData = inject(ProfileData);
 
-  // Follows the stored display name, e.g. once it has loaded, until the user edits it.
   protected readonly profileForm = form(
-    linkedSignal({
+    linkedSignal<string, ProfileForm>({
       source: () => this.profileData.profile()?.displayName ?? '',
-      computation: (displayName) => ({ displayName }),
+      // Follows the stored display name, e.g. once it has loaded or after a change in another
+      // tab, but keeps what the user typed and hasn't saved yet.
+      computation: (displayName, previous) =>
+        previous && previous.value.displayName !== previous.source
+          ? previous.value
+          : { displayName },
     }),
     (path) => {
-      validate(path.displayName, ({ value }) =>
-        value().trim() ? undefined : { kind: 'required', message: 'Enter a display name.' },
-      );
+      validate(path.displayName, ({ value }) => {
+        const displayName = value().trim();
+        if (!displayName) {
+          return { kind: 'required', message: 'Enter a display name.' };
+        }
+        // Same limits as the Firestore rules, which see the trimmed name.
+        return displayName.length < 2
+          ? { kind: 'minLength', message: 'Use at least 2 characters.' }
+          : undefined;
+      });
       maxLength(path.displayName, 50, { message: 'Use at most 50 characters.' });
     },
   );
@@ -86,6 +101,8 @@ export class EditProfile {
   protected saveProfile(): void {
     submit(this.profileForm, async () => {
       const displayName = this.profileForm.displayName().value().trim();
+      // Show what gets stored; also ends the draft, so the form follows the stored name again.
+      this.profileForm.displayName().value.set(displayName);
       await this.profileData.updateDisplayName(displayName);
       this.#savedDisplayName.set(displayName);
     });
