@@ -11,7 +11,10 @@ import { RELOAD_PAGE } from '../browser/reload-page';
 import { FIREBASE_AUTH, FIRESTORE, provideFirebase } from '../firebase/provide-firebase';
 import { ProfileData } from './profile-data';
 
-describe('ProfileData against the Firestore emulator', () => {
+// On a cold CI runner the emulator can take seconds to answer, but `vi.waitFor` gives up after 1 s.
+const emulatorReply = { timeout: 5_000 };
+
+describe('ProfileData against the Firestore emulator', { timeout: 20_000 }, () => {
   let testEnv: RulesTestEnvironment;
   const reportError = vi.fn<(error: unknown) => void>();
 
@@ -74,7 +77,10 @@ describe('ProfileData against the Firestore emulator', () => {
 
     const profileData = TestBed.inject(ProfileData);
 
-    await vi.waitFor(() => expect(profileData.profile()).toEqual({ displayName: 'Ada' }));
+    await vi.waitFor(
+      () => expect(profileData.profile()).toEqual({ displayName: 'Ada' }),
+      emulatorReply,
+    );
   });
 
   it('has no display name for a user who never set one', async () => {
@@ -82,25 +88,31 @@ describe('ProfileData against the Firestore emulator', () => {
 
     const profileData = TestBed.inject(ProfileData);
 
-    await vi.waitFor(() => expect(profileData.profile()).toEqual({ displayName: '' }));
+    await vi.waitFor(
+      () => expect(profileData.profile()).toEqual({ displayName: '' }),
+      emulatorReply,
+    );
   });
 
   it('changes the display name and syncs it to the server', async () => {
     const uid = await signUp();
     const profileData = TestBed.inject(ProfileData);
-    await vi.waitFor(() => expect(profileData.profile()).toBeDefined());
+    await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), emulatorReply);
 
     await profileData.updateDisplayName('Ada');
 
-    await vi.waitFor(() => expect(profileData.profile()).toEqual({ displayName: 'Ada' }));
+    await vi.waitFor(
+      () => expect(profileData.profile()).toEqual({ displayName: 'Ada' }),
+      emulatorReply,
+    );
     expect(profileData.waitingToSync()).toBe(false);
-    await vi.waitFor(async () => expect(await storedDisplayName(uid)).toBe('Ada'));
+    await vi.waitFor(async () => expect(await storedDisplayName(uid)).toBe('Ada'), emulatorReply);
   });
 
   it('shows a change made offline straight away and syncs it once back online', async () => {
     const uid = await signUp();
     const profileData = TestBed.inject(ProfileData);
-    await vi.waitFor(() => expect(profileData.profile()).toBeDefined());
+    await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), emulatorReply);
     const firestore = await TestBed.inject(FIRESTORE)();
     await disableNetwork(firestore);
 
@@ -109,18 +121,18 @@ describe('ProfileData against the Firestore emulator', () => {
     await vi.waitFor(() => {
       expect(profileData.profile()).toEqual({ displayName: 'Ada' });
       expect(profileData.waitingToSync()).toBe(true);
-    });
+    }, emulatorReply);
 
     await enableNetwork(firestore);
 
-    await vi.waitFor(() => expect(profileData.waitingToSync()).toBe(false));
+    await vi.waitFor(() => expect(profileData.waitingToSync()).toBe(false), emulatorReply);
     expect(await storedDisplayName(uid)).toBe('Ada');
   });
 
   it('reports no failure when sign-out shuts Firestore down', async () => {
     await signUp();
     const profileData = TestBed.inject(ProfileData);
-    await vi.waitFor(() => expect(profileData.profile()).toBeDefined());
+    await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), emulatorReply);
 
     await TestBed.inject(AuthSession).signOut();
     // Firestore tells listeners about the shutdown asynchronously; give it the chance.
