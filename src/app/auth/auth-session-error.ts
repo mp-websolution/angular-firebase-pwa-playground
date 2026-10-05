@@ -1,22 +1,7 @@
-/** Why an auth session command failed, in the app's words rather than the SDK's error codes. */
-export type AuthFailure =
-  | 'wrong-password'
-  | 'user-not-found'
-  | 'invalid-credential'
-  | 'invalid-email'
-  | 'email-in-use'
-  | 'weak-password'
-  | 'popup-closed'
-  | 'popup-blocked'
-  | 'too-many-requests'
-  | 'offline'
-  | 'other-tabs-open'
-  | 'unknown';
+import { AuthFailure } from './auth-failure.model';
 
 const messageByReason: Record<AuthFailure, string> = {
-  'wrong-password': 'Wrong password. Try again.',
-  'user-not-found': 'No account uses this email. Create one first.',
-  // Firebase gives this instead of the two above when email enumeration protection is on.
+  // Doesn't say whether the email or the password is wrong: that would reveal who has an account.
   'invalid-credential': 'Wrong email or password.',
   'invalid-email': 'Enter a valid email address.',
   'email-in-use': 'An account with this email already exists. Sign in instead.',

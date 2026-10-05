@@ -1,11 +1,12 @@
 import { screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { renderApp } from '../../testing/render-app';
+import { Credentials } from '../credentials.model';
 import { FakeAuthSession } from '../testing/fake-auth-session';
 
-const ada = { email: 'ada@example.com', password: 'correct-horse' };
+const ada: Credentials = { email: 'ada@example.com', password: 'correct-horse' };
 
-async function signIn(email: string, password: string) {
+async function signIn({ email, password }: Credentials) {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText('Email'), email);
   await user.type(screen.getByLabelText('Password'), password);
@@ -16,7 +17,7 @@ describe('SignIn', () => {
   it('signs in with email and password and opens home', async () => {
     await renderApp('/sign-in', new FakeAuthSession({ accounts: [ada] }));
 
-    await signIn(ada.email, ada.password);
+    await signIn(ada);
 
     expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
   });
@@ -24,19 +25,17 @@ describe('SignIn', () => {
   it('says so when the password is wrong', async () => {
     await renderApp('/sign-in', new FakeAuthSession({ accounts: [ada] }));
 
-    await signIn(ada.email, 'wrong-horse');
+    await signIn({ ...ada, password: 'wrong-horse' });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Wrong password. Try again.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password.');
   });
 
-  it('says so when no account uses the email', async () => {
+  it('says the same when no account uses the email, so it does not reveal who has one', async () => {
     await renderApp('/sign-in', new FakeAuthSession({ accounts: [ada] }));
 
-    await signIn('grace@example.com', ada.password);
+    await signIn({ ...ada, email: 'grace@example.com' });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'No account uses this email. Create one first.',
-    );
+    expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password.');
   });
 
   it('asks for an email and a password before trying to sign in', async () => {
@@ -53,7 +52,7 @@ describe('SignIn', () => {
   it('asks for a valid email address', async () => {
     await renderApp('/sign-in', new FakeAuthSession({ accounts: [ada] }));
 
-    await signIn('ada-at-example.com', ada.password);
+    await signIn({ ...ada, email: 'ada-at-example.com' });
 
     expect(await screen.findByText('Enter a valid email address.')).toBeVisible();
   });

@@ -1,18 +1,15 @@
 import { signal } from '@angular/core';
-import type { AuthSession, SessionUser } from '../auth-session';
+import type { AuthSession } from '../auth-session';
 import { AuthSessionError } from '../auth-session-error';
+import { Credentials } from '../credentials.model';
+import { SessionUser } from '../session-user.model';
 
 // `implements AuthSession` would also demand its `#private` fields; this keeps only the public ones.
 type PublicApi<T> = { [K in keyof T]: T[K] };
 
-export interface FakeAccount {
-  email: string;
-  password: string;
-}
-
 export interface FakeAuthSessionOptions {
   /** Email/password accounts that exist before the test starts. */
-  accounts?: FakeAccount[];
+  accounts?: Credentials[];
   /** Starts with this email/password account signed in. */
   signedInAs?: string;
   /** What happens in the Google popup: the user picks this account, or closes it (the default). */
@@ -27,6 +24,8 @@ export interface FakeAuthSessionOptions {
 export class FakeAuthSession implements PublicApi<AuthSession> {
   readonly #user = signal<SessionUser | null>(null);
   readonly #resolved = signal(true);
+  #finishResolving!: () => void;
+  readonly #whenResolved = new Promise<void>((resolve) => (this.#finishResolving = resolve));
 
   readonly user = this.#user.asReadonly();
   readonly resolved = this.#resolved.asReadonly();
@@ -52,6 +51,9 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
     this.#googlePopup = googlePopup;
     this.#restoring = restoring;
     this.#resolved.set(!restoring);
+    if (!restoring) {
+      this.#finishResolving();
+    }
     this.#otherTabsOpen = otherTabsOpen;
   }
 
@@ -59,9 +61,14 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
   finishRestoring(): void {
     this.#user.set(this.#restoring ? fakeUser(this.#restoring) : null);
     this.#resolved.set(true);
+    this.#finishResolving();
   }
 
-  async signUpWithEmail(email: string, password: string): Promise<void> {
+  whenResolved(): Promise<void> {
+    return this.#whenResolved;
+  }
+
+  async signUpWithEmail({ email, password }: Credentials): Promise<void> {
     if (this.#passwords.has(email)) {
       throw new AuthSessionError('email-in-use');
     }
@@ -72,13 +79,9 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
     this.#user.set(fakeUser(email));
   }
 
-  async signInWithEmail(email: string, password: string): Promise<void> {
-    const knownPassword = this.#passwords.get(email);
-    if (knownPassword === undefined) {
-      throw new AuthSessionError('user-not-found');
-    }
-    if (knownPassword !== password) {
-      throw new AuthSessionError('wrong-password');
+  async signInWithEmail({ email, password }: Credentials): Promise<void> {
+    if (this.#passwords.get(email) !== password) {
+      throw new AuthSessionError('invalid-credential');
     }
     this.#user.set(fakeUser(email));
   }

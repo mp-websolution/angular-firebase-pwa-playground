@@ -1,18 +1,18 @@
 import { Component, input, signal } from '@angular/core';
-import { FormField, FormRoot, email, form, required } from '@angular/forms/signals';
+import { FormField, email, form, required, submit } from '@angular/forms/signals';
 import { messageOf } from './auth-session-error';
-
-export interface Credentials {
-  email: string;
-  password: string;
-}
+import { Credentials } from './credentials.model';
 
 /** Email and password fields that run `action` on submit and show why it failed. */
 @Component({
   selector: 'app-credentials-form',
-  imports: [FormField, FormRoot],
+  imports: [FormField],
   template: `
-    <form [formRoot]="credentials" class="flex flex-col gap-4">
+    <form
+      novalidate
+      class="flex flex-col gap-4"
+      (submit)="submitCredentials(); $event.preventDefault()"
+    >
       @let emailField = credentials.email();
       <label class="flex flex-col gap-1">
         Email
@@ -77,17 +77,16 @@ export class CredentialsForm {
       email(path.email, { message: 'Enter a valid email address.' });
       required(path.password, { message: 'Enter your password.' });
     },
-    {
-      submission: {
-        action: async (credentials) => {
-          this.error.set('');
-          try {
-            await this.action()(credentials().value());
-          } catch (error) {
-            this.error.set(messageOf(error));
-          }
-        },
-      },
-    },
   );
+
+  protected submitCredentials(): void {
+    submit(this.credentials, async () => {
+      this.error.set('');
+      try {
+        await this.action()(this.credentials().value());
+      } catch (error) {
+        this.error.set(messageOf(error));
+      }
+    });
+  }
 }

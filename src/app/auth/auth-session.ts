@@ -1,4 +1,5 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import {
   GoogleAuthProvider,
   User,
@@ -8,16 +9,13 @@ import {
   signInWithPopup,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
+import { filter, firstValueFrom } from 'rxjs';
 import { RELOAD_PAGE } from '../browser/reload-page';
 import { FIREBASE_AUTH, FIRESTORE, signOutAndClearCache } from '../firebase/provide-firebase';
-import { AuthFailure, AuthSessionError } from './auth-session-error';
-
-/** The signed-in user, free of SDK types. */
-export interface SessionUser {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-}
+import { AuthFailure } from './auth-failure.model';
+import { AuthSessionError } from './auth-session-error';
+import { Credentials } from './credentials.model';
+import { SessionUser } from './session-user.model';
 
 /** Who is signed in, plus the commands that change it. Components and guards never touch the SDK. */
 @Injectable({ providedIn: 'root' })
@@ -33,6 +31,7 @@ export class AuthSession {
   readonly user = this.#user.asReadonly();
   /** False until Auth has restored (or ruled out) the session from the previous visit. */
   readonly resolved = this.#resolved.asReadonly();
+  readonly #resolved$ = toObservable(this.#resolved);
 
   constructor() {
     const unsubscribe = onAuthStateChanged(this.#auth, (user) => {
@@ -48,13 +47,23 @@ export class AuthSession {
     inject(DestroyRef).onDestroy(unsubscribe);
   }
 
+  /** Settles once `resolved` is true, so `user` can be trusted. */
+  async whenResolved(): Promise<void> {
+    if (!this.#resolved()) {
+      await firstValueFrom(this.#resolved$.pipe(filter(Boolean)));
+    }
+  }
+
   /** Creates an email/password account and signs it in. Rejects with an `AuthSessionError`. */
-  async signUpWithEmail(email: string, password: string): Promise<void> {
+  async signUpWithEmail({ email, password }: Credentials): Promise<void> {
     await this.#signIn(() => createUserWithEmailAndPassword(this.#auth, email, password));
   }
 
-  /** Rejects with an `AuthSessionError`. */
-  async signInWithEmail(email: string, password: string): Promise<void> {
+  /**
+   * Rejects with an `AuthSessionError`. A wrong password and an unknown email fail alike, as
+   * `invalid-credential`, so the error doesn't reveal which emails have accounts.
+   */
+  async signInWithEmail({ email, password }: Credentials): Promise<void> {
     await this.#signIn(() => signInWithEmailAndPassword(this.#auth, email, password));
   }
 
@@ -72,6 +81,8 @@ export class AuthSession {
     try {
       await signOutAndClearCache(this.#auth, this.#loadFirestore);
     } catch (error) {
+      // Defensive: with today's SDK, other tabs shut their Firestore down when the cache is
+      // deleted instead of blocking it. If one ever holds on to it, ask to close it.
       throw error instanceof FirebaseError && error.code === 'failed-precondition'
         ? new AuthSessionError('other-tabs-open', { cause: error })
         : toAuthSessionError(error);
@@ -93,8 +104,8 @@ function toSessionUser({ uid, email, displayName }: User): SessionUser {
 }
 
 const reasonByFirebaseCode: Record<string, AuthFailure> = {
-  'auth/wrong-password': 'wrong-password',
-  'auth/user-not-found': 'user-not-found',
+  'auth/wrong-password': 'invalid-credential',
+  'auth/user-not-found': 'invalid-credential',
   'auth/invalid-credential': 'invalid-credential',
   'auth/invalid-login-credentials': 'invalid-credential',
   'auth/invalid-email': 'invalid-email',

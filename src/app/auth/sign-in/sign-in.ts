@@ -1,9 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { injectReturnUrl } from '../auth-guards';
 import { AuthSession } from '../auth-session';
 import { messageOf } from '../auth-session-error';
-import { Credentials, CredentialsForm } from '../credentials-form';
+import { CredentialsForm } from '../credentials-form';
+import { Credentials } from '../credentials.model';
+import { injectReturnUrl } from '../return-url';
 
 @Component({
   selector: 'app-sign-in',
@@ -44,8 +45,8 @@ export class SignIn {
   protected readonly googlePending = signal(false);
   protected readonly googleError = signal('');
 
-  protected readonly signIn = async ({ email, password }: Credentials) => {
-    await this.#session.signInWithEmail(email, password);
+  protected readonly signIn = async (credentials: Credentials) => {
+    await this.#session.signInWithEmail(credentials);
     await this.#router.navigateByUrl(this.#returnUrl);
   };
 
