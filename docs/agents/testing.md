@@ -15,7 +15,7 @@ A component test renders the whole app through the router and drives it the way 
 
 ## Integration tests
 
-`*.integration.spec.ts` files run the real data-access services against the emulators (`npm run test:integration`). They have no DOM: configure providers with `TestBed.configureTestingModule` and get the service with `TestBed.inject`.
+`*.integration.spec.ts` files run the real data-access services against the emulators (`npm run test:integration`). They render nothing, though they run in jsdom like the component tests: configure providers with `TestBed.configureTestingModule` and get the service with `TestBed.inject`.
 
 ## Security-rules tests
 
