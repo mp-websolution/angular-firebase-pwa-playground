@@ -8,13 +8,15 @@ service firebase.storage {
     }
 
     // Baseline: one avatar per user, keyed by user ID. Anyone can see it, as anyone with its
-    // download URL could anyway; only its owner can upload it.
+    // download URL could anyway; only its owner can upload or delete it.
     match /avatars/{uid} {
       allow read: if true;
-      // The profile page checks the same limits before uploading.
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      // The profile page checks the same limits before uploading. No SVG: it can carry scripts,
+      // which would run when someone opens the public URL directly.
       allow create, update: if request.auth != null && request.auth.uid == uid
         && request.resource.size <= 2 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+        && request.resource.contentType.matches('image/(png|jpeg|webp|gif)');
     }
   }
 }

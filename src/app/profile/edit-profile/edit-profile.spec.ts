@@ -229,17 +229,37 @@ describe('EditProfile', () => {
     expect(profile.profile()?.avatarUrl).toBeUndefined();
   });
 
-  it('says a file that is not an image is not one, instead of uploading it', async () => {
+  it.each([
+    ['ada.jpg', 'image/jpeg'],
+    ['ada.webp', 'image/webp'],
+    ['ada.gif', 'image/gif'],
+  ])('accepts %s as an avatar', async (name, type) => {
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+      profile: new FakeProfileData({ displayName: 'Ada' }),
+    });
+
+    await userEvent.setup().upload(await screen.findByLabelText('Avatar'), file(name, type));
+
+    expect(await screen.findByRole('img', { name: 'Your avatar' })).toHaveAttribute(
+      'src',
+      `https://storage.example/avatars/${name}`,
+    );
+  });
+
+  it.each([
+    ['notes.txt', 'text/plain'],
+    ['logo.svg', 'image/svg+xml'],
+  ])('asks for a PNG, JPEG, WebP or GIF instead of uploading %s', async (name, type) => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
     await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
       profile,
     });
-    // The file dialog only suggests images; the user can still switch it to all files.
+    // The file dialog only suggests these types; the user can still switch it to all files.
     const user = userEvent.setup({ applyAccept: false });
 
-    await user.upload(await screen.findByLabelText('Avatar'), file('notes.txt', 'text/plain'));
+    await user.upload(await screen.findByLabelText('Avatar'), file(name, type));
 
-    expect(await screen.findByText('Choose an image file.')).toBeVisible();
+    expect(await screen.findByText('Choose a PNG, JPEG, WebP or GIF image.')).toBeVisible();
     expect(screen.getByLabelText('Avatar')).toBeInvalid();
     expect(profile.profile()?.avatarUrl).toBeUndefined();
   });

@@ -78,16 +78,28 @@ describe('Storage rules for avatars', () => {
     await assertFails(uploadBytes(avatarAs(ada, ada), ...image(twoMegabytes + 1)));
   });
 
-  it.each(['text/plain', 'application/octet-stream'])(
+  it.each(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])(
+    'accepts an image of type %s',
+    async (contentType) => {
+      await assertSucceeds(uploadBytes(avatarAs(ada, ada), ...image(1024, contentType)));
+    },
+  );
+
+  // SVG can carry scripts, which would run when someone opens the public URL directly.
+  it.each(['image/svg+xml', 'image/bmp', 'image/pngx', 'text/plain', 'application/octet-stream'])(
     'rejects a file of type %s',
     async (contentType) => {
       await assertFails(uploadBytes(avatarAs(ada, ada), ...image(1024, contentType)));
     },
   );
 
-  it('keeps everyone from deleting avatars, as the app never does', async () => {
-    await assertFails(deleteObject(avatarAs(ada, ada)));
+  it('lets users delete their own avatar', async () => {
+    await assertSucceeds(deleteObject(avatarAs(ada, ada)));
+  });
+
+  it("keeps other users and signed-out visitors from deleting someone's avatar", async () => {
     await assertFails(deleteObject(avatarAs(grace, ada)));
+    await assertFails(deleteObject(avatarAs(null, ada)));
   });
 
   it('denies paths that no rule opens', async () => {
