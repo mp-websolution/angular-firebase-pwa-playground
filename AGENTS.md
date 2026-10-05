@@ -2,6 +2,10 @@
 
 ## Agent skills
 
+### Testing
+
+Before writing or updating tests, read `docs/agents/testing.md`. It overrides the `angular-developer` skill's testing references.
+
 ### Issue tracker
 
 Issues and specs are local markdown files under `.scratch/<feature-slug>/`. See `docs/agents/issue-tracker.md`.
