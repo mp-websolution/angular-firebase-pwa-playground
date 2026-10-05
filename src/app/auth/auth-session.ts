@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { DestroyRef, Service, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import {
   GoogleAuthProvider,
@@ -18,7 +18,7 @@ import { Credentials } from './credentials.model';
 import { SessionUser } from './session-user.model';
 
 /** Who is signed in, plus the commands that change it. Components and guards never touch the SDK. */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AuthSession {
   readonly #auth = inject(FIREBASE_AUTH);
   // Only loaded on sign-out, so Firestore stays out of the initial load.
