@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/angular';
+import { screen, waitForElementToBeRemoved } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { FakeAuthSession } from '../../auth/testing/fake-auth-session';
 import { renderApp } from '../../testing/render-app';
@@ -169,13 +169,37 @@ describe('EditProfile', () => {
 
   it('shows the avatar', async () => {
     await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
-      profile: new FakeProfileData({ avatarUrl: 'https://storage.example/avatars/ada.png' }),
+      profile: new FakeProfileData({
+        displayName: 'Ada',
+        avatarUrl: 'https://storage.example/avatars/ada.png',
+      }),
     });
 
     expect(await screen.findByRole('img', { name: 'Your avatar' })).toHaveAttribute(
       'src',
       'https://storage.example/avatars/ada.png',
     );
+  });
+
+  it('asks for a display name before an avatar can be uploaded', async () => {
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+      profile: new FakeProfileData(),
+    });
+
+    expect(await screen.findByText('Save a display name first.')).toBeVisible();
+    expect(screen.getByLabelText('Avatar')).toBeDisabled();
+  });
+
+  it('offers the avatar upload once a display name is saved', async () => {
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+      profile: new FakeProfileData(),
+    });
+
+    await changeDisplayName('Ada');
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Saved.');
+    expect(screen.getByLabelText('Avatar')).toBeEnabled();
+    expect(screen.queryByText('Save a display name first.')).not.toBeInTheDocument();
   });
 
   it('uploads an avatar and shows it', async () => {
@@ -279,8 +303,8 @@ describe('EditProfile', () => {
 
     profile.finishUpload();
 
-    expect(await screen.findByRole('img', { name: 'Your avatar' })).toBeVisible();
-    await waitFor(() => expect(screen.queryByText('Uploading…')).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(() => screen.queryByText('Uploading…'));
+    expect(screen.getByRole('img', { name: 'Your avatar' })).toBeVisible();
     expect(screen.getByLabelText('Avatar')).toBeEnabled();
   });
 
@@ -309,8 +333,9 @@ describe('EditProfile', () => {
     const user = userEvent.setup();
     const image = file('ada.png', 'image/png');
     await user.upload(await screen.findByLabelText('Avatar'), image);
+    const uploading = await screen.findByText('Uploading…');
     profile.finishUpload();
-    await waitFor(() => expect(screen.getByLabelText('Avatar')).toBeEnabled());
+    await waitForElementToBeRemoved(uploading);
 
     await user.upload(screen.getByLabelText('Avatar'), image);
 

@@ -193,7 +193,10 @@ describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
     });
 
     it('replaces the avatar under a new URL, so browsers show the new image', async () => {
-      await signUp();
+      const uid = await signUp();
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'profiles', uid), { displayName: 'Ada' });
+      });
       const profileData = TestBed.inject(ProfileData);
       await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), emulatorReply);
       await profileData.uploadAvatar(image([1, 2, 3]));
