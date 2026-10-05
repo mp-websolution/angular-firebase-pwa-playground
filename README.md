@@ -18,6 +18,8 @@ Needs Node 24 (`.nvmrc`) and Java 21+ for the Firebase emulators. No Firebase pr
 | `npm run test:integration` | Integration tests (`*.integration.spec.ts`) inside the emulators. |
 | `npm run seed` | Runs every seeder in `scripts/seed/`. Only works inside the emulators; `npm start` calls it. |
 
+After `npm start`, sign in as the seeded demo user `demo@example.com` with password `demo-password` (see `scripts/seed/01-demo-user.mjs`), create an account, or use "Sign in with Google": the Auth emulator opens a popup where you pick or add a fake Google account.
+
 Production builds need the production project's web config in `src/environments/environment.ts`. While it still holds the `REPLACE_ME` placeholder, the app throws at startup instead of failing later on its first Firebase call.
 
 ## How this repo was planned
