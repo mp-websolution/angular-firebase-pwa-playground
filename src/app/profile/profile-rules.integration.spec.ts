@@ -81,6 +81,18 @@ describe('Firestore rules for profiles', () => {
     await assertSucceeds(updateDoc(profileAs(ada, ada), { displayName: 'x'.repeat(50) }));
   });
 
+  it('lets users record their avatar URL, with or without a display name', async () => {
+    const avatarUrl =
+      'https://firebasestorage.googleapis.com/v0/b/bucket/o/avatars%2Fada?alt=media';
+    await assertSucceeds(setDoc(profileAs(grace, grace), { avatarUrl }));
+    await assertSucceeds(updateDoc(profileAs(ada, ada), { avatarUrl }));
+  });
+
+  it('rejects an avatar URL that is not text', async () => {
+    await assertFails(setDoc(profileAs(grace, grace), { avatarUrl: 42 }));
+    await assertFails(updateDoc(profileAs(ada, ada), { avatarUrl: 42 }));
+  });
+
   it('rejects fields a profile does not have', async () => {
     await assertFails(setDoc(profileAs(grace, grace), { displayName: 'Grace', admin: true }));
     await assertFails(updateDoc(profileAs(ada, ada), { admin: true }));

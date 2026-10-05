@@ -1,16 +1,18 @@
 import { DestroyRef, ErrorHandler, Service, inject, signal } from '@angular/core';
 import { DocumentReference, Unsubscribe, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { AuthSession } from '../auth/auth-session';
-import { FIRESTORE } from '../firebase/provide-firebase';
+import { FIREBASE_STORAGE, FIRESTORE } from '../firebase/provide-firebase';
 import { Profile } from './profile.model';
 
 /**
- * The signed-in user's profile, kept up to date, plus the command that changes it. Imports the
+ * The signed-in user's profile, kept up to date, plus the commands that change it. Imports the
  * Firestore SDK, so only lazy routes may reach it (ADR 0003).
  */
 @Service()
 export class ProfileData {
   readonly #loadFirestore = inject(FIRESTORE);
+  readonly #storage = inject(FIREBASE_STORAGE);
   readonly #errorHandler = inject(ErrorHandler);
   // The profile page is guarded, so someone is signed in. Whenever that user goes away, the page
   // reloads (see AuthSession), so the uid never changes for this instance.
@@ -46,7 +48,10 @@ export class ProfileData {
         profileRef,
         { includeMetadataChanges: true },
         (snapshot) => {
-          this.#profile.set({ displayName: snapshot.get('displayName') ?? '' });
+          this.#profile.set({
+            displayName: snapshot.get('displayName') ?? '',
+            avatarUrl: snapshot.get('avatarUrl'),
+          });
           // Online, every change is pending for a moment too; only `fromCache` means the
           // listener has lost the server.
           const { hasPendingWrites, fromCache } = snapshot.metadata;
@@ -72,6 +77,23 @@ export class ProfileData {
     setDoc(profileRef, { displayName }, { merge: true }).catch((error: unknown) => {
       // The page only sends what the rules accept, so a rejection is a bug. Firestore has
       // already undone the change, so `profile` shows what the server kept.
+      this.#errorHandler.handleError(error);
+    });
+  }
+
+  /**
+   * Uploads the image as the avatar, replacing the previous one, then records its URL in the
+   * profile, so `profile` shows it. Unlike the display name, the upload needs a connection: it
+   * settles once the image is in Storage, and rejects if the upload fails.
+   */
+  async uploadAvatar(image: Blob): Promise<void> {
+    const profileRef = await this.#profileRef();
+    // One avatar per user, at a path only they may write (storage.rules).
+    const avatarRef = ref(this.#storage, `avatars/${profileRef.id}`);
+    await uploadBytes(avatarRef, image);
+    const avatarUrl = await getDownloadURL(avatarRef);
+    // Not awaited, like the display name: the URL syncs in the background.
+    setDoc(profileRef, { avatarUrl }, { merge: true }).catch((error: unknown) => {
       this.#errorHandler.handleError(error);
     });
   }
