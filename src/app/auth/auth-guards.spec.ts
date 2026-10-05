@@ -4,6 +4,7 @@ import { screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { renderApp } from '../testing/render-app';
 import { signedInGuard } from './auth-guards';
+import { Credentials } from './credentials.model';
 import { FakeAuthSession } from './testing/fake-auth-session';
 
 @Component({ template: '<h1>Deep page</h1>' })
@@ -12,9 +13,9 @@ class DeepPage {}
 const deepRoutes: Routes = [
   { path: 'deep/page', component: DeepPage, canActivate: [signedInGuard] },
 ];
-const ada = { email: 'ada@example.com', password: 'correct-horse' };
+const ada: Credentials = { email: 'ada@example.com', password: 'correct-horse' };
 
-async function fillInCredentials(email: string, password: string) {
+async function fillInCredentials({ email, password }: Credentials) {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText('Email'), email);
   await user.type(screen.getByLabelText('Password'), password);
@@ -39,7 +40,7 @@ describe('auth guards', () => {
   it('returns to the requested page after sign-in', async () => {
     await renderApp('/deep/page?tab=2', new FakeAuthSession({ accounts: [ada] }), deepRoutes);
 
-    await fillInCredentials(ada.email, ada.password);
+    await fillInCredentials(ada);
     await userEvent.setup().click(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Deep page' })).toBeVisible();
@@ -50,7 +51,7 @@ describe('auth guards', () => {
     await renderApp('/deep/page', new FakeAuthSession(), deepRoutes);
 
     await user.click(await screen.findByRole('link', { name: 'Create one' }));
-    await fillInCredentials('grace@example.com', 'correct-horse');
+    await fillInCredentials({ email: 'grace@example.com', password: 'correct-horse' });
     await user.click(screen.getByRole('button', { name: 'Create account' }));
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Deep page' })).toBeVisible();

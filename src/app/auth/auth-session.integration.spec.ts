@@ -44,7 +44,7 @@ describe('AuthSession against the Auth emulator', () => {
     const session = TestBed.inject(AuthSession);
     const email = newEmail();
 
-    await session.signUpWithEmail(email, 'correct-horse');
+    await session.signUpWithEmail({ email, password: 'correct-horse' });
 
     expect(session.user()).toMatchObject({ email });
   });
@@ -52,10 +52,10 @@ describe('AuthSession against the Auth emulator', () => {
   it('signs in an existing user with email and password', async () => {
     const session = TestBed.inject(AuthSession);
     const email = newEmail();
-    await session.signUpWithEmail(email, 'correct-horse');
+    await session.signUpWithEmail({ email, password: 'correct-horse' });
     await signOut(TestBed.inject(FIREBASE_AUTH));
 
-    await session.signInWithEmail(email, 'correct-horse');
+    await session.signInWithEmail({ email, password: 'correct-horse' });
 
     expect(session.user()).toMatchObject({ email });
   });
@@ -63,41 +63,45 @@ describe('AuthSession against the Auth emulator', () => {
   it('rejects a wrong password', async () => {
     const session = TestBed.inject(AuthSession);
     const email = newEmail();
-    await session.signUpWithEmail(email, 'correct-horse');
+    await session.signUpWithEmail({ email, password: 'correct-horse' });
     await signOut(TestBed.inject(FIREBASE_AUTH));
 
-    await expect(session.signInWithEmail(email, 'wrong-horse')).rejects.toMatchObject({
-      reason: 'wrong-password',
-      message: 'Wrong password. Try again.',
-    });
+    await expect(session.signInWithEmail({ email, password: 'wrong-horse' })).rejects.toMatchObject(
+      {
+        reason: 'invalid-credential',
+        message: 'Wrong email or password.',
+      },
+    );
   });
 
-  it('rejects signing in with an email no account uses', async () => {
+  it('rejects an email no account uses just like a wrong password', async () => {
     await expect(
-      TestBed.inject(AuthSession).signInWithEmail(newEmail(), 'correct-horse'),
-    ).rejects.toMatchObject({ reason: 'user-not-found' });
+      TestBed.inject(AuthSession).signInWithEmail({ email: newEmail(), password: 'correct-horse' }),
+    ).rejects.toMatchObject({ reason: 'invalid-credential' });
   });
 
   it('rejects signing up with an email that is already in use', async () => {
     const session = TestBed.inject(AuthSession);
     const email = newEmail();
-    await session.signUpWithEmail(email, 'correct-horse');
+    await session.signUpWithEmail({ email, password: 'correct-horse' });
     await signOut(TestBed.inject(FIREBASE_AUTH));
 
-    await expect(session.signUpWithEmail(email, 'correct-horse')).rejects.toMatchObject({
+    await expect(
+      session.signUpWithEmail({ email, password: 'correct-horse' }),
+    ).rejects.toMatchObject({
       reason: 'email-in-use',
     });
   });
 
   it('rejects signing up with a weak password', async () => {
     await expect(
-      TestBed.inject(AuthSession).signUpWithEmail(newEmail(), '123'),
+      TestBed.inject(AuthSession).signUpWithEmail({ email: newEmail(), password: '123' }),
     ).rejects.toMatchObject({ reason: 'weak-password' });
   });
 
   it('signs out, then reloads the page', async () => {
     const session = TestBed.inject(AuthSession);
-    await session.signUpWithEmail(newEmail(), 'correct-horse');
+    await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
 
     await session.signOut();
 
@@ -107,7 +111,7 @@ describe('AuthSession against the Auth emulator', () => {
 
   it('reloads the page when the user is signed out elsewhere, e.g. in another tab', async () => {
     const session = TestBed.inject(AuthSession);
-    await session.signUpWithEmail(newEmail(), 'correct-horse');
+    await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
 
     // What this tab's Auth sees when another tab signs out.
     await signOut(TestBed.inject(FIREBASE_AUTH));
@@ -119,7 +123,7 @@ describe('AuthSession against the Auth emulator', () => {
     const session = TestBed.inject(AuthSession);
     await vi.waitFor(() => expect(session.resolved()).toBe(true));
 
-    await session.signUpWithEmail(newEmail(), 'correct-horse');
+    await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
 
     expect(reloadPage).not.toHaveBeenCalled();
   });

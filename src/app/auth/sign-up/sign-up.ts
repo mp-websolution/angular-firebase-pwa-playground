@@ -1,8 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { injectReturnUrl } from '../auth-guards';
 import { AuthSession } from '../auth-session';
-import { Credentials, CredentialsForm } from '../credentials-form';
+import { CredentialsForm } from '../credentials-form';
+import { Credentials } from '../credentials.model';
+import { injectReturnUrl } from '../return-url';
 
 @Component({
   selector: 'app-sign-up',
@@ -27,8 +28,8 @@ export class SignUp {
   readonly #router = inject(Router);
   readonly #returnUrl = injectReturnUrl();
 
-  protected readonly signUp = async ({ email, password }: Credentials) => {
-    await this.#session.signUpWithEmail(email, password);
+  protected readonly signUp = async (credentials: Credentials) => {
+    await this.#session.signUpWithEmail(credentials);
     await this.#router.navigateByUrl(this.#returnUrl);
   };
 }

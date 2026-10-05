@@ -14,7 +14,7 @@
 - [x] Public sign-in and sign-up page(s), and a protected home page showing who is signed in
 - [x] A guard that depends only on the auth session service, which preserves the requested URL and redirects back after sign-in
 - [x] Signed-in users visiting sign-in are redirected to home
-- [x] Human-readable error messages for common failures (wrong password, user not found, email in use, weak password, popup closed)
+- [x] Human-readable error messages for common failures (wrong email or password, email in use, weak password, popup closed). A wrong password and an unknown email get the same message, as in production with email enumeration protection, so sign-in doesn't reveal which emails have accounts
 - [x] The seed script creates a demo email/password user in the Auth emulator
 - [x] Component tests (seam A, faked auth service, rendered through the router) cover sign-up, sign-in, error display, sign-out, the guard redirect with return URL, and the redirect away from sign-in when already signed in
 - [x] Integration tests (seam B) cover email sign-up, sign-in and sign-out against the Auth emulator
@@ -35,8 +35,6 @@
 Checked in the Firebase 12.19 SDK source and in a real browser (two tabs, both with Firestore's IndexedDB cache open): when one tab deletes the cache, Firestore in every other tab gets a `versionchange` event and shuts itself down, so `clearIndexedDbPersistence` succeeds and does not fail with `failed-precondition`. The `other-tabs-open` handling is still there, as the ticket asks, but it is defensive. The `signOutAndClearCache` docstring has been corrected.
 
 The real gap was the other tabs: they stayed on the protected page, signed out, with Firestore shut down. `AuthSession` now reloads the page whenever the signed-in user goes away, whether they signed out in this tab or another one. So every tab ends up on sign-in, with a fresh Firestore. This is covered by an integration test and was checked in the browser.
-
-Known limitation, from the review: `signOutAndClearCache` shuts Firestore down before it clears the cache. If clearing ever fails, the user stays signed in, but this tab's Firestore stays shut down until the next reload, and the `FIRESTORE` loader keeps returning that instance. This can't happen with today's SDK. If it ever starts happening, have the loader drop its cached instance after a terminate.
 
 ### Manual check: Google popup against the Auth emulator
 
