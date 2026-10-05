@@ -94,6 +94,8 @@ export class ProfileData {
     const avatarUrl = await getDownloadURL(avatarRef);
     // Not awaited, like the display name: the URL syncs in the background.
     setDoc(profileRef, { avatarUrl }, { merge: true }).catch((error: unknown) => {
+      // The rules accept any URL string, so a rejection is a bug. The page keeps showing the
+      // previous avatar, since Firestore has undone the change.
       this.#errorHandler.handleError(error);
     });
   }

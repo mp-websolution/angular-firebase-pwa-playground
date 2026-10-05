@@ -17,7 +17,7 @@ declare const process: { getBuiltinModule(id: 'node:buffer'): { Blob: typeof Blo
 // On a cold CI runner the emulator can take seconds to answer, but `vi.waitFor` gives up after 1 s.
 const emulatorReply = { timeout: 5_000 };
 
-describe('ProfileData against the Firestore emulator', { timeout: 20_000 }, () => {
+describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
   let testEnv: RulesTestEnvironment;
   const reportError = vi.fn<(error: unknown) => void>();
 
