@@ -84,7 +84,8 @@ export class ProfileData {
   /**
    * Uploads the image as the avatar, replacing the previous one, then records its URL in the
    * profile, so `profile` shows it. Unlike the display name, the upload needs a connection: it
-   * settles once the image is in Storage, and rejects if the upload fails.
+   * settles once the image is in Storage, and rejects if the upload fails. Needs a saved display
+   * name: the Firestore rules take no avatar URL on a profile without one.
    */
   async uploadAvatar(image: Blob): Promise<void> {
     const profileRef = await this.#profileRef();
@@ -94,8 +95,9 @@ export class ProfileData {
     const avatarUrl = await getDownloadURL(avatarRef);
     // Not awaited, like the display name: the URL syncs in the background.
     setDoc(profileRef, { avatarUrl }, { merge: true }).catch((error: unknown) => {
-      // The rules accept any URL string, so a rejection is a bug. The page keeps showing the
-      // previous avatar, since Firestore has undone the change.
+      // The page only offers an upload once a display name is saved, and the rules then accept
+      // any URL string, so a rejection is a bug. The page keeps showing the previous avatar,
+      // since Firestore has undone the change.
       this.#errorHandler.handleError(error);
     });
   }

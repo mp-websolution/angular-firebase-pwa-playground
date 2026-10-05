@@ -37,17 +37,21 @@ interface ProfileForm {
               Avatar
               <input
                 type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
                 aria-describedby="avatar-message"
                 class="text-sm file:mr-3 file:rounded file:border file:border-slate-300 file:px-3 file:py-1"
+                [accept]="avatarAccept"
                 [attr.aria-invalid]="
                   avatarStatus() === 'wrong-type' || avatarStatus() === 'too-large'
                 "
-                [disabled]="avatarStatus() === 'uploading'"
+                [disabled]="!profile.displayName || avatarStatus() === 'uploading'"
                 (change)="uploadAvatar($event)"
               />
             </label>
             <p id="avatar-message" aria-live="polite" class="text-sm text-red-700">
+              @if (!profile.displayName) {
+                <!-- The Firestore rules only take an avatar URL on a profile with a display name. -->
+                <span class="text-slate-600">Save a display name first.</span>
+              }
               @switch (avatarStatus()) {
                 @case ('uploading') {
                   <span class="text-slate-600">Uploading…</span>
@@ -145,6 +149,7 @@ export class EditProfile {
     () => this.#savedDisplayName() === this.profileForm.displayName().value(),
   );
 
+  protected readonly avatarAccept = avatarTypes.join(',');
   protected readonly avatarStatus = signal<
     'idle' | 'wrong-type' | 'too-large' | 'uploading' | 'failed'
   >('idle');
