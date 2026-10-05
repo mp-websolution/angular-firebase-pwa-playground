@@ -35,8 +35,8 @@ export function provideFirebase(settings: FirebaseSettings): EnvironmentProvider
 
 /**
  * Deletes Firestore's on-disk cache, then signs out, so the next person on the device cannot read
- * the previous user's documents. Firestore is unusable afterwards: reload the page. Clearing fails
- * with `failed-precondition` while another tab still has the app open; the user then stays signed
+ * the previous user's documents. Firestore is unusable afterwards: reload the page. Other tabs shut
+ * their Firestore down when the cache is deleted. If clearing fails anyway, the user stays signed
  * in, so sign-out never succeeds with their documents left on disk.
  */
 export async function signOutAndClearCache(
