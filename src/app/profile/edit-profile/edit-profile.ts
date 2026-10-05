@@ -3,6 +3,8 @@ import { RouterLink } from '@angular/router';
 import { FormField, form, maxLength, submit, validate } from '@angular/forms/signals';
 import { ProfileData } from '../profile-data';
 
+// Same limits as the Storage rules. No SVG: it can carry scripts.
+const avatarTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 const maxAvatarBytes = 2 * 1024 * 1024;
 
 interface ProfileForm {
@@ -35,11 +37,11 @@ interface ProfileForm {
               Avatar
               <input
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp,image/gif"
                 aria-describedby="avatar-message"
                 class="text-sm file:mr-3 file:rounded file:border file:border-slate-300 file:px-3 file:py-1"
                 [attr.aria-invalid]="
-                  avatarStatus() === 'not-an-image' || avatarStatus() === 'too-large'
+                  avatarStatus() === 'wrong-type' || avatarStatus() === 'too-large'
                 "
                 [disabled]="avatarStatus() === 'uploading'"
                 (change)="uploadAvatar($event)"
@@ -50,8 +52,8 @@ interface ProfileForm {
                 @case ('uploading') {
                   <span class="text-slate-600">Uploading…</span>
                 }
-                @case ('not-an-image') {
-                  Choose an image file.
+                @case ('wrong-type') {
+                  Choose a PNG, JPEG, WebP or GIF image.
                 }
                 @case ('too-large') {
                   Choose an image of at most 2 MB.
@@ -144,7 +146,7 @@ export class EditProfile {
   );
 
   protected readonly avatarStatus = signal<
-    'idle' | 'not-an-image' | 'too-large' | 'uploading' | 'failed'
+    'idle' | 'wrong-type' | 'too-large' | 'uploading' | 'failed'
   >('idle');
 
   protected async uploadAvatar(event: Event): Promise<void> {
@@ -156,9 +158,9 @@ export class EditProfile {
     if (!image) {
       return;
     }
-    // Same limits as the Storage rules. `accept` only suggests images; the user can pick any file.
-    if (!image.type.startsWith('image/')) {
-      this.avatarStatus.set('not-an-image');
+    // `accept` only suggests these types; the user can still pick any file.
+    if (!avatarTypes.includes(image.type)) {
+      this.avatarStatus.set('wrong-type');
       return;
     }
     if (image.size > maxAvatarBytes) {
