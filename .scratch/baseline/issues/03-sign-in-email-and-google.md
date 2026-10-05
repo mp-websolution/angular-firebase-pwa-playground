@@ -6,7 +6,7 @@
 
 **Blocked by:** 02 (Firebase wiring, emulators and emulator CI job)
 
-**Status:** ready-for-human
+**Status:** ready-for-agent
 
 - [x] An auth session service exposes the current user and an "auth resolved" state as signals, plus commands for email sign-up, email sign-in, Google popup sign-in and sign-out. No SDK types leak to components
 - [x] Sign-out goes through `signOutAndClearCache(auth, loadFirestore)` (then reloads the page), so the next person on the device cannot read the previous user's cached documents. The auth session service injects the `FIRESTORE` loader but never calls it at startup, so Firestore stays out of the initial load; sign-out loads it if needed
@@ -18,7 +18,7 @@
 - [x] The seed script creates a demo email/password user in the Auth emulator
 - [x] Component tests (seam A, faked auth service, rendered through the router) cover sign-up, sign-in, error display, sign-out, the guard redirect with return URL, and the redirect away from sign-in when already signed in
 - [x] Integration tests (seam B) cover email sign-up, sign-in and sign-out against the Auth emulator
-- [ ] The Google popup is verified manually against the Auth emulator; how to do this is noted in the ticket's comments when done
+- [x] The Google popup is verified manually against the Auth emulator; how to do this is noted in the ticket's comments when done
 
 ## Comments
 
@@ -40,7 +40,7 @@ Known limitation, from the review: `signOutAndClearCache` shuts Firestore down b
 
 ### Manual check: Google popup against the Auth emulator
 
-Not done yet. The agent's built-in browser opens popups in the same tab, so the emulator's widget has no opener to report back to ("No matching frame"). To check it in a normal browser:
+Verified by the user in a normal browser on 2026-10-05. The agent's built-in browser can't do this check: it opens popups in the same tab, so the emulator's widget has no opener to report back to ("No matching frame"). Steps:
 
 1. `npm start` and open http://localhost:4200/sign-in.
 2. Click "Sign in with Google". A popup opens the Auth emulator's "Sign-in with Google.com" widget.
@@ -48,4 +48,3 @@ Not done yet. The agent's built-in browser opens popups in the same tab, so the 
 4. Expect the popup to close and the app to show home with "Signed in as <generated email>". The user also shows up in the Emulator UI (http://localhost:4000/auth) with the Google provider.
 5. Sign out, click "Sign in with Google" again and close the popup. Expect "The Google sign-in window was closed before you finished."
 
-Once that passes, tick the last box.
