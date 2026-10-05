@@ -6,5 +6,15 @@ service firebase.storage {
     match /{allPaths=**} {
       allow read, write: if false;
     }
+
+    // Baseline: one avatar per user, keyed by user ID. Anyone can see it, as anyone with its
+    // download URL could anyway; only its owner can upload it.
+    match /avatars/{uid} {
+      allow read: if true;
+      // The profile page checks the same limits before uploading.
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.size <= 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
   }
 }

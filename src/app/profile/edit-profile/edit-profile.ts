@@ -3,6 +3,8 @@ import { RouterLink } from '@angular/router';
 import { FormField, form, maxLength, submit, validate } from '@angular/forms/signals';
 import { ProfileData } from '../profile-data';
 
+const maxAvatarBytes = 2 * 1024 * 1024;
+
 interface ProfileForm {
   displayName: string;
 }
@@ -17,7 +19,50 @@ interface ProfileForm {
         <p role="alert" class="text-red-700">
           Your profile couldn't be loaded. Reload the page to try again.
         </p>
-      } @else if (profileData.profile()) {
+      } @else if (profileData.profile(); as profile) {
+        <div class="flex items-center gap-4">
+          @if (profile.avatarUrl) {
+            <img
+              alt="Your avatar"
+              class="size-20 rounded-full object-cover"
+              [src]="profile.avatarUrl"
+            />
+          } @else {
+            <div class="size-20 rounded-full bg-slate-200"></div>
+          }
+          <div class="flex flex-col gap-1">
+            <label class="flex flex-col gap-1">
+              Avatar
+              <input
+                type="file"
+                accept="image/*"
+                aria-describedby="avatar-message"
+                class="text-sm file:mr-3 file:rounded file:border file:border-slate-300 file:px-3 file:py-1"
+                [attr.aria-invalid]="
+                  avatarStatus() === 'not-an-image' || avatarStatus() === 'too-large'
+                "
+                [disabled]="avatarStatus() === 'uploading'"
+                (change)="uploadAvatar($event)"
+              />
+            </label>
+            <p id="avatar-message" aria-live="polite" class="text-sm text-red-700">
+              @switch (avatarStatus()) {
+                @case ('uploading') {
+                  <span class="text-slate-600">Uploading…</span>
+                }
+                @case ('not-an-image') {
+                  Choose an image file.
+                }
+                @case ('too-large') {
+                  Choose an image of at most 2 MB.
+                }
+                @case ('failed') {
+                  Your avatar couldn't be uploaded. Check your connection and try again.
+                }
+              }
+            </p>
+          </div>
+        </div>
         <form
           novalidate
           class="flex flex-col gap-4"
@@ -97,6 +142,37 @@ export class EditProfile {
   protected readonly saved = computed(
     () => this.#savedDisplayName() === this.profileForm.displayName().value(),
   );
+
+  protected readonly avatarStatus = signal<
+    'idle' | 'not-an-image' | 'too-large' | 'uploading' | 'failed'
+  >('idle');
+
+  protected async uploadAvatar(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const image = input.files?.[0];
+    // Browsers only report a change when the selection changes; clear it so the same file can be
+    // picked again, e.g. to retry a failed upload.
+    input.value = '';
+    if (!image) {
+      return;
+    }
+    // Same limits as the Storage rules. `accept` only suggests images; the user can pick any file.
+    if (!image.type.startsWith('image/')) {
+      this.avatarStatus.set('not-an-image');
+      return;
+    }
+    if (image.size > maxAvatarBytes) {
+      this.avatarStatus.set('too-large');
+      return;
+    }
+    this.avatarStatus.set('uploading');
+    try {
+      await this.profileData.uploadAvatar(image);
+      this.avatarStatus.set('idle');
+    } catch {
+      this.avatarStatus.set('failed');
+    }
+  }
 
   protected saveProfile(): void {
     submit(this.profileForm, async () => {

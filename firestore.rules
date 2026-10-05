@@ -16,13 +16,19 @@ service cloud.firestore {
       allow read, delete: if isSignedInAs(uid);
       allow create, update: if isSignedInAs(uid) && isValidProfile(request.resource.data);
 
-      // The profile page saves display names trimmed, so 2 characters means 2 visible ones.
+      // Both fields are optional: a user may upload an avatar before choosing a display name.
       function isValidProfile(profile) {
-        return profile.keys().hasOnly(['displayName'])
-          && profile.displayName is string
-          && profile.displayName == profile.displayName.trim()
-          && profile.displayName.size() >= 2
-          && profile.displayName.size() <= 50;
+        return profile.keys().hasOnly(['displayName', 'avatarUrl'])
+          && (!('displayName' in profile) || isValidDisplayName(profile.displayName))
+          && (!('avatarUrl' in profile) || profile.avatarUrl is string);
+      }
+
+      // The profile page saves display names trimmed, so 2 characters means 2 visible ones.
+      function isValidDisplayName(displayName) {
+        return displayName is string
+          && displayName == displayName.trim()
+          && displayName.size() >= 2
+          && displayName.size() <= 50;
       }
     }
   }
