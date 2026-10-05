@@ -11,6 +11,13 @@ export const routes: Routes = [
     canActivate: [signedInGuard],
     title: 'Angular Firebase PWA Playground',
   },
+  {
+    path: 'profile',
+    // Lazy: the profile page is where the Firestore SDK first gets imported (ADR 0003).
+    loadComponent: () => import('./profile/edit-profile/edit-profile').then((m) => m.EditProfile),
+    canActivate: [signedInGuard],
+    title: 'Profile',
+  },
   { path: 'sign-in', component: SignIn, canActivate: [signedOutGuard], title: 'Sign in' },
   { path: 'sign-up', component: SignUp, canActivate: [signedOutGuard], title: 'Create account' },
   { path: '**', redirectTo: '' },
