@@ -1,17 +1,19 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthSession } from '../auth/auth-session';
 import { messageOf } from '../auth/auth-session-error';
 
 @Component({
   selector: 'app-home',
+  imports: [RouterLink],
   template: `
     <main class="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-4 p-6">
       <h1 class="text-3xl font-bold tracking-tight">Angular Firebase PWA Playground</h1>
       @if (session.user(); as user) {
         <p class="text-slate-600">Signed in as {{ user.email ?? user.displayName }}</p>
       }
-      <div>
+      <div class="flex items-center gap-4">
+        <a routerLink="/profile" class="underline">Profile</a>
         <button
           type="button"
           class="rounded border border-slate-300 px-4 py-2 font-medium disabled:opacity-50"

@@ -6,5 +6,22 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if false;
     }
+
+    function isSignedInAs(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Baseline: one profile per user, keyed by user ID. Only its owner can read or change it.
+    match /profiles/{uid} {
+      allow read, delete: if isSignedInAs(uid);
+      allow create, update: if isSignedInAs(uid) && isValidProfile(request.resource.data);
+
+      function isValidProfile(profile) {
+        return profile.keys().hasOnly(['displayName'])
+          && profile.displayName is string
+          && profile.displayName.size() >= 1
+          && profile.displayName.size() <= 50;
+      }
+    }
   }
 }
