@@ -4,20 +4,16 @@ import { FakeAuthSession } from '../../auth/testing/fake-auth-session';
 import { renderApp } from '../../testing/render-app';
 import { FakeProfileData } from '../testing/fake-profile-data';
 
-const signedInAsAda = () => new FakeAuthSession({ signedInAs: 'ada@example.com' });
-
 async function changeDisplayName(displayName: string) {
   const user = userEvent.setup();
   await user.clear(await screen.findByLabelText('Display name'));
-  if (displayName) {
-    await user.type(screen.getByLabelText('Display name'), displayName);
-  }
+  await user.type(screen.getByLabelText('Display name'), displayName);
   await user.click(screen.getByRole('button', { name: 'Save' }));
 }
 
 describe('EditProfile', () => {
   it('shows the display name', async () => {
-    await renderApp('/profile', signedInAsAda(), {
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
       profile: new FakeProfileData({ displayName: 'Ada Lovelace' }),
     });
 
@@ -25,7 +21,7 @@ describe('EditProfile', () => {
   });
 
   it('opens from home', async () => {
-    await renderApp('/', signedInAsAda(), {
+    await renderApp('/', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
       profile: new FakeProfileData({ displayName: 'Ada Lovelace' }),
     });
 
@@ -43,7 +39,9 @@ describe('EditProfile', () => {
 
   it('saves a new display name', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', signedInAsAda(), { profile });
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+      profile,
+    });
 
     await changeDisplayName('Ada Lovelace');
 
@@ -53,16 +51,30 @@ describe('EditProfile', () => {
 
   it('saves the display name without surrounding spaces', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', signedInAsAda(), { profile });
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+      profile,
+    });
 
     await changeDisplayName('  Ada Lovelace  ');
 
     expect(await screen.findByRole('status')).toHaveTextContent('Saved.');
     expect(screen.getByLabelText('Display name')).toHaveValue('Ada Lovelace');
+    expect(profile.profile()).toEqual({ displayName: 'Ada Lovelace' });
+  });
+
+  it('says it saved when only spaces were added around the stored name', async () => {
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+      profile: new FakeProfileData({ displayName: 'Ada' }),
+    });
+
+    await changeDisplayName('Ada ');
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Saved.');
+    expect(screen.getByLabelText('Display name')).toHaveValue('Ada');
   });
 
   it("says a change made offline is saved on this device until it's synced", async () => {
-    await renderApp('/profile', signedInAsAda(), {
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
       profile: new FakeProfileData({ displayName: 'Ada', offline: true }),
     });
 
@@ -76,7 +88,9 @@ describe('EditProfile', () => {
 
   it('asks for a display name instead of saving a blank one', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', signedInAsAda(), { profile });
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+      profile,
+    });
 
     await changeDisplayName('   ');
 
@@ -85,9 +99,24 @@ describe('EditProfile', () => {
     expect(profile.profile()).toEqual({ displayName: 'Ada' });
   });
 
+  it('asks for a display name of at least 2 characters', async () => {
+    const profile = new FakeProfileData({ displayName: 'Ada' });
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+      profile,
+    });
+
+    await changeDisplayName(' A ');
+
+    expect(await screen.findByText('Use at least 2 characters.')).toBeVisible();
+    expect(screen.getByLabelText('Display name')).toBeInvalid();
+    expect(profile.profile()).toEqual({ displayName: 'Ada' });
+  });
+
   it('takes at most 50 characters for the display name', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', signedInAsAda(), { profile });
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+      profile,
+    });
 
     await changeDisplayName('x'.repeat(51));
 
@@ -95,8 +124,36 @@ describe('EditProfile', () => {
     expect(profile.profile()).toEqual({ displayName: 'x'.repeat(50) });
   });
 
+  it('shows a display name changed elsewhere, e.g. in another tab', async () => {
+    const profile = new FakeProfileData({ displayName: 'Ada' });
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+      profile,
+    });
+    await screen.findByLabelText('Display name');
+
+    profile.changeElsewhere('Countess of Lovelace');
+
+    expect(await screen.findByDisplayValue('Countess of Lovelace')).toBeVisible();
+  });
+
+  it('keeps what the user is typing when the display name changes elsewhere', async () => {
+    const profile = new FakeProfileData({ displayName: 'Ada' });
+    const { fixture } = await renderApp(
+      '/profile',
+      new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      { profile },
+    );
+    await userEvent.setup().type(await screen.findByLabelText('Display name'), ' Lovelace');
+
+    profile.changeElsewhere('Countess of Lovelace');
+    // Nothing to find when nothing changes: wait for the page to finish rendering instead.
+    await fixture.whenStable();
+
+    expect(screen.getByLabelText('Display name')).toHaveValue('Ada Lovelace');
+  });
+
   it("says so when the profile can't be loaded", async () => {
-    await renderApp('/profile', signedInAsAda(), {
+    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
       profile: new FakeProfileData({ loadFails: true }),
     });
 

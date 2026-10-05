@@ -16,13 +16,13 @@ export class ProfileData {
   // reloads (see AuthSession), so the uid never changes for this instance.
   readonly #uid = inject(AuthSession).user()?.uid;
   readonly #profile = signal<Profile | undefined>(undefined);
-  readonly #syncing = signal(false);
+  readonly #waitingToSync = signal(false);
   readonly #loadFailed = signal(false);
 
   /** The signed-in user's profile; `undefined` until it has loaded. */
   readonly profile = this.#profile.asReadonly();
-  /** True while changes made on this device, e.g. offline, haven't reached the server yet. */
-  readonly syncing = this.#syncing.asReadonly();
+  /** True while changes made on this device can't reach the server, e.g. offline. */
+  readonly waitingToSync = this.#waitingToSync.asReadonly();
   /** True when the profile can't be loaded, e.g. Firestore refused to read it. */
   readonly loadFailed = this.#loadFailed.asReadonly();
 
@@ -41,13 +41,16 @@ export class ProfileData {
       if (destroyed) {
         return;
       }
-      // Metadata changes too, so `syncing` turns false once the server has the change.
+      // Metadata changes too, so `waitingToSync` follows the connection and the server's replies.
       unsubscribe = onSnapshot(
         profileRef,
         { includeMetadataChanges: true },
         (snapshot) => {
           this.#profile.set({ displayName: snapshot.get('displayName') ?? '' });
-          this.#syncing.set(snapshot.metadata.hasPendingWrites);
+          // Online, every change is pending for a moment too; only `fromCache` means the
+          // listener has lost the server.
+          const { hasPendingWrites, fromCache } = snapshot.metadata;
+          this.#waitingToSync.set(hasPendingWrites && fromCache);
         },
         (error) => {
           // Sign-out, here or in another tab, shuts Firestore down and reloads the page: nothing failed.
@@ -61,7 +64,7 @@ export class ProfileData {
 
   /**
    * Saves the display name on this device and syncs it in the background, so it also works
-   * offline: `profile` shows it straight away, and `syncing` stays true until the server has it.
+   * offline: `profile` shows it straight away, and `waitingToSync` stays true until it's back online.
    */
   async updateDisplayName(displayName: string): Promise<void> {
     const profileRef = await this.#profileRef();

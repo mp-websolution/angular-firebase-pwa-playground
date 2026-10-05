@@ -61,20 +61,29 @@ describe('Firestore rules for profiles', () => {
   it('keeps signed-out visitors from reading or changing profiles', async () => {
     await assertFails(getDoc(profileAs(null, ada)));
     await assertFails(setDoc(profileAs(null, ada), { displayName: 'Nobody' }));
+    await assertFails(deleteDoc(profileAs(null, ada)));
   });
 
-  it('rejects a blank or too long display name', async () => {
-    await assertFails(setDoc(profileAs(ada, ada), { displayName: '' }));
-    await assertFails(setDoc(profileAs(ada, ada), { displayName: 'x'.repeat(51) }));
-    await assertFails(setDoc(profileAs(ada, ada), { displayName: 42 }));
+  // Each bad name is tried on a new profile (grace) and on an existing one (ada).
+  it.each([
+    ['is blank', '   '],
+    ['is shorter than 2 characters', 'A'],
+    ['is longer than 50 characters', 'x'.repeat(51)],
+    ['has surrounding spaces', ' Ada '],
+    ['is not text', 42],
+  ])('rejects a display name that %s', async (_case, displayName) => {
+    await assertFails(setDoc(profileAs(grace, grace), { displayName }));
+    await assertFails(updateDoc(profileAs(ada, ada), { displayName }));
   });
 
-  it('accepts a display name of exactly 50 characters', async () => {
-    await assertSucceeds(setDoc(profileAs(ada, ada), { displayName: 'x'.repeat(50) }));
+  it('accepts display names of 2 and of 50 characters', async () => {
+    await assertSucceeds(setDoc(profileAs(grace, grace), { displayName: 'Gr' }));
+    await assertSucceeds(updateDoc(profileAs(ada, ada), { displayName: 'x'.repeat(50) }));
   });
 
   it('rejects fields a profile does not have', async () => {
-    await assertFails(setDoc(profileAs(ada, ada), { displayName: 'Ada', admin: true }));
+    await assertFails(setDoc(profileAs(grace, grace), { displayName: 'Grace', admin: true }));
+    await assertFails(updateDoc(profileAs(ada, ada), { admin: true }));
   });
 
   it('denies collections that no rule opens', async () => {
