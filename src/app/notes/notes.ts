@@ -8,7 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormField, form, maxLength, schema, submit, validate } from '@angular/forms/signals';
+import { FormField, form, schema, submit, validate } from '@angular/forms/signals';
 import { NotesData } from './notes-data';
 import { Note, maxNoteLength } from './note.model';
 
@@ -18,10 +18,15 @@ interface NoteForm {
 
 // For new notes and changed ones alike.
 const noteSchema = schema<NoteForm>((path) => {
-  validate(path.text, ({ value }) =>
-    value().trim() ? undefined : { kind: 'required', message: 'Write something first.' },
-  );
-  maxLength(path.text, maxNoteLength, { message: `Use at most ${maxNoteLength} characters.` });
+  validate(path.text, ({ value }) => {
+    const text = value().trim();
+    if (!text) {
+      return { kind: 'required', message: 'Write something first.' };
+    }
+    return text.length > maxNoteLength
+      ? { kind: 'maxLength', message: `Use at most ${maxNoteLength} characters.` }
+      : undefined;
+  });
 });
 
 @Component({
@@ -82,7 +87,7 @@ const noteSchema = schema<NoteForm>((path) => {
                     class="flex flex-col gap-2"
                     (submit)="saveNote(note.id); $event.preventDefault()"
                   >
-                    @let editText = editForm.text();
+                    @let editText = editNoteForm.text();
                     <label class="flex flex-col gap-1">
                       Note
                       <textarea
@@ -91,7 +96,7 @@ const noteSchema = schema<NoteForm>((path) => {
                         aria-describedby="edit-note-errors"
                         class="rounded border border-slate-300 px-3 py-2"
                         [attr.aria-invalid]="editText.touched() && editText.invalid()"
-                        [formField]="editForm.text"
+                        [formField]="editNoteForm.text"
                       ></textarea>
                     </label>
                     <div id="edit-note-errors">
@@ -105,7 +110,7 @@ const noteSchema = schema<NoteForm>((path) => {
                       <button
                         type="submit"
                         class="rounded bg-slate-900 px-3 py-1 font-medium text-white disabled:opacity-50"
-                        [disabled]="editForm().submitting()"
+                        [disabled]="editNoteForm().submitting()"
                       >
                         Save
                       </button>
@@ -156,7 +161,7 @@ export class Notes {
 
   /** The note being changed, if any; one at a time. */
   protected readonly editingId = signal<string | undefined>(undefined);
-  protected readonly editForm = form(signal<NoteForm>({ text: '' }), noteSchema);
+  protected readonly editNoteForm = form(signal<NoteForm>({ text: '' }), noteSchema);
   // Not `#editTextarea`: Angular's queries can't use ES private fields.
   private readonly editTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('editTextarea');
 
@@ -168,7 +173,7 @@ export class Notes {
   }
 
   protected startEditing(note: Note): void {
-    this.editForm().reset({ text: note.text });
+    this.editNoteForm().reset({ text: note.text });
     this.editingId.set(note.id);
     // The Edit button is gone once the form shows; keep keyboard users where they were.
     afterNextRender(() => this.editTextarea()?.nativeElement.focus(), {
@@ -177,8 +182,8 @@ export class Notes {
   }
 
   protected saveNote(id: string): void {
-    submit(this.editForm, async () => {
-      await this.notesData.update(id, this.editForm.text().value().trim());
+    submit(this.editNoteForm, async () => {
+      await this.notesData.update(id, this.editNoteForm.text().value().trim());
       this.editingId.set(undefined);
     });
   }

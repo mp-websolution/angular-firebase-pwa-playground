@@ -16,5 +16,5 @@
 - [x] Rules tests cover owner allowed and cross-user and unauthenticated denied
 - [x] Component tests (seam A, faked notes service) cover the list, create, edit and delete
 - [x] Integration tests (seam B) cover CRUD and realtime updates against the emulator
-- [x] Deleting the notes Prototype (route entry, folder, rules section, seed section, tests) leaves the Baseline building and all remaining tests green. Verified once, then the deletion is reverted
+- [ ] Deleting the notes Prototype (route entry, folder, rules section, seed section, tests) leaves the Baseline building and all remaining tests green. Verified once, then the deletion is reverted
 - [x] A short developer note explains how to add or remove a Prototype, including that Firestore code must stay behind the Prototype's lazy route

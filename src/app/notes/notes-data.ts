@@ -1,11 +1,9 @@
-import { DestroyRef, ErrorHandler, Service, computed, inject, signal } from '@angular/core';
+import { ErrorHandler, Service, computed, inject, signal } from '@angular/core';
 import {
   CollectionReference,
-  Unsubscribe,
   collection,
   deleteDoc,
   doc,
-  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -13,6 +11,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { AuthSession } from '../auth/auth-session';
+import { listenUntilDestroyed } from '../firebase/listen-until-destroyed';
 import { FIRESTORE } from '../firebase/provide-firebase';
 import { Note } from './note.model';
 
@@ -28,55 +27,39 @@ export class NotesData {
   // reloads (see AuthSession), so the uid never changes for this instance.
   readonly #uid = inject(AuthSession).user()?.uid;
   readonly #notes = signal<Note[] | undefined>(undefined);
-  readonly #listedPendingWrites = signal(false);
+  readonly #snapshotHasPendingWrites = signal(false);
   readonly #unsyncedDeletes = signal(0);
-  readonly #listenerOffline = signal(false);
+  readonly #snapshotFromCache = signal(false);
   readonly #loadFailed = signal(false);
 
   /** The signed-in user's notes, newest first; `undefined` until they have loaded. */
   readonly notes = this.#notes.asReadonly();
   /** True while changes made on this device can't reach the server, e.g. offline. */
   readonly waitingToSync = computed(
-    () => this.#listenerOffline() && (this.#listedPendingWrites() || this.#unsyncedDeletes() > 0),
+    () =>
+      this.#snapshotFromCache() &&
+      (this.#snapshotHasPendingWrites() || this.#unsyncedDeletes() > 0),
   );
   /** True when the notes can't be loaded, e.g. Firestore refused to read them. */
   readonly loadFailed = this.#loadFailed.asReadonly();
 
   constructor() {
-    let unsubscribe: Unsubscribe | undefined;
-    let destroyed = false;
-    inject(DestroyRef).onDestroy(() => {
-      destroyed = true;
-      unsubscribe?.();
-    });
-    const fail = (error: unknown) => {
-      this.#loadFailed.set(true);
-      this.#errorHandler.handleError(error);
-    };
-    this.#notesRef().then((notesRef) => {
-      if (destroyed) {
-        return;
-      }
-      // A note created on this device sorts first while its server timestamp is still pending.
-      // Metadata changes too, so `waitingToSync` follows the connection and the server's replies.
-      unsubscribe = onSnapshot(
-        query(notesRef, orderBy('createdAt', 'desc')),
-        { includeMetadataChanges: true },
-        (snapshot) => {
-          this.#notes.set(snapshot.docs.map((note) => ({ id: note.id, text: note.get('text') })));
-          // Online, every change is pending for a moment too; only `fromCache` means the
-          // listener has lost the server.
-          this.#listedPendingWrites.set(snapshot.metadata.hasPendingWrites);
-          this.#listenerOffline.set(snapshot.metadata.fromCache);
-        },
-        (error) => {
-          // Sign-out, here or in another tab, shuts Firestore down and reloads the page: nothing failed.
-          if (error.code !== 'aborted') {
-            fail(error);
-          }
-        },
-      );
-    }, fail);
+    // A note created on this device sorts first while its server timestamp is still pending.
+    // Metadata changes too, so `waitingToSync` follows the connection and the server's replies.
+    listenUntilDestroyed(
+      this.#notesRef().then((notesRef) => query(notesRef, orderBy('createdAt', 'desc'))),
+      (snapshot) => {
+        this.#notes.set(snapshot.docs.map((note) => ({ id: note.id, text: note.get('text') })));
+        // Online, every change is pending for a moment too; only `fromCache` means the listener
+        // has lost the server.
+        this.#snapshotHasPendingWrites.set(snapshot.metadata.hasPendingWrites);
+        this.#snapshotFromCache.set(snapshot.metadata.fromCache);
+      },
+      (error) => {
+        this.#loadFailed.set(true);
+        this.#errorHandler.handleError(error);
+      },
+    );
   }
 
   /**
