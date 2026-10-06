@@ -5,7 +5,7 @@ import { Credentials } from '../credentials.model';
 import { SessionUser } from '../session-user.model';
 
 // `implements AuthSession` would also demand its `#private` fields; this keeps only the public ones.
-type PublicApi<T> = { [K in keyof T]: T[K] };
+type PublicApi<T> = { [K in keyof T]: T[K] }; //todo: after feature extract this to a common palce, exists at least 4 times.
 
 export interface FakeAuthSessionOptions {
   /** Email/password accounts that exist before the test starts. */
