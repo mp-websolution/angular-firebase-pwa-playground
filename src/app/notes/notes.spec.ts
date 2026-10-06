@@ -207,6 +207,67 @@ describe('Notes', () => {
     expect(notes.notes()?.map(({ text }) => text)).toEqual(['Call Grace']);
   });
 
+  it("says a note added offline is saved on this device until it's synced", async () => {
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: new FakeNotesData({ offline: true }) }],
+    });
+
+    await addNote('Call Grace');
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      "Saved on this device. It syncs to your account once you're online.",
+    );
+    expect(screen.getByRole('listitem', { name: 'Call Grace' })).toBeVisible();
+  });
+
+  it("says a note changed offline is saved on this device until it's synced", async () => {
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [
+        { provide: NotesData, useValue: new FakeNotesData({ notes: ['Buy milk'], offline: true }) },
+      ],
+    });
+    const user = userEvent.setup();
+    const note = await screen.findByRole('listitem', { name: 'Buy milk' });
+
+    await user.click(within(note).getByRole('button', { name: 'Edit' }));
+    await user.type(screen.getByLabelText('Note'), ' and eggs');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      "Saved on this device. It syncs to your account once you're online.",
+    );
+  });
+
+  it("says a deletion made offline is saved on this device until it's synced", async () => {
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [
+        { provide: NotesData, useValue: new FakeNotesData({ notes: ['Buy milk'], offline: true }) },
+      ],
+    });
+    const note = await screen.findByRole('listitem', { name: 'Buy milk' });
+
+    await userEvent.setup().click(within(note).getByRole('button', { name: 'Delete' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      "Saved on this device. It syncs to your account once you're online.",
+    );
+  });
+
+  it('says nothing about syncing once a change has reached the server', async () => {
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
+    });
+
+    await addNote('Call Grace');
+
+    expect(await screen.findByRole('listitem', { name: 'Call Grace' })).toBeVisible();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+
   it('shows a note added elsewhere, e.g. in another tab', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
     await renderApp('/notes', {

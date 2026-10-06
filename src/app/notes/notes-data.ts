@@ -1,4 +1,4 @@
-import { DestroyRef, ErrorHandler, Service, inject, signal } from '@angular/core';
+import { DestroyRef, ErrorHandler, Service, computed, inject, signal } from '@angular/core';
 import {
   CollectionReference,
   Unsubscribe,
@@ -28,10 +28,17 @@ export class NotesData {
   // reloads (see AuthSession), so the uid never changes for this instance.
   readonly #uid = inject(AuthSession).user()?.uid;
   readonly #notes = signal<Note[] | undefined>(undefined);
+  readonly #listedPendingWrites = signal(false);
+  readonly #unsyncedDeletes = signal(0);
+  readonly #listenerOffline = signal(false);
   readonly #loadFailed = signal(false);
 
   /** The signed-in user's notes, newest first; `undefined` until they have loaded. */
   readonly notes = this.#notes.asReadonly();
+  /** True while changes made on this device can't reach the server, e.g. offline. */
+  readonly waitingToSync = computed(
+    () => this.#listenerOffline() && (this.#listedPendingWrites() || this.#unsyncedDeletes() > 0),
+  );
   /** True when the notes can't be loaded, e.g. Firestore refused to read them. */
   readonly loadFailed = this.#loadFailed.asReadonly();
 
@@ -51,10 +58,16 @@ export class NotesData {
         return;
       }
       // A note created on this device sorts first while its server timestamp is still pending.
+      // Metadata changes too, so `waitingToSync` follows the connection and the server's replies.
       unsubscribe = onSnapshot(
         query(notesRef, orderBy('createdAt', 'desc')),
+        { includeMetadataChanges: true },
         (snapshot) => {
           this.#notes.set(snapshot.docs.map((note) => ({ id: note.id, text: note.get('text') })));
+          // Online, every change is pending for a moment too; only `fromCache` means the
+          // listener has lost the server.
+          this.#listedPendingWrites.set(snapshot.metadata.hasPendingWrites);
+          this.#listenerOffline.set(snapshot.metadata.fromCache);
         },
         (error) => {
           // Sign-out, here or in another tab, shuts Firestore down and reloads the page: nothing failed.
@@ -89,9 +102,14 @@ export class NotesData {
   /** Deletes a note on this device and syncs it in the background, like `create`. */
   async delete(id: string): Promise<void> {
     const notesRef = await this.#notesRef();
-    deleteDoc(doc(notesRef, id)).catch((error: unknown) => {
-      this.#reportRejected(error);
-    });
+    // A deleted note leaves the listed snapshot, and its pending write with it, so count it until
+    // the server has it. A delete still queued from before a reload isn't counted.
+    this.#unsyncedDeletes.update((count) => count + 1);
+    deleteDoc(doc(notesRef, id))
+      .catch((error: unknown) => {
+        this.#reportRejected(error);
+      })
+      .finally(() => this.#unsyncedDeletes.update((count) => count - 1));
   }
 
   #reportRejected(error: unknown): void {
