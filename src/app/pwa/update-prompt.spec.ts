@@ -21,7 +21,7 @@ describe('Update prompt', () => {
     const swUpdate = new FakeSwUpdate();
     swUpdate.deployNewVersion();
 
-    await renderApp('/sign-in', undefined, { swUpdate });
+    await renderApp('/sign-in', { swUpdate });
 
     expect(await screen.findByText('A new version is available.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Reload' })).toBeVisible();
@@ -29,7 +29,7 @@ describe('Update prompt', () => {
 
   it('offers a reload when the user returns to the tab after a new version was deployed', async () => {
     const swUpdate = new FakeSwUpdate();
-    await renderApp('/sign-in', undefined, { swUpdate });
+    await renderApp('/sign-in', { swUpdate });
     swUpdate.deployNewVersion();
 
     returnToTab();
@@ -40,7 +40,7 @@ describe('Update prompt', () => {
   it('waits until the new version is downloaded', async () => {
     const swUpdate = new FakeSwUpdate({ slowDownload: true });
     swUpdate.deployNewVersion();
-    await renderApp('/sign-in', undefined, { swUpdate });
+    await renderApp('/sign-in', { swUpdate });
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
 
     expect(screen.queryByText('A new version is available.')).not.toBeInTheDocument();
@@ -54,7 +54,7 @@ describe('Update prompt', () => {
     const swUpdate = new FakeSwUpdate();
     swUpdate.deployNewVersion();
     const reloadPage = vi.fn<() => void>();
-    await renderApp('/sign-in', undefined, { swUpdate, reloadPage });
+    await renderApp('/sign-in', { swUpdate, reloadPage });
     const reload = await screen.findByRole('button', { name: 'Reload' });
 
     expect(reloadPage).not.toHaveBeenCalled();
@@ -68,7 +68,7 @@ describe('Update prompt', () => {
     const swUpdate = new FakeSwUpdate();
     swUpdate.deployNewVersion();
     const reloadPage = vi.fn<() => void>();
-    await renderApp('/sign-in', undefined, { swUpdate, reloadPage });
+    await renderApp('/sign-in', { swUpdate, reloadPage });
 
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Later' }));
 
@@ -79,7 +79,7 @@ describe('Update prompt', () => {
   it('comes back for the next version after the user picked later', async () => {
     const swUpdate = new FakeSwUpdate();
     swUpdate.deployNewVersion();
-    await renderApp('/sign-in', undefined, { swUpdate });
+    await renderApp('/sign-in', { swUpdate });
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Later' }));
     swUpdate.deployNewVersion();
 
@@ -91,7 +91,7 @@ describe('Update prompt', () => {
   it('asks for a reload when the current version breaks', async () => {
     const swUpdate = new FakeSwUpdate();
     const reloadPage = vi.fn<() => void>();
-    await renderApp('/sign-in', undefined, { swUpdate, reloadPage });
+    await renderApp('/sign-in', { swUpdate, reloadPage });
 
     swUpdate.breakCurrentVersion();
 
@@ -99,12 +99,13 @@ describe('Update prompt', () => {
       'This version of the app stopped working. Reload to get the latest one.',
     );
     expect(screen.queryByRole('button', { name: 'Later' })).not.toBeInTheDocument();
+    expect(reloadPage).not.toHaveBeenCalled();
   });
 
   it('reloads from the broken-version notice when the user chooses to', async () => {
     const swUpdate = new FakeSwUpdate();
     const reloadPage = vi.fn<() => void>();
-    await renderApp('/sign-in', undefined, { swUpdate, reloadPage });
+    await renderApp('/sign-in', { swUpdate, reloadPage });
     swUpdate.breakCurrentVersion();
 
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Reload' }));

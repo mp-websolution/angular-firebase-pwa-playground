@@ -9,12 +9,12 @@ import { RELOAD_PAGE } from '../browser/reload-page';
   selector: 'app-update-prompt',
   host: { '(document:visibilitychange)': 'checkForUpdateIfVisible()' },
   template: `
+    @let panelClass =
+      'fixed inset-x-4 bottom-4 mx-auto flex max-w-md flex-wrap items-center gap-3 rounded border border-slate-300 bg-white p-4 shadow-lg';
     <!-- Always rendered, so screen readers announce the prompt when it appears inside. -->
     <div aria-live="polite">
       @if (prompt() === 'new-version') {
-        <div
-          class="fixed inset-x-4 bottom-4 mx-auto flex max-w-md flex-wrap items-center gap-3 rounded border border-slate-300 bg-white p-4 shadow-lg"
-        >
+        <div [class]="panelClass">
           <p class="flex-1">A new version is available.</p>
           <button
             type="button"
@@ -34,10 +34,7 @@ import { RELOAD_PAGE } from '../browser/reload-page';
       }
     </div>
     @if (prompt() === 'broken') {
-      <div
-        role="alert"
-        class="fixed inset-x-4 bottom-4 mx-auto flex max-w-md flex-wrap items-center gap-3 rounded border border-slate-300 bg-white p-4 shadow-lg"
-      >
+      <div role="alert" [class]="panelClass">
         <p class="flex-1">This version of the app stopped working. Reload to get the latest one.</p>
         <button
           type="button"
