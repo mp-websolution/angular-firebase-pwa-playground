@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthSession } from '../auth/auth-session';
 import { messageOf } from '../auth/auth-session-error';
+import { prototypeRoutes } from '../prototypes.routes';
 
 @Component({
   selector: 'app-home',
@@ -23,6 +24,13 @@ import { messageOf } from '../auth/auth-session-error';
           Sign out
         </button>
       </div>
+      @if (prototypeRoutes.length > 0) {
+        <nav aria-label="Prototypes" class="flex gap-4">
+          @for (prototype of prototypeRoutes; track prototype.path) {
+            <a class="underline" [routerLink]="'/' + prototype.path">{{ prototype.title }}</a>
+          }
+        </nav>
+      }
       @if (error(); as message) {
         <p role="alert" class="text-red-700">{{ message }}</p>
       }
@@ -31,6 +39,7 @@ import { messageOf } from '../auth/auth-session-error';
 })
 export class Home {
   protected readonly session = inject(AuthSession);
+  protected readonly prototypeRoutes = prototypeRoutes;
   readonly #router = inject(Router);
 
   protected readonly signingOut = signal(false);
