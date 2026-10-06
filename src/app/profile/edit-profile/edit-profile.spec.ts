@@ -125,7 +125,7 @@ describe('EditProfile', () => {
     expect(profile.profile()).toEqual({ displayName: 'Ada' });
   });
 
-  it('takes at most 50 characters for the display name', async () => {
+  it('asks for a display name of at most 50 characters', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
     await renderApp('/profile', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
@@ -133,6 +133,20 @@ describe('EditProfile', () => {
     });
 
     await changeDisplayName('x'.repeat(51));
+
+    expect(await screen.findByText('Use at most 50 characters.')).toBeVisible();
+    expect(screen.getByLabelText('Display name')).toBeInvalid();
+    expect(profile.profile()).toEqual({ displayName: 'Ada' });
+  });
+
+  it('leaves spaces around the display name out of the 50 characters', async () => {
+    const profile = new FakeProfileData({ displayName: 'Ada' });
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      profile,
+    });
+
+    await changeDisplayName(` ${'x'.repeat(50)} `);
 
     expect(await screen.findByRole('status')).toHaveTextContent('Saved.');
     expect(profile.profile()).toEqual({ displayName: 'x'.repeat(50) });

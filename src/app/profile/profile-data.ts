@@ -1,7 +1,8 @@
-import { DestroyRef, ErrorHandler, Service, inject, signal } from '@angular/core';
-import { DocumentReference, Unsubscribe, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { ErrorHandler, Service, inject, signal } from '@angular/core';
+import { DocumentReference, doc, setDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { AuthSession } from '../auth/auth-session';
+import { listenUntilDestroyed } from '../firebase/listen-until-destroyed';
 import { FIREBASE_STORAGE, FIRESTORE } from '../firebase/provide-firebase';
 import { Profile } from './profile.model';
 
@@ -29,42 +30,24 @@ export class ProfileData {
   readonly loadFailed = this.#loadFailed.asReadonly();
 
   constructor() {
-    let unsubscribe: Unsubscribe | undefined;
-    let destroyed = false;
-    inject(DestroyRef).onDestroy(() => {
-      destroyed = true;
-      unsubscribe?.();
-    });
-    const fail = (error: unknown) => {
-      this.#loadFailed.set(true);
-      this.#errorHandler.handleError(error);
-    };
-    this.#profileRef().then((profileRef) => {
-      if (destroyed) {
-        return;
-      }
-      // Metadata changes too, so `waitingToSync` follows the connection and the server's replies.
-      unsubscribe = onSnapshot(
-        profileRef,
-        { includeMetadataChanges: true },
-        (snapshot) => {
-          this.#profile.set({
-            displayName: snapshot.get('displayName') ?? '',
-            avatarUrl: snapshot.get('avatarUrl'),
-          });
-          // Online, every change is pending for a moment too; only `fromCache` means the
-          // listener has lost the server.
-          const { hasPendingWrites, fromCache } = snapshot.metadata;
-          this.#waitingToSync.set(hasPendingWrites && fromCache);
-        },
-        (error) => {
-          // Sign-out, here or in another tab, shuts Firestore down and reloads the page: nothing failed.
-          if (error.code !== 'aborted') {
-            fail(error);
-          }
-        },
-      );
-    }, fail);
+    // Metadata changes too, so `waitingToSync` follows the connection and the server's replies.
+    listenUntilDestroyed(
+      this.#profileRef(),
+      (snapshot) => {
+        this.#profile.set({
+          displayName: snapshot.get('displayName') ?? '',
+          avatarUrl: snapshot.get('avatarUrl'),
+        });
+        // Online, every change is pending for a moment too; only `fromCache` means the listener
+        // has lost the server.
+        const { hasPendingWrites, fromCache } = snapshot.metadata;
+        this.#waitingToSync.set(hasPendingWrites && fromCache);
+      },
+      (error) => {
+        this.#loadFailed.set(true);
+        this.#errorHandler.handleError(error);
+      },
+    );
   }
 
   /**

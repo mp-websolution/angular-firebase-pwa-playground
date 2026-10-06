@@ -113,7 +113,7 @@ describe('Notes', () => {
     expect(notes.notes()).toEqual([]);
   });
 
-  it('takes at most 1000 characters for a note', async () => {
+  it('asks for at most 1000 characters for a note', async () => {
     const notes = new FakeNotesData();
     await renderApp('/notes', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
@@ -121,6 +121,20 @@ describe('Notes', () => {
     });
 
     await addNote('x'.repeat(1001));
+
+    expect(await screen.findByText('Use at most 1000 characters.')).toBeVisible();
+    expect(screen.getByLabelText('New note')).toBeInvalid();
+    expect(notes.notes()).toEqual([]);
+  });
+
+  it('leaves spaces around a note out of the 1000 characters', async () => {
+    const notes = new FakeNotesData();
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
+
+    await addNote(` ${'x'.repeat(1000)} `);
 
     expect(await screen.findByRole('listitem', { name: 'x'.repeat(1000) })).toBeVisible();
   });

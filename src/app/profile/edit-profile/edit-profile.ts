@@ -1,6 +1,6 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormField, form, maxLength, submit, validate } from '@angular/forms/signals';
+import { FormField, form, submit, validate } from '@angular/forms/signals';
 import { ProfileData } from '../profile-data';
 
 // Same limits as the Storage rules. No SVG: it can carry scripts.
@@ -135,11 +135,13 @@ export class EditProfile {
           return { kind: 'required', message: 'Enter a display name.' };
         }
         // Same limits as the Firestore rules, which see the trimmed name.
-        return displayName.length < 2
-          ? { kind: 'minLength', message: 'Use at least 2 characters.' }
+        if (displayName.length < 2) {
+          return { kind: 'minLength', message: 'Use at least 2 characters.' };
+        }
+        return displayName.length > 50
+          ? { kind: 'maxLength', message: 'Use at most 50 characters.' }
           : undefined;
       });
-      maxLength(path.displayName, 50, { message: 'Use at most 50 characters.' });
     },
   );
 
