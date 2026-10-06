@@ -20,6 +20,8 @@ Needs Node 24 (`.nvmrc`) and Java 21+ for the Firebase emulators. No Firebase pr
 
 After `npm start`, sign in as the seeded demo user `demo@example.com` with password `demo-password` (see `scripts/seed/01-demo-user.mjs`; its profile comes from `02-demo-profile.mjs`), create an account, or use "Sign in with Google": the Auth emulator opens a popup where you pick or add a fake Google account.
 
+Production builds are a PWA: Angular's service worker (configured in `ngsw-config.json`) is registered only there, never under `ng serve`. `public/.htaccess` ships with the build and gives Apache the SPA fallback to `index.html` and the cache headers.
+
 Production builds need the production project's web config in `src/environments/environment.ts`. While it still holds the `REPLACE_ME` placeholder, the app throws at startup instead of failing later on its first Firebase call.
 
 ## How this repo was planned
