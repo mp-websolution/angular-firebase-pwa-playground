@@ -11,6 +11,8 @@ import { FakeProfileData } from '../profile/testing/fake-profile-data';
 import { FakeSwUpdate } from '../pwa/testing/fake-sw-update';
 
 export interface RenderAppOptions {
+  /** Replaces the auth session; defaults to a signed-out user. */
+  session?: FakeAuthSession;
   /** Replaces the profile data service; defaults to a profile without a display name. */
   profile?: FakeProfileData;
   /** Replaces Angular's service-worker update service; defaults to one where no new version comes. */
@@ -24,8 +26,8 @@ export interface RenderAppOptions {
 /** Renders the whole app through the router at `url`, with its data-access services faked in memory. */
 export async function renderApp(
   url: string,
-  session = new FakeAuthSession(),
   {
+    session = new FakeAuthSession(),
     profile = new FakeProfileData(),
     swUpdate = new FakeSwUpdate(),
     reloadPage = () => undefined,

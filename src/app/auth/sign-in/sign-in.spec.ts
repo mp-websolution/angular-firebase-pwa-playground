@@ -15,7 +15,7 @@ async function signIn({ email, password }: Credentials) {
 
 describe('SignIn', () => {
   it('signs in with email and password and opens home', async () => {
-    await renderApp('/sign-in', new FakeAuthSession({ accounts: [ada] }));
+    await renderApp('/sign-in', { session: new FakeAuthSession({ accounts: [ada] }) });
 
     await signIn(ada);
 
@@ -23,7 +23,7 @@ describe('SignIn', () => {
   });
 
   it('says so when the password is wrong', async () => {
-    await renderApp('/sign-in', new FakeAuthSession({ accounts: [ada] }));
+    await renderApp('/sign-in', { session: new FakeAuthSession({ accounts: [ada] }) });
 
     await signIn({ ...ada, password: 'wrong-horse' });
 
@@ -31,7 +31,7 @@ describe('SignIn', () => {
   });
 
   it('says the same when no account uses the email, so it does not reveal who has one', async () => {
-    await renderApp('/sign-in', new FakeAuthSession({ accounts: [ada] }));
+    await renderApp('/sign-in', { session: new FakeAuthSession({ accounts: [ada] }) });
 
     await signIn({ ...ada, email: 'grace@example.com' });
 
@@ -39,7 +39,7 @@ describe('SignIn', () => {
   });
 
   it('asks for an email and a password before trying to sign in', async () => {
-    await renderApp('/sign-in', new FakeAuthSession({ accounts: [ada] }));
+    await renderApp('/sign-in', { session: new FakeAuthSession({ accounts: [ada] }) });
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Sign in' }));
 
@@ -50,7 +50,7 @@ describe('SignIn', () => {
   });
 
   it('asks for a valid email address', async () => {
-    await renderApp('/sign-in', new FakeAuthSession({ accounts: [ada] }));
+    await renderApp('/sign-in', { session: new FakeAuthSession({ accounts: [ada] }) });
 
     await signIn({ ...ada, email: 'ada-at-example.com' });
 
@@ -58,7 +58,9 @@ describe('SignIn', () => {
   });
 
   it('signs in with Google and opens home', async () => {
-    await renderApp('/sign-in', new FakeAuthSession({ googlePopup: { email: 'ada@gmail.com' } }));
+    await renderApp('/sign-in', {
+      session: new FakeAuthSession({ googlePopup: { email: 'ada@gmail.com' } }),
+    });
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Sign in with Google' }));
 
@@ -66,7 +68,7 @@ describe('SignIn', () => {
   });
 
   it('says so when the Google window is closed before finishing', async () => {
-    await renderApp('/sign-in', new FakeAuthSession({ googlePopup: 'closed' }));
+    await renderApp('/sign-in', { session: new FakeAuthSession({ googlePopup: 'closed' }) });
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Sign in with Google' }));
 

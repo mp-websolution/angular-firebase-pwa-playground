@@ -32,13 +32,14 @@ describe('auth guards', () => {
     const session = new FakeAuthSession({ restoring: 'ada@example.com' });
     setTimeout(() => session.finishRestoring(), 50);
 
-    await renderApp('/', session);
+    await renderApp('/', { session });
 
     expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
   });
 
   it('returns to the requested page after sign-in', async () => {
-    await renderApp('/deep/page?tab=2', new FakeAuthSession({ accounts: [ada] }), {
+    await renderApp('/deep/page?tab=2', {
+      session: new FakeAuthSession({ accounts: [ada] }),
       extraRoutes: deepRoutes,
     });
 
@@ -50,7 +51,7 @@ describe('auth guards', () => {
 
   it('returns to the requested page after creating an account instead', async () => {
     const user = userEvent.setup();
-    await renderApp('/deep/page', new FakeAuthSession(), { extraRoutes: deepRoutes });
+    await renderApp('/deep/page', { session: new FakeAuthSession(), extraRoutes: deepRoutes });
 
     await user.click(await screen.findByRole('link', { name: 'Create one' }));
     await fillInCredentials({ email: 'grace@example.com', password: 'correct-horse' });
@@ -60,7 +61,7 @@ describe('auth guards', () => {
   });
 
   it.each(['/sign-in', '/sign-up'])('sends a signed-in user from %s to home', async (url) => {
-    await renderApp(url, new FakeAuthSession({ signedInAs: 'ada@example.com' }));
+    await renderApp(url, { session: new FakeAuthSession({ signedInAs: 'ada@example.com' }) });
 
     expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
   });

@@ -18,7 +18,8 @@ function file(name: string, type: string, size = 1024) {
 
 describe('EditProfile', () => {
   it('shows the display name', async () => {
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({ displayName: 'Ada Lovelace' }),
     });
 
@@ -26,7 +27,8 @@ describe('EditProfile', () => {
   });
 
   it('opens from home', async () => {
-    await renderApp('/', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({ displayName: 'Ada Lovelace' }),
     });
 
@@ -44,7 +46,8 @@ describe('EditProfile', () => {
 
   it('saves a new display name', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile,
     });
 
@@ -56,7 +59,8 @@ describe('EditProfile', () => {
 
   it('saves the display name without surrounding spaces', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile,
     });
 
@@ -68,7 +72,8 @@ describe('EditProfile', () => {
   });
 
   it('says it saved when only spaces were added around the stored name', async () => {
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({ displayName: 'Ada' }),
     });
 
@@ -79,7 +84,8 @@ describe('EditProfile', () => {
   });
 
   it("says a change made offline is saved on this device until it's synced", async () => {
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({ displayName: 'Ada', offline: true }),
     });
 
@@ -93,7 +99,8 @@ describe('EditProfile', () => {
 
   it('asks for a display name instead of saving a blank one', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile,
     });
 
@@ -106,7 +113,8 @@ describe('EditProfile', () => {
 
   it('asks for a display name of at least 2 characters', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile,
     });
 
@@ -119,7 +127,8 @@ describe('EditProfile', () => {
 
   it('takes at most 50 characters for the display name', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile,
     });
 
@@ -131,7 +140,8 @@ describe('EditProfile', () => {
 
   it('shows a display name changed elsewhere, e.g. in another tab', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile,
     });
     await screen.findByLabelText('Display name');
@@ -143,11 +153,10 @@ describe('EditProfile', () => {
 
   it('keeps what the user is typing when the display name changes elsewhere', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    const { fixture } = await renderApp(
-      '/profile',
-      new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      { profile },
-    );
+    const { fixture } = await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      profile,
+    });
     await userEvent.setup().type(await screen.findByLabelText('Display name'), ' Lovelace');
 
     profile.changeElsewhere('Countess of Lovelace');
@@ -158,7 +167,8 @@ describe('EditProfile', () => {
   });
 
   it("says so when the profile can't be loaded", async () => {
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({ loadFails: true }),
     });
 
@@ -168,7 +178,8 @@ describe('EditProfile', () => {
   });
 
   it('shows the avatar', async () => {
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({
         displayName: 'Ada',
         avatarUrl: 'https://storage.example/avatars/ada.png',
@@ -182,7 +193,8 @@ describe('EditProfile', () => {
   });
 
   it('asks for a display name before an avatar can be uploaded', async () => {
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData(),
     });
 
@@ -191,7 +203,8 @@ describe('EditProfile', () => {
   });
 
   it('offers the avatar upload once a display name is saved', async () => {
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData(),
     });
 
@@ -203,7 +216,8 @@ describe('EditProfile', () => {
   });
 
   it('uploads an avatar and shows it', async () => {
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({ displayName: 'Ada' }),
     });
 
@@ -218,7 +232,8 @@ describe('EditProfile', () => {
   });
 
   it('accepts an image of exactly 2 MB', async () => {
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({ displayName: 'Ada' }),
     });
 
@@ -237,7 +252,8 @@ describe('EditProfile', () => {
 
   it('says an image larger than 2 MB is too large, instead of uploading it', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile,
     });
 
@@ -258,7 +274,8 @@ describe('EditProfile', () => {
     ['ada.webp', 'image/webp'],
     ['ada.gif', 'image/gif'],
   ])('accepts %s as an avatar', async (name, type) => {
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({ displayName: 'Ada' }),
     });
 
@@ -275,7 +292,8 @@ describe('EditProfile', () => {
     ['logo.svg', 'image/svg+xml'],
   ])('asks for a PNG, JPEG, WebP or GIF instead of uploading %s', async (name, type) => {
     const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile,
     });
     // The file dialog only suggests these types; the user can still switch it to all files.
@@ -290,7 +308,8 @@ describe('EditProfile', () => {
 
   it('shows that the avatar is uploading until it is done', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada', slowUpload: true });
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile,
     });
 
@@ -309,7 +328,8 @@ describe('EditProfile', () => {
   });
 
   it("says so when the avatar can't be uploaded", async () => {
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({ displayName: 'Ada', uploadFails: true }),
     });
 
@@ -327,7 +347,8 @@ describe('EditProfile', () => {
 
   it('uploads the same image again when picked again, e.g. to retry', async () => {
     const profile = new FakeProfileData({ displayName: 'Ada', slowUpload: true });
-    await renderApp('/profile', new FakeAuthSession({ signedInAs: 'ada@example.com' }), {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile,
     });
     const user = userEvent.setup();

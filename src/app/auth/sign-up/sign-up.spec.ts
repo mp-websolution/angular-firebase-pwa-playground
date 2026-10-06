@@ -21,10 +21,11 @@ describe('SignUp', () => {
   });
 
   it('says so when the email is already in use', async () => {
-    await renderApp(
-      '/sign-up',
-      new FakeAuthSession({ accounts: [{ email: 'grace@example.com', password: 'other-horse' }] }),
-    );
+    await renderApp('/sign-up', {
+      session: new FakeAuthSession({
+        accounts: [{ email: 'grace@example.com', password: 'other-horse' }],
+      }),
+    });
 
     await signUp({ email: 'grace@example.com', password: 'correct-horse' });
 
