@@ -62,6 +62,11 @@ const noteSchema = schema<NoteForm>((path) => {
             Add note
           </button>
         </form>
+        <p role="status" class="text-slate-600">
+          @if (notesData.waitingToSync()) {
+            Saved on this device. It syncs to your account once you're online.
+          }
+        </p>
         @if (notes.length === 0) {
           <p class="text-slate-600">No notes yet.</p>
         } @else {
