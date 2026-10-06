@@ -6,7 +6,7 @@ A **Prototype** (see `CONTEXT.md`) is a self-contained feature beside the Baseli
 
 | Part | Notes Prototype | Removed by |
 |---|---|---|
-| Route entry | `notes` in `src/app/prototypes.routes.ts`: lazy, guarded, titled. Home links to every entry there, by its title | Deleting the entry |
+| Route entry | `notes` in `src/app/prototypes.routes.ts`: lazy and titled. Home links to every entry there, by its title | Deleting the entry |
 | Folder | `src/app/notes/`: its routes, pages, data-access service, model, fake (`testing/`) and tests | Deleting the folder |
 | Rules section | The block between the `Prototype: notes` markers in `firestore.rules` | Deleting the block |
 | Seed data | `scripts/seed/prototype-notes.mjs` | Deleting the file |
@@ -16,10 +16,10 @@ Removing those four leaves the Baseline building and its tests green. Nothing el
 ## Adding a Prototype
 
 1. Copy `src/app/notes/` to `src/app/<name>/` and rename inside it. Keep the shape:
-   - `<name>.routes.ts` exports the Prototype's routes, relative to its path.
+   - `<name>.routes.ts` exports the Prototype's routes, relative to its path, with `canActivate: [signedInGuard]` on those that need a signed-in user.
    - A data-access service per collection, like `NotesData`: `@Service()`, read state as signals, commands as promise-returning methods, no SDK types in its public API.
    - `testing/` holds an in-memory fake of that service for component tests.
-2. Add an entry to `prototypeRoutes` in `src/app/prototypes.routes.ts` with `loadChildren`, `canActivate: [signedInGuard]` if it needs a signed-in user, and a `title`, which becomes the link on home.
+2. Add an entry to `prototypeRoutes` in `src/app/prototypes.routes.ts` with `loadChildren` and a `title`, which becomes the link on home.
 3. Store per-user data under `users/{uid}/<collection>`, and add a delimited section to `firestore.rules` (and `storage.rules` if needed) that opens it to its owner only.
 4. Add `scripts/seed/prototype-<name>.mjs` for demo data.
 5. Write the tests (see `docs/agents/testing.md`):
@@ -31,7 +31,7 @@ Removing those four leaves the Baseline building and its tests green. Nothing el
 The Firestore SDK is most of Firebase's weight, so it loads on first use, never with the initial bundle (ADR 0003). For a Prototype that means:
 
 - Only files reached through its `loadChildren` import values from `firebase/firestore`. Its data-access service gets Firestore with `await inject(FIRESTORE)()`.
-- Never import the Prototype's service, pages or routes file from Baseline code, and never use `loadComponent`/`loadChildren` targets that are also imported eagerly.
+- Nothing outside the Prototype's folder imports from it, except the `loadChildren` in its route entry.
 - `npm run build` warns when the initial bundle passes 500 kB: that usually means a value import from `firebase/firestore` slipped into `main`.
 
 ## Removing a Prototype

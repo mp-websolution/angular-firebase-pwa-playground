@@ -1,5 +1,4 @@
 import { Route } from '@angular/router';
-import { signedInGuard } from './auth/auth-guards';
 
 /** A Prototype's route area. Home links to it, named by its title. */
 type PrototypeRoute = Route & { path: string; title: string };
@@ -12,7 +11,6 @@ export const prototypeRoutes: PrototypeRoute[] = [
   {
     path: 'notes',
     loadChildren: () => import('./notes/notes.routes').then((m) => m.notesRoutes),
-    canActivate: [signedInGuard],
     title: 'Notes',
   },
 ];
