@@ -32,5 +32,30 @@ service cloud.firestore {
           && displayName.size() <= 50;
       }
     }
+
+    // ---- Prototype: notes (src/app/notes) --------------------------------------------------
+    // Delete this section together with the Prototype.
+
+    // Each user's notes, under their user ID. Only their owner can read or change them.
+    match /users/{uid}/notes/{noteId} {
+      allow read, delete: if isSignedInAs(uid);
+      allow create: if isSignedInAs(uid)
+        && request.resource.data.keys().hasOnly(['text', 'createdAt'])
+        && isValidNoteText(request.resource.data.text)
+        && request.resource.data.createdAt == request.time;
+      allow update: if isSignedInAs(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text'])
+        && isValidNoteText(request.resource.data.text);
+
+      // The notes page saves texts trimmed, so 1 character means 1 visible one.
+      function isValidNoteText(text) {
+        return text is string
+          && text == text.trim()
+          && text.size() >= 1
+          && text.size() <= 1000;
+      }
+    }
+
+    // ---- End of Prototype: notes -----------------------------------------------------------
   }
 }

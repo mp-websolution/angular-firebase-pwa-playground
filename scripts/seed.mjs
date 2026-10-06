@@ -1,8 +1,9 @@
 // Populates the emulators with demo data. `npm start` runs it inside `firebase emulators:exec`.
 //
 // Every module in `scripts/seed/` is a seeder: its default export is an async function that
-// receives `{ projectId }` and writes its data to the emulators. Seeders run in filename order,
-// so a Prototype adds or removes its demo data by adding or deleting one file.
+// receives `{ projectId }` and writes its data to the emulators. Seeders run in filename order:
+// the Baseline's numbered ones first, then one `prototype-<name>.mjs` per Prototype, so a
+// Prototype adds or removes its demo data by adding or deleting one file.
 
 import { readdir } from 'node:fs/promises';
 

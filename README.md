@@ -20,6 +20,8 @@ Needs Node 24 (`.nvmrc`) and Java 21+ for the Firebase emulators. No Firebase pr
 
 After `npm start`, sign in as the seeded demo user `demo@example.com` with password `demo-password` (see `scripts/seed/01-demo-user.mjs`; its profile comes from `02-demo-profile.mjs`), create an account, or use "Sign in with Google": the Auth emulator opens a popup where you pick or add a fake Google account.
 
+The notes page (`/notes`) is the example **Prototype**. `docs/prototypes.md` explains how to add or remove a Prototype; its demo notes come from `scripts/seed/prototype-notes.mjs`.
+
 Production builds are a PWA: Angular's service worker (configured in `ngsw-config.json`) is registered only there, never under `ng serve`. `public/.htaccess` ships with the build and gives Apache the SPA fallback to `index.html` and the cache headers.
 
 Production builds need the production project's web config in `src/environments/environment.ts`. While it still holds the `REPLACE_ME` placeholder, the app throws at startup instead of failing later on its first Firebase call.
@@ -46,6 +48,7 @@ Next step: implement the tickets in order, e.g. with [`/tdd`](https://aihero.dev
 | `docs/adr/0001-native-firebase-sdk-instead-of-angularfire.md` | Why the native Firebase SDK is used instead of AngularFire: Angular updates shouldn't wait on a wrapper library. |
 | `docs/adr/0002-ftp-deploy-instead-of-firebase-hosting.md` | Why the app is deployed by FTP to existing webspace, and what that means (static build, `.htaccess`, Google sign-in by popup only). |
 | `docs/adr/0003-lazy-firestore-loader-token.md` | Why the `FIRESTORE` token gives a loader instead of an instance: the Firestore SDK stays out of the initial bundle. |
+| `docs/prototypes.md` | How to add or remove a Prototype, and why its Firestore code stays behind its lazy route. |
 | `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. |
 | `docs/agents/issue-tracker.md` | Issues are local markdown files under `.scratch/<feature>/`. |
 | `docs/agents/triage-labels.md` | The triage labels, stored on each issue's `Status:` line. |
