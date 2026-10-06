@@ -51,9 +51,9 @@ import { RELOAD_PAGE } from '../browser/reload-page';
 })
 export class UpdatePrompt {
   readonly #swUpdate = inject(SwUpdate);
+  // Reloading is enough to switch: the service worker serves the latest version to a fresh page.
   protected readonly reloadPage = inject(RELOAD_PAGE);
 
-  // Reloading is enough to switch: the service worker serves the latest version to a fresh page.
   readonly #readyVersion = toSignal(
     this.#swUpdate.versionUpdates.pipe(
       filter((event) => event.type === 'VERSION_READY'),
