@@ -22,3 +22,4 @@
   - Set up the webspace subdomain and folder
   - Mark the repo as a template
 - [ ] The README documents the update workflow: grouped Dependabot PRs are merged by hand, and major Angular upgrades are done with `ng update`
+- [ ] App icons: Angular's placeholder icons are replaced with the project's own, and the manifest stops declaring `"purpose": "maskable any"`. The existing sizes become `any` icons, plus separate `maskable` icons (at least 192 and 512 px) with an opaque background and the artwork inside the central safe zone, made with a tool like maskable.app or pwa-asset-generator. Chrome DevTools (Application → Manifest) shows no icon warnings. The README tells template users how to swap in their own icons
