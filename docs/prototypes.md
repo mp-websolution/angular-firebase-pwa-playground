@@ -11,7 +11,7 @@ A **Prototype** (see `CONTEXT.md`) is a self-contained feature beside the Baseli
 | Rules section | The block between the `Prototype: notes` markers in `firestore.rules` | Deleting the block |
 | Seed data | `scripts/seed/prototype-notes.mjs` | Deleting the file |
 
-Removing those four leaves the Baseline building and its tests green. Nothing else refers to a Prototype.
+Removing those four leaves the Baseline building and its tests green. Only docs mention a Prototype elsewhere: `README.md` and `docs/agents/testing.md` use the notes Prototype as their example.
 
 ## Adding a Prototype
 
@@ -41,5 +41,6 @@ The Firestore SDK is most of Firebase's weight, so it loads on first use, never 
 3. Delete its section in `firestore.rules` (and `storage.rules`).
 4. Delete its `scripts/seed/prototype-<name>.mjs`.
 5. Run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
+6. Removing the notes Prototype? Point the examples in `README.md` and `docs/agents/testing.md` at another Prototype, or drop them.
 
 Data already stored in a deployed project stays there; with the rules section gone, nobody can read or write it.

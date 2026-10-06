@@ -9,8 +9,8 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormField, form, maxLength, schema, submit, validate } from '@angular/forms/signals';
-import { NotesData } from '../notes-data';
-import { Note, maxNoteLength } from '../note.model';
+import { NotesData } from './notes-data';
+import { Note, maxNoteLength } from './note.model';
 
 interface NoteForm {
   text: string;
@@ -25,7 +25,7 @@ const noteSchema = schema<NoteForm>((path) => {
 });
 
 @Component({
-  selector: 'app-notes-page',
+  selector: 'app-notes',
   imports: [FormField, RouterLink],
   template: `
     <main class="mx-auto flex min-h-screen max-w-xl flex-col gap-6 p-6">
@@ -143,7 +143,7 @@ const noteSchema = schema<NoteForm>((path) => {
     </main>
   `,
 })
-export class NotesPage {
+export class Notes {
   protected readonly notesData = inject(NotesData);
   readonly #injector = inject(Injector);
 
@@ -152,6 +152,7 @@ export class NotesPage {
   /** The note being changed, if any; one at a time. */
   protected readonly editingId = signal<string | undefined>(undefined);
   protected readonly editForm = form(signal<NoteForm>({ text: '' }), noteSchema);
+  // Not `#editTextarea`: Angular's queries can't use ES private fields.
   private readonly editTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('editTextarea');
 
   protected addNote(): void {

@@ -1,8 +1,6 @@
 import { Routes } from '@angular/router';
 import { signedInGuard } from '../auth/auth-guards';
-import { NotesPage } from './notes-page/notes-page';
+import { Notes } from './notes';
 
 /** The notes Prototype's pages, below `/notes`, all for signed-in users only. */
-export const notesRoutes: Routes = [
-  { path: '', component: NotesPage, canActivate: [signedInGuard] },
-];
+export const notesRoutes: Routes = [{ path: '', component: Notes, canActivate: [signedInGuard] }];

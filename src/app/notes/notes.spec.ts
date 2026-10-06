@@ -1,17 +1,9 @@
 import { screen, waitFor, within } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { FakeAuthSession } from '../../auth/testing/fake-auth-session';
-import { renderApp } from '../../testing/render-app';
-import { NotesData } from '../notes-data';
-import { FakeNotesData } from '../testing/fake-notes-data';
-
-/** Renders the app at `url` for a signed-in user whose stored notes are `notes`. */
-function renderWithNotes(url: string, notes: FakeNotesData) {
-  return renderApp(url, {
-    session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-    providers: [{ provide: NotesData, useValue: notes }],
-  });
-}
+import { FakeAuthSession } from '../auth/testing/fake-auth-session';
+import { renderApp } from '../testing/render-app';
+import { NotesData } from './notes-data';
+import { FakeNotesData } from './testing/fake-notes-data';
 
 async function addNote(text: string) {
   const user = userEvent.setup();
@@ -19,9 +11,12 @@ async function addNote(text: string) {
   await user.click(screen.getByRole('button', { name: 'Add note' }));
 }
 
-describe('NotesPage', () => {
+describe('Notes', () => {
   it('opens from home', async () => {
-    await renderWithNotes('/', new FakeNotesData({ notes: ['Buy milk'] }));
+    await renderApp('/', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: new FakeNotesData({ notes: ['Buy milk'] }) }],
+    });
 
     await userEvent.setup().click(await screen.findByRole('link', { name: 'Notes' }));
 
@@ -38,7 +33,12 @@ describe('NotesPage', () => {
   });
 
   it('lists the notes, newest first', async () => {
-    await renderWithNotes('/notes', new FakeNotesData({ notes: ['Call Grace', 'Buy milk'] }));
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [
+        { provide: NotesData, useValue: new FakeNotesData({ notes: ['Call Grace', 'Buy milk'] }) },
+      ],
+    });
 
     const older = await screen.findByRole('listitem', { name: 'Buy milk' });
 
@@ -49,13 +49,19 @@ describe('NotesPage', () => {
   });
 
   it('says when there are no notes yet', async () => {
-    await renderWithNotes('/notes', new FakeNotesData());
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
+    });
 
     expect(await screen.findByText('No notes yet.')).toBeVisible();
   });
 
   it("says so when the notes can't be loaded", async () => {
-    await renderWithNotes('/notes', new FakeNotesData({ loadFails: true }));
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: new FakeNotesData({ loadFails: true }) }],
+    });
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       "Your notes couldn't be loaded. Reload the page to try again.",
@@ -64,7 +70,10 @@ describe('NotesPage', () => {
 
   it('adds a note on top of the list and clears the field', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
-    await renderWithNotes('/notes', notes);
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
 
     await addNote('Call Grace');
 
@@ -79,7 +88,10 @@ describe('NotesPage', () => {
 
   it('adds the note without surrounding spaces', async () => {
     const notes = new FakeNotesData();
-    await renderWithNotes('/notes', notes);
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
 
     await addNote('  Call Grace  ');
 
@@ -89,7 +101,10 @@ describe('NotesPage', () => {
 
   it('asks for some text instead of adding a blank note', async () => {
     const notes = new FakeNotesData();
-    await renderWithNotes('/notes', notes);
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
 
     await addNote('   ');
 
@@ -100,7 +115,10 @@ describe('NotesPage', () => {
 
   it('takes at most 1000 characters for a note', async () => {
     const notes = new FakeNotesData();
-    await renderWithNotes('/notes', notes);
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
 
     await addNote('x'.repeat(1001));
 
@@ -109,7 +127,10 @@ describe('NotesPage', () => {
 
   it('changes a note', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
-    await renderWithNotes('/notes', notes);
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
     const user = userEvent.setup();
     const note = await screen.findByRole('listitem', { name: 'Buy milk' });
 
@@ -124,7 +145,10 @@ describe('NotesPage', () => {
   });
 
   it('puts the cursor in the note to change', async () => {
-    await renderWithNotes('/notes', new FakeNotesData({ notes: ['Buy milk'] }));
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: new FakeNotesData({ notes: ['Buy milk'] }) }],
+    });
     const note = await screen.findByRole('listitem', { name: 'Buy milk' });
 
     await userEvent.setup().click(within(note).getByRole('button', { name: 'Edit' }));
@@ -135,7 +159,10 @@ describe('NotesPage', () => {
 
   it('keeps the note as it was when the change is cancelled', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
-    await renderWithNotes('/notes', notes);
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
     const user = userEvent.setup();
     const note = await screen.findByRole('listitem', { name: 'Buy milk' });
 
@@ -149,7 +176,10 @@ describe('NotesPage', () => {
 
   it('asks for some text instead of saving a blank note', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
-    await renderWithNotes('/notes', notes);
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
     const user = userEvent.setup();
     const note = await screen.findByRole('listitem', { name: 'Buy milk' });
 
@@ -164,7 +194,10 @@ describe('NotesPage', () => {
 
   it('deletes a note', async () => {
     const notes = new FakeNotesData({ notes: ['Call Grace', 'Buy milk'] });
-    await renderWithNotes('/notes', notes);
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
     const note = await screen.findByRole('listitem', { name: 'Buy milk' });
 
     await userEvent.setup().click(within(note).getByRole('button', { name: 'Delete' }));
@@ -176,7 +209,10 @@ describe('NotesPage', () => {
 
   it('shows a note added elsewhere, e.g. in another tab', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
-    await renderWithNotes('/notes', notes);
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
     await screen.findByRole('listitem', { name: 'Buy milk' });
 
     notes.createElsewhere('Call Grace');
