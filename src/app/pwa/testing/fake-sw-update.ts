@@ -4,22 +4,38 @@ import { Subject } from 'rxjs';
 // `implements SwUpdate` would also demand its private fields; this keeps only the public ones.
 type PublicApi<T> = { [K in keyof T]: T[K] };
 
+export interface FakeSwUpdateOptions {
+  /** Downloading a new version takes until `finishDownload()` instead of being done right away. */
+  slowDownload?: boolean;
+}
+
 /** An in-memory stand-in for Angular's `SwUpdate`, driven by the test like a deploy would drive it. */
 export class FakeSwUpdate implements PublicApi<SwUpdate> {
   readonly #versionUpdates = new Subject<VersionEvent>();
   readonly #unrecoverable = new Subject<UnrecoverableStateEvent>();
-  #version = 1;
+  readonly #slowDownload: boolean;
+  /** The tab keeps running the version it loaded until it reloads, which tests can't do. */
+  readonly #tabVersion = 1;
+  #foundVersion = 1;
+  #deployedVersion = 1;
+  #finishDownload?: () => void;
 
   readonly isEnabled = true;
   readonly versionUpdates = this.#versionUpdates.asObservable();
   readonly unrecoverable = this.#unrecoverable.asObservable();
 
-  /** A new version is deployed, and the service worker has downloaded it. */
+  constructor({ slowDownload = false }: FakeSwUpdateOptions = {}) {
+    this.#slowDownload = slowDownload;
+  }
+
+  /** A new version goes live on the server. The app finds it on its next update check. */
   deployNewVersion(): void {
-    const currentVersion = { hash: `v${this.#version}` };
-    const latestVersion = { hash: `v${++this.#version}` };
-    this.#versionUpdates.next({ type: 'VERSION_DETECTED', version: latestVersion });
-    this.#versionUpdates.next({ type: 'VERSION_READY', currentVersion, latestVersion });
+    this.#deployedVersion++;
+  }
+
+  /** Ends the download started by an update check with the `slowDownload` option. */
+  finishDownload(): void {
+    this.#finishDownload?.();
   }
 
   /** The version serving this tab broke, e.g. its files are gone from the server and the cache. */
@@ -31,7 +47,18 @@ export class FakeSwUpdate implements PublicApi<SwUpdate> {
   }
 
   async checkForUpdate(): Promise<boolean> {
-    return false;
+    if (this.#deployedVersion === this.#foundVersion) {
+      return false;
+    }
+    this.#foundVersion = this.#deployedVersion;
+    const currentVersion = { hash: `v${this.#tabVersion}` };
+    const latestVersion = { hash: `v${this.#foundVersion}` };
+    this.#versionUpdates.next({ type: 'VERSION_DETECTED', version: latestVersion });
+    if (this.#slowDownload) {
+      await new Promise<void>((resolve) => (this.#finishDownload = resolve));
+    }
+    this.#versionUpdates.next({ type: 'VERSION_READY', currentVersion, latestVersion });
+    return true;
   }
 
   async activateUpdate(): Promise<boolean> {
