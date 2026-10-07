@@ -19,3 +19,7 @@ _Avoid_: Core, skeleton, scaffold
 **Prototype**:
 A self-contained, disposable feature that sits beside the Baseline. It may depend on the Baseline but never on another Prototype, and deleting it leaves the Baseline intact.
 _Avoid_: Experiment, demo, module, feature (when the self-contained sense is meant)
+
+**Live data**:
+The signed-in user's Firestore data, kept up to date on this device, with whether changes are waiting to sync and whether loading failed.
+_Avoid_: Realtime data, synced data, store

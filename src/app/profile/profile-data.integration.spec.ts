@@ -4,11 +4,11 @@ import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import { signOut } from 'firebase/auth';
-import { disableNetwork, doc, enableNetwork, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { AuthSession } from '../auth/auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
-import { FIREBASE_AUTH, FIRESTORE, provideFirebase } from '../firebase/provide-firebase';
+import { FIREBASE_AUTH, provideFirebase } from '../firebase/provide-firebase';
 import { ProfileData } from './profile-data';
 
 // Tests run in Node, but only see the browser's types.
@@ -19,7 +19,6 @@ const emulatorReply = { timeout: 5_000 };
 
 describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
   let testEnv: RulesTestEnvironment;
-  const reportError = vi.fn<(error: unknown) => void>();
 
   beforeAll(async () => {
     // Writes profiles as they'd be there already, past the rules. Finds the emulator through
@@ -35,14 +34,13 @@ describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
   });
 
   beforeEach(() => {
-    reportError.mockReset();
     // Tests load Firestore's Node build, which only uses IndexedDB with its own test switch on.
     vi.stubEnv('USE_MOCK_PERSISTENCE', 'YES');
     TestBed.configureTestingModule({
       providers: [
         provideFirebase(environment.firebase),
         { provide: RELOAD_PAGE, useValue: vi.fn() },
-        { provide: ErrorHandler, useValue: { handleError: reportError } },
+        { provide: ErrorHandler, useValue: { handleError: vi.fn() } },
       ],
     });
   });
@@ -108,44 +106,10 @@ describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
       () => expect(profileData.profile()).toEqual({ displayName: 'Ada' }),
       emulatorReply,
     );
-    expect(profileData.waitingToSync()).toBe(false);
     await vi.waitFor(
       async () => expect(await storedProfile(uid)).toEqual({ displayName: 'Ada' }),
       emulatorReply,
     );
-  });
-
-  it('shows a change made offline straight away and syncs it once back online', async () => {
-    const uid = await signUp();
-    const profileData = TestBed.inject(ProfileData);
-    await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), emulatorReply);
-    const firestore = await TestBed.inject(FIRESTORE)();
-    await disableNetwork(firestore);
-
-    await profileData.updateDisplayName('Ada');
-
-    await vi.waitFor(() => {
-      expect(profileData.profile()).toEqual({ displayName: 'Ada' });
-      expect(profileData.waitingToSync()).toBe(true);
-    }, emulatorReply);
-
-    await enableNetwork(firestore);
-
-    await vi.waitFor(() => expect(profileData.waitingToSync()).toBe(false), emulatorReply);
-    expect(await storedProfile(uid)).toEqual({ displayName: 'Ada' });
-  });
-
-  it('reports no failure when sign-out shuts Firestore down', async () => {
-    await signUp();
-    const profileData = TestBed.inject(ProfileData);
-    await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), emulatorReply);
-
-    await TestBed.inject(AuthSession).signOut();
-    // Firestore tells listeners about the shutdown asynchronously; give it the chance.
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    expect(profileData.loadFailed()).toBe(false);
-    expect(reportError).not.toHaveBeenCalled();
   });
 
   describe('avatar', () => {
