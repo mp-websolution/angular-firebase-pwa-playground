@@ -22,12 +22,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  commit:
+  resolve-commit:
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ steps.resolve.outputs.sha }}
     steps:
-      # Pin the commit once, so the checks and the deploy can't see different code if the branch or tag moves.
+      # Pin the commit once, so the checks and the deploy can't see different code
+      # if the branch or tag moves.
       - id: resolve
         env:
           GH_TOKEN: ${{ github.token }}
@@ -42,25 +43,25 @@ jobs:
             exit 1
           fi
           sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/refs/tags/$TAG" --jq .sha) || {
-            echo "::error::Tag '$TAG' does not exist."
+            echo "::error::Could not resolve tag '$TAG' to a commit. Does it exist?"
             exit 1
           }
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
   checks:
-    needs: commit
+    needs: resolve-commit
     uses: ./.github/workflows/checks.yml
     with:
-      ref: ${{ needs.commit.outputs.sha }}
+      ref: ${{ needs.resolve-commit.outputs.sha }}
 
   deploy:
-    needs: [commit, checks]
+    needs: [resolve-commit, checks]
     runs-on: ubuntu-latest
     environment: production
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.commit.outputs.sha }}
+          ref: ${{ needs.resolve-commit.outputs.sha }}
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -68,7 +69,8 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
 
-      # The committed web config names the production project, so the rules go to the same project the client talks to.
+      # The committed web config names the production project, so the rules go to the same
+      # project the client talks to.
       - id: project
         run: |
           project_id=$(node --input-type=module --no-warnings -e "
@@ -93,7 +95,8 @@ jobs:
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$GOOGLE_APPLICATION_CREDENTIALS"
           npx firebase deploy --only firestore:rules,storage --project "$PROJECT_ID" --non-interactive
 
-      # Plain FTP, knowingly (ADR 0002). The state file on the server lets each run upload only changed files.
+      # Plain FTP, knowingly (ADR 0002). The state file on the server lets each run upload
+      # only changed files.
       - name: Upload the app over FTP
         uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:

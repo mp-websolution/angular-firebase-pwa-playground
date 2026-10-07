@@ -28,12 +28,12 @@ Production builds need the production project's web config in `src/environments/
 
 ## Deploy
 
-`.github/workflows/deploy.yml` deploys to production on every merge to `main`. To deploy a release tag by hand (e.g. from a `release/*` branch, or to roll back), run the **Deploy** workflow from the Actions tab and enter the tag (`vX.Y.Z`). Each run re-runs the PR checks (`.github/workflows/checks.yml`), deploys the Firestore and Storage rules, then uploads the build over FTP, all from the same commit. Deploys run one at a time.
+`.github/workflows/deploy.yml` deploys to production on every merge to `main`. To deploy a release tag by hand (e.g. from a `release/*` branch, or to roll back), run the **Deploy** workflow from `main` in the Actions tab and enter the tag (`vX.Y.Z`). Each run re-runs the PR checks (`.github/workflows/checks.yml`), deploys the Firestore and Storage rules, then uploads the build over FTP, all from the same commit. Deploys run one at a time; while one runs, only the newest waiting run is kept, so a waiting rollback is cancelled if a merge to `main` comes after it.
 
 Before the first deploy:
 
 1. Paste the production project's web config into `src/environments/environment.ts`, replacing the `REPLACE_ME` placeholder. Its `projectId` is also where the rules go; the deploy fails while the placeholder is there.
-2. Create a GitHub environment named `production` with these secrets:
+2. Create a GitHub environment named `production`. Under **Deployment branches and tags**, allow only `main`: otherwise any pushed branch could run a changed workflow with these secrets. Then add these secrets:
 
 | Secret | Value |
 |---|---|
