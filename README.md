@@ -26,6 +26,23 @@ Production builds are a PWA: Angular's service worker (configured in `ngsw-confi
 
 Production builds need the production project's web config in `src/environments/environment.ts`. While it still holds the `REPLACE_ME` placeholder, the app throws at startup instead of failing later on its first Firebase call.
 
+## Deploy
+
+`.github/workflows/deploy.yml` deploys to production on every merge to `main`. To deploy a release tag by hand (e.g. from a `release/*` branch, or to roll back), run the **Deploy** workflow from the Actions tab and enter the tag (`vX.Y.Z`). Each run re-runs the PR checks (`.github/workflows/checks.yml`), deploys the Firestore and Storage rules, then uploads the build over FTP, all from the same commit. Deploys run one at a time.
+
+Before the first deploy:
+
+1. Paste the production project's web config into `src/environments/environment.ts`, replacing the `REPLACE_ME` placeholder. Its `projectId` is also where the rules go; the deploy fails while the placeholder is there.
+2. Create a GitHub environment named `production` with these secrets:
+
+| Secret | Value |
+|---|---|
+| `FTP_SERVER` | FTP host name of the webspace. |
+| `FTP_USERNAME` | FTP user. |
+| `FTP_PASSWORD` | FTP password. |
+| `FTP_SERVER_DIR` | Folder of the subdomain on the webspace, ending in `/`, e.g. `playground/`. |
+| `FIREBASE_SERVICE_ACCOUNT` | JSON key of a service account that may deploy rules (likely roles: **Firebase Rules Admin**, **Firebase Viewer** and **Service Usage Consumer**; the first deploy confirms them). |
+
 ## How this repo was planned
 
 Planning was done in a conversation with Claude Code, using [Matt Pocock's agent skills](https://github.com/mattpocock/skills). Each step used one skill:

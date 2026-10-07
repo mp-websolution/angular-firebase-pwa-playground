@@ -1,0 +1,105 @@
+name: Deploy
+
+# Deploys to production: every push to main (only reachable by merging a PR),
+# or a release tag picked by hand, e.g. from a release/* branch or to roll back.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to deploy (vX.Y.Z)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# One deploy at a time, in the order they were started. A newer run replaces one that is still
+# waiting, so an older commit never lands on top of a newer one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+    steps:
+      # Pin the commit once, so the checks and the deploy can't see different code if the branch or tag moves.
+      - id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ]; then
+            echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '$TAG' is not of the form vX.Y.Z."
+            exit 1
+          fi
+          sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/refs/tags/$TAG" --jq .sha) || {
+            echo "::error::Tag '$TAG' does not exist."
+            exit 1
+          }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+  checks:
+    needs: commit
+    uses: ./.github/workflows/checks.yml
+    with:
+      ref: ${{ needs.commit.outputs.sha }}
+
+  deploy:
+    needs: [commit, checks]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.commit.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+
+      # The committed web config names the production project, so the rules go to the same project the client talks to.
+      - id: project
+        run: |
+          project_id=$(node --input-type=module --no-warnings -e "
+            const { environment } = await import('./src/environments/environment.ts');
+            console.log(environment.firebase.options.projectId);
+          ")
+          if [[ -z "$project_id" || "$project_id" == REPLACE_ME* ]]; then
+            echo "::error::src/environments/environment.ts still holds the placeholder web config. Paste the production project's config there."
+            exit 1
+          fi
+          echo "id=$project_id" >> "$GITHUB_OUTPUT"
+
+      - run: npm run build
+
+      # Rules first: they fail fast on a setup mistake, before anything reaches the webspace.
+      - name: Deploy Firestore and Storage rules
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          PROJECT_ID: ${{ steps.project.outputs.id }}
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-service-account.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          npx firebase deploy --only firestore:rules,storage --project "$PROJECT_ID" --non-interactive
+
+      # Plain FTP, knowingly (ADR 0002). The state file on the server lets each run upload only changed files.
+      - name: Upload the app over FTP
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp
+          local-dir: ./dist/angular-firebase-pwa-playground/browser/
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
