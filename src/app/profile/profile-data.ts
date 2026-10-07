@@ -47,7 +47,8 @@ export class ProfileData {
     const avatarRef = ref(this.#storage, `avatars/${profileRef.id}`);
     await uploadBytes(avatarRef, image);
     const avatarUrl = await getDownloadURL(avatarRef);
-    // Like the display name, the URL syncs in the background.
+    // Like the display name, the URL syncs in the background. The page only offers an upload once a
+    // display name is saved, and the rules then accept any URL string, so a rejection is a bug.
     this.#live.track(setDoc(profileRef, { avatarUrl }, { merge: true }));
   }
 }
