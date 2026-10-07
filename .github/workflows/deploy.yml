@@ -24,6 +24,7 @@ concurrency:
 jobs:
   resolve-commit:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       sha: ${{ steps.resolve.outputs.sha }}
     steps:
@@ -57,6 +58,7 @@ jobs:
   deploy:
     needs: [resolve-commit, checks]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: production
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -104,5 +106,5 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
-          local-dir: ./dist/angular-firebase-pwa-playground/browser/
+          local-dir: ./dist/browser/
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
