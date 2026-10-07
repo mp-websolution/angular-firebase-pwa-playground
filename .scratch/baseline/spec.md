@@ -168,7 +168,7 @@ A Prototype adds its own service following the same shape. Route guards depend o
 ### CI/CD
 
 - **PR workflow:** install, lint, component tests, emulator integration tests (Java set up in CI), production build.
-- **Deploy workflow:** triggered by a push to `main` (only reachable via merge) and by `workflow_dispatch` with a `vX.Y.Z` tag as input. Runs the same checks, then uploads over FTP with `SamKirkland/FTP-Deploy-Action` (plain FTP, state-file sync), then `firebase deploy --only firestore:rules,storage` using a service-account key. Both use secrets of the `production` environment.
+- **Deploy workflow:** triggered by a push to `main` (only reachable via merge) and by `workflow_dispatch` with a `vX.Y.Z` tag as input. Runs the same checks, then `firebase deploy --only firestore:rules,storage` using a service-account key, then uploads over FTP with `SamKirkland/FTP-Deploy-Action` (plain FTP, state-file sync). Rules go first because they fail fast on a setup mistake, before anything reaches the webspace. Both use secrets of the `production` environment.
 - **Rulesets:** `main` and `release/*` require a PR and passing checks and forbid direct pushes and bypass, admins included. Creating `v*` tags is restricted to the owner.
 - **Dependabot:** npm updates grouped (`@angular/*`, `firebase`, others) plus GitHub Actions updates. No auto-merge.
 
