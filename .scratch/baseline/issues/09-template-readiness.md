@@ -16,10 +16,11 @@
   - Create the Firebase project, with Firestore and Storage in `europe-west3`
   - Enable email/password and Google auth, and add the production domain to authorised domains
   - Put the web config in the production environment
-  - Create a service account with the needed roles and store its key
-  - Create the GitHub `production` environment and its secrets
-  - Create rulesets: `main` and `release/*` require a PR and passing checks with no bypass, including admins; `v*` tag creation is restricted to the owner
+  - Create a service account with the needed roles and store its key. The README's Deploy section (ticket 08) guesses Firebase Rules Admin, Firebase Viewer and Service Usage Consumer; confirm them once the first deploy has run
+  - Create the GitHub `production` environment and its secrets (`FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_SERVER_DIR`, `FIREBASE_SERVICE_ACCOUNT`), with deployment branches restricted to `main`. Manual tag deploys run the Deploy workflow from `main` with the tag as input
+  - Create rulesets: `main` and `release/*` require a PR and the passing checks `checks / lint-test-build` and `checks / integration` with no bypass, including admins; `v*` tag creation is restricted to the owner
   - Set up the webspace subdomain and folder
   - Mark the repo as a template
+- [ ] The README's setup steps build on the "Deploy" section ticket 08 added (web config, `production` environment and secrets), rather than duplicating it
 - [ ] The README documents the update workflow: grouped Dependabot PRs are merged by hand, and major Angular upgrades are done with `ng update`
 - [ ] App icons: Angular's placeholder icons are replaced with the project's own, and the manifest stops declaring `"purpose": "maskable any"`. The existing sizes become `any` icons, plus separate `maskable` icons (at least 192 and 512 px) with an opaque background and the artwork inside the central safe zone, made with a tool like maskable.app or pwa-asset-generator. Chrome DevTools (Application → Manifest) shows no icon warnings. The README tells template users how to swap in their own icons
