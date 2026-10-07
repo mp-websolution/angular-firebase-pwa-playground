@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- "any" icon and favicon: the artwork on a rounded square, transparent corners. -->
+  <rect width="512" height="512" rx="112" fill="#0f172a"/>
+  <g>
+    <rect x="196" y="128" width="120" height="120" rx="16" fill="#ffffff"/>
+    <rect x="128" y="264" width="120" height="120" rx="16" fill="#f59e0b"/>
+    <rect x="264" y="264" width="120" height="120" rx="16" fill="#38bdf8"/>
+  </g>
+</svg>
