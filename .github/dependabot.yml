@@ -1,0 +1,47 @@
+# Grouped update PRs. CI checks them; a human merges every one (no auto-merge).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # Major Angular upgrades need `ng update`'s migrations, so Dependabot leaves them alone.
+    ignore:
+      - dependency-name: '@angular/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@angular-devkit/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@schematics/angular'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'angular-eslint'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@angular-eslint/*'
+        update-types: ['version-update:semver-major']
+    groups:
+      # Angular and the tooling that must move with it. The compiler pins the TypeScript range.
+      angular:
+        patterns:
+          - '@angular/*'
+          - '@angular-devkit/*'
+          - '@schematics/angular'
+          - 'angular-eslint'
+          - '@angular-eslint/*'
+          - 'typescript'
+      firebase:
+        patterns:
+          - 'firebase'
+          - 'firebase-tools'
+          - '@firebase/*'
+      # Everything else. Groups are matched in order, so this only gets what's left.
+      other:
+        patterns:
+          - '*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - '*'
