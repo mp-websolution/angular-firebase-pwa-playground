@@ -18,6 +18,14 @@ The five default triage roles (`needs-triage`, `needs-info`, `ready-for-agent`, 
 
 Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
+## Code style
+
+### Readability over DRY
+
+Don't pull small duplicates into helpers. Bundling domain data into a named type is fine (e.g. `Credentials`), but never hide `inject()` calls behind a helper.
+
+Report duplication only, unless the copies are long, likely to drift apart, or in 3+ places.
+
 ## Workflow
 
 ### Branches and pull requests
