@@ -13,7 +13,8 @@ import { join } from 'node:path';
 
 const chrome = process.env.CHROME ?? 'google-chrome';
 const source = import.meta.dirname;
-const icons = join(import.meta.dirname, '../../public/icons');
+const publicDir = join(source, '../../public');
+const icons = join(publicDir, 'icons');
 const temp = mkdtempSync(join(tmpdir(), 'icons-'));
 
 function render(svg, size, out) {
@@ -45,12 +46,13 @@ const faviconPngs = [16, 32, 48].map((size) => {
   render('icon.svg', size, out);
   return { size, data: readFileSync(out) };
 });
+const entrySize = 16;
 const header = Buffer.alloc(6);
 header.writeUInt16LE(1, 2); // type: icon
 header.writeUInt16LE(faviconPngs.length, 4);
-let offset = header.length + 16 * faviconPngs.length;
+let offset = header.length + entrySize * faviconPngs.length;
 const entries = faviconPngs.map(({ size, data }) => {
-  const entry = Buffer.alloc(16);
+  const entry = Buffer.alloc(entrySize);
   entry.writeUInt8(size, 0); // width
   entry.writeUInt8(size, 1); // height
   entry.writeUInt16LE(1, 4); // colour planes
@@ -61,7 +63,7 @@ const entries = faviconPngs.map(({ size, data }) => {
   return entry;
 });
 writeFileSync(
-  join(icons, '../favicon.ico'),
+  join(publicDir, 'favicon.ico'),
   Buffer.concat([header, ...entries, ...faviconPngs.map(({ data }) => data)]),
 );
 
