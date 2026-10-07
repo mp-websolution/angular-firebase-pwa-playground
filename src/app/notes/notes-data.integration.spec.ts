@@ -4,20 +4,11 @@ import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import { signOut } from 'firebase/auth';
-import {
-  Timestamp,
-  collection,
-  deleteDoc,
-  disableNetwork,
-  doc,
-  enableNetwork,
-  getDocs,
-  setDoc,
-} from 'firebase/firestore';
+import { Timestamp, collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { AuthSession } from '../auth/auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
-import { FIREBASE_AUTH, FIRESTORE, provideFirebase } from '../firebase/provide-firebase';
+import { FIREBASE_AUTH, provideFirebase } from '../firebase/provide-firebase';
 import { NotesData } from './notes-data';
 
 // On a cold CI runner the emulator can take seconds to answer, but `vi.waitFor` gives up after 1 s.
@@ -25,7 +16,6 @@ const emulatorReply = { timeout: 5_000 };
 
 describe('NotesData against the emulators', { timeout: 20_000 }, () => {
   let testEnv: RulesTestEnvironment;
-  const reportError = vi.fn<(error: unknown) => void>();
 
   beforeAll(async () => {
     // Writes notes as another device would, past the rules. Finds the emulator through
@@ -41,14 +31,13 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
   });
 
   beforeEach(() => {
-    reportError.mockReset();
     // Tests load Firestore's Node build, which only uses IndexedDB with its own test switch on.
     vi.stubEnv('USE_MOCK_PERSISTENCE', 'YES');
     TestBed.configureTestingModule({
       providers: [
         provideFirebase(environment.firebase),
         { provide: RELOAD_PAGE, useValue: vi.fn() },
-        { provide: ErrorHandler, useValue: { handleError: reportError } },
+        { provide: ErrorHandler, useValue: { handleError: vi.fn() } },
       ],
     });
   });
@@ -130,7 +119,6 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
       async () => expect(await storedTexts(uid)).toEqual(['Buy milk', 'Call Grace']),
       emulatorReply,
     );
-    expect(notesData.waitingToSync()).toBe(false);
   });
 
   it("changes a note's text and syncs it to the server", async () => {
@@ -189,82 +177,5 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
       () => expect(notesData.notes()).toEqual([{ id: 'milk', text: 'Buy oat milk' }]),
       emulatorReply,
     );
-  });
-
-  it('shows a note created offline straight away and syncs it once back online', async () => {
-    const uid = await signUp();
-    await storeNote(uid, 'older', 'Buy milk', new Date('2026-01-01'));
-    const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), emulatorReply);
-    const firestore = await TestBed.inject(FIRESTORE)();
-    await disableNetwork(firestore);
-
-    await notesData.create('Call Grace');
-
-    await vi.waitFor(() => {
-      expect(notesData.notes()?.map(({ text }) => text)).toEqual(['Call Grace', 'Buy milk']);
-      expect(notesData.waitingToSync()).toBe(true);
-    }, emulatorReply);
-
-    await enableNetwork(firestore);
-
-    await vi.waitFor(() => expect(notesData.waitingToSync()).toBe(false), emulatorReply);
-    expect(await storedTexts(uid)).toEqual(['Buy milk', 'Call Grace']);
-    expect(reportError).not.toHaveBeenCalled();
-  });
-
-  it('shows a note changed offline straight away and syncs it once back online', async () => {
-    const uid = await signUp();
-    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
-    const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), emulatorReply);
-    const firestore = await TestBed.inject(FIRESTORE)();
-    await disableNetwork(firestore);
-
-    await notesData.update('milk', 'Buy oat milk');
-
-    await vi.waitFor(() => {
-      expect(notesData.notes()).toEqual([{ id: 'milk', text: 'Buy oat milk' }]);
-      expect(notesData.waitingToSync()).toBe(true);
-    }, emulatorReply);
-
-    await enableNetwork(firestore);
-
-    await vi.waitFor(() => expect(notesData.waitingToSync()).toBe(false), emulatorReply);
-    expect(await storedTexts(uid)).toEqual(['Buy oat milk']);
-  });
-
-  it('removes a note deleted offline straight away and syncs it once back online', async () => {
-    const uid = await signUp();
-    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
-    const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), emulatorReply);
-    const firestore = await TestBed.inject(FIRESTORE)();
-    await disableNetwork(firestore);
-
-    await notesData.delete('milk');
-
-    await vi.waitFor(() => {
-      expect(notesData.notes()).toEqual([]);
-      expect(notesData.waitingToSync()).toBe(true);
-    }, emulatorReply);
-
-    await enableNetwork(firestore);
-
-    await vi.waitFor(() => expect(notesData.waitingToSync()).toBe(false), emulatorReply);
-    expect(await storedTexts(uid)).toEqual([]);
-  });
-
-  it('reports no failure when sign-out shuts Firestore down', async () => {
-    await signUp();
-    const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toBeDefined(), emulatorReply);
-
-    await TestBed.inject(AuthSession).signOut();
-    // Firestore tells listeners about the shutdown asynchronously; give it the chance.
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    expect(notesData.loadFailed()).toBe(false);
-    expect(reportError).not.toHaveBeenCalled();
   });
 });

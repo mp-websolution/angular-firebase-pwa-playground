@@ -17,6 +17,8 @@ A component test renders the whole app through the router and drives it the way 
 
 `*.integration.spec.ts` files run the real data-access services against the emulators (`npm run test:integration`). They render nothing, though they run in jsdom like the component tests: configure providers with `TestBed.configureTestingModule` and get the service with `TestBed.inject`.
 
+What every service built on `injectLiveData()` shares (live updates, `waitingToSync` online and offline, counted deletes, rejected writes, `loadFailed`, and no failure when sign-out shuts Firestore down) is tested once, in `src/app/firebase/inject-live-data.integration.spec.ts`. It runs in its own demo project (`demo-live-data`), with its own rules, open except for a marked write and a forbidden path, loaded through `initializeTestEnvironment({ firestore: { rules } })`, so it doesn't depend on any collection's rules. A data-access service's own integration spec covers only its mapping, commands and ordering, e.g. `src/app/notes/notes-data.integration.spec.ts`.
+
 ## Security-rules tests
 
 Each collection's rules get a `*-rules.integration.spec.ts` beside its data-access service, e.g. `src/app/profile/profile-rules.integration.spec.ts`. They use `@firebase/rules-unit-testing`:

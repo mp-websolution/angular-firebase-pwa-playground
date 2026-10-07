@@ -1,0 +1,265 @@
+// jsdom has no IndexedDB; Firestore's persistent cache needs one.
+import 'fake-indexeddb/auto';
+import { ErrorHandler } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
+import { signOut } from 'firebase/auth';
+import {
+  collection,
+  deleteDoc,
+  disableNetwork,
+  doc,
+  enableNetwork,
+  getDoc,
+  orderBy,
+  query,
+  setDoc,
+} from 'firebase/firestore';
+import { environment } from '../../environments/environment';
+import { AuthSession } from '../auth/auth-session';
+import { RELOAD_PAGE } from '../browser/reload-page';
+import { injectLiveData } from './inject-live-data';
+import { FIREBASE_AUTH, FIRESTORE, provideFirebase } from './provide-firebase';
+
+// Its own project, so these rules don't replace firestore.rules for the other integration tests.
+const projectId = 'demo-live-data';
+
+// Anything goes under a user's scratch path, except a write marked to be rejected. Every other
+// path is denied, so it can't be loaded.
+const rules = `
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /scratch/{uid}/{document=**} {
+      allow read, delete: if true;
+      allow create, update: if request.resource.data.get('rejected', false) != true;
+    }
+  }
+}`;
+
+// On a cold CI runner the emulator can take seconds to answer, but `vi.waitFor` gives up after 1 s.
+const emulatorReply = { timeout: 5_000 };
+
+describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
+  let testEnv: RulesTestEnvironment;
+  const reportError = vi.fn<(error: unknown) => void>();
+
+  beforeAll(async () => {
+    // Loads the rules, and writes data as another device would. Finds the emulator through
+    // FIRESTORE_EMULATOR_HOST, set by `emulators:exec`.
+    testEnv = await initializeTestEnvironment({ projectId, firestore: { rules } });
+  });
+
+  afterAll(async () => {
+    await testEnv.cleanup();
+  });
+
+  beforeEach(() => {
+    reportError.mockReset();
+    // Tests load Firestore's Node build, which only uses IndexedDB with its own test switch on.
+    vi.stubEnv('USE_MOCK_PERSISTENCE', 'YES');
+    const { firebase } = environment;
+    TestBed.configureTestingModule({
+      providers: [
+        provideFirebase({ ...firebase, options: { ...firebase.options, projectId } }),
+        { provide: RELOAD_PAGE, useValue: vi.fn() },
+        { provide: ErrorHandler, useValue: { handleError: reportError } },
+      ],
+    });
+  });
+
+  afterEach(async () => {
+    // Auth keeps the signed-in user across app instances; don't let it leak into the next test.
+    await signOut(TestBed.inject(FIREBASE_AUTH));
+    vi.unstubAllEnvs();
+  });
+
+  /** Signs a new user in, as the guards make sure before a page with live data loads. */
+  async function signUp(): Promise<string> {
+    const session = TestBed.inject(AuthSession);
+    await session.signUpWithEmail({
+      email: `live-data-${crypto.randomUUID()}@example.com`,
+      password: 'correct-horse',
+    });
+    return session.user()!.uid;
+  }
+
+  /** Writes past the rules, as if on another device. */
+  async function storeElsewhere(path: string, data: Record<string, unknown>): Promise<void> {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), path), data);
+    });
+  }
+
+  /** What the server has, read past the rules. */
+  async function stored(path: string): Promise<unknown> {
+    let data: unknown;
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      data = (await getDoc(doc(context.firestore(), path))).data();
+    });
+    return data;
+  }
+
+  describe('of a document', () => {
+    function injectSettings() {
+      return TestBed.runInInjectionContext(() =>
+        injectLiveData({
+          ref: (firestore, uid) => doc(firestore, 'scratch', uid),
+          map: (snapshot): string => snapshot.get('theme') ?? 'system',
+        }),
+      );
+    }
+
+    it('shows the stored document, and every change made elsewhere', async () => {
+      const uid = await signUp();
+      await storeElsewhere(`scratch/${uid}`, { theme: 'dark' });
+
+      const settings = injectSettings();
+
+      await vi.waitFor(() => expect(settings.value()).toBe('dark'), emulatorReply);
+      await storeElsewhere(`scratch/${uid}`, { theme: 'light' });
+      await vi.waitFor(() => expect(settings.value()).toBe('light'), emulatorReply);
+      expect(settings.waitingToSync()).toBe(false);
+      expect(settings.loadFailed()).toBe(false);
+    });
+
+    it('shows a tracked write straight away and syncs it to the server', async () => {
+      const uid = await signUp();
+      const settings = injectSettings();
+      await vi.waitFor(() => expect(settings.value()).toBe('system'), emulatorReply);
+
+      settings.track(setDoc(await settings.ref(), { theme: 'dark' }));
+
+      await vi.waitFor(() => expect(settings.value()).toBe('dark'), emulatorReply);
+      expect(settings.waitingToSync()).toBe(false);
+      await vi.waitFor(
+        async () => expect(await stored(`scratch/${uid}`)).toEqual({ theme: 'dark' }),
+        emulatorReply,
+      );
+    });
+
+    it('shows a write made offline straight away and syncs it once back online', async () => {
+      const uid = await signUp();
+      const settings = injectSettings();
+      await vi.waitFor(() => expect(settings.value()).toBe('system'), emulatorReply);
+      const firestore = await TestBed.inject(FIRESTORE)();
+      await disableNetwork(firestore);
+
+      settings.track(setDoc(await settings.ref(), { theme: 'dark' }));
+
+      await vi.waitFor(() => {
+        expect(settings.value()).toBe('dark');
+        expect(settings.waitingToSync()).toBe(true);
+      }, emulatorReply);
+
+      await enableNetwork(firestore);
+
+      await vi.waitFor(() => expect(settings.waitingToSync()).toBe(false), emulatorReply);
+      expect(await stored(`scratch/${uid}`)).toEqual({ theme: 'dark' });
+      expect(reportError).not.toHaveBeenCalled();
+    });
+
+    it('reports a write the server rejects, and shows what the server kept', async () => {
+      const uid = await signUp();
+      await storeElsewhere(`scratch/${uid}`, { theme: 'dark' });
+      const settings = injectSettings();
+      await vi.waitFor(() => expect(settings.value()).toBe('dark'), emulatorReply);
+
+      settings.track(setDoc(await settings.ref(), { theme: 'light', rejected: true }));
+
+      await vi.waitFor(
+        () =>
+          expect(reportError).toHaveBeenCalledWith(
+            expect.objectContaining({ code: 'permission-denied' }),
+          ),
+        emulatorReply,
+      );
+      await vi.waitFor(() => expect(settings.value()).toBe('dark'), emulatorReply);
+      expect(settings.waitingToSync()).toBe(false);
+      expect(settings.loadFailed()).toBe(false);
+    });
+
+    it('says when the data cannot be loaded, and reports why', async () => {
+      await signUp();
+
+      const forbidden = TestBed.runInInjectionContext(() =>
+        injectLiveData({
+          ref: (firestore, uid) => doc(firestore, 'forbidden', uid),
+          map: (snapshot) => snapshot.data(),
+        }),
+      );
+
+      await vi.waitFor(() => expect(forbidden.loadFailed()).toBe(true), emulatorReply);
+      expect(forbidden.value()).toBeUndefined();
+      expect(reportError).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'permission-denied' }),
+      );
+    });
+
+    it('reports no failure when sign-out shuts Firestore down', async () => {
+      await signUp();
+      const settings = injectSettings();
+      await vi.waitFor(() => expect(settings.value()).toBe('system'), emulatorReply);
+
+      await TestBed.inject(AuthSession).signOut();
+      // Firestore tells listeners about the shutdown asynchronously; give it the chance.
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(settings.loadFailed()).toBe(false);
+      expect(reportError).not.toHaveBeenCalled();
+    });
+
+    it('needs a signed-in user', () => {
+      expect(() => injectSettings()).toThrow('injectLiveData needs a signed-in user.');
+    });
+  });
+
+  describe('of a query', () => {
+    function injectTodos() {
+      return TestBed.runInInjectionContext(() =>
+        injectLiveData({
+          ref: (firestore, uid) => collection(firestore, 'scratch', uid, 'todos'),
+          listenTo: (todosRef) => query(todosRef, orderBy('rank')),
+          map: (snapshot) => snapshot.docs.map((todo) => todo.id),
+        }),
+      );
+    }
+
+    it('lists the query, and every change made elsewhere', async () => {
+      const uid = await signUp();
+      await storeElsewhere(`scratch/${uid}/todos/second`, { rank: 2 });
+
+      const todos = injectTodos();
+
+      await vi.waitFor(() => expect(todos.value()).toEqual(['second']), emulatorReply);
+      await storeElsewhere(`scratch/${uid}/todos/first`, { rank: 1 });
+      await vi.waitFor(() => expect(todos.value()).toEqual(['first', 'second']), emulatorReply);
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await deleteDoc(doc(context.firestore(), `scratch/${uid}/todos/second`));
+      });
+      await vi.waitFor(() => expect(todos.value()).toEqual(['first']), emulatorReply);
+    });
+
+    it('counts a delete made offline as waiting to sync until back online', async () => {
+      const uid = await signUp();
+      await storeElsewhere(`scratch/${uid}/todos/first`, { rank: 1 });
+      const todos = injectTodos();
+      await vi.waitFor(() => expect(todos.value()).toEqual(['first']), emulatorReply);
+      const firestore = await TestBed.inject(FIRESTORE)();
+      await disableNetwork(firestore);
+
+      todos.track(deleteDoc(doc(await todos.ref(), 'first')));
+
+      await vi.waitFor(() => {
+        expect(todos.value()).toEqual([]);
+        expect(todos.waitingToSync()).toBe(true);
+      }, emulatorReply);
+
+      await enableNetwork(firestore);
+
+      await vi.waitFor(() => expect(todos.waitingToSync()).toBe(false), emulatorReply);
+      expect(await stored(`scratch/${uid}/todos/first`)).toBeUndefined();
+      expect(reportError).not.toHaveBeenCalled();
+    });
+  });
+});

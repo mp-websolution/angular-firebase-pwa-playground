@@ -18,19 +18,20 @@ Removing those four leaves the Baseline building and its tests green. Only docs 
 1. Copy `src/app/notes/` to `src/app/<name>/` and rename inside it. Keep the shape:
    - `<name>.routes.ts` exports the Prototype's routes, relative to its path, with `canActivate: [signedInGuard]` on those that need a signed-in user.
    - A data-access service per collection, like `NotesData`: `@Service()`, read state as signals, commands as promise-returning methods, no SDK types in its public API.
+   - The service gets its data through `injectLiveData()` from `src/app/firebase/inject-live-data.ts`, in a field initializer: `ref` says where the signed-in user's data lives, `listenTo` optionally narrows it to a query, and `map` turns each snapshot into the service's model. It loads Firestore, listens until destroyed, and exposes `value`, `waitingToSync` and `loadFailed` for the service to pass on. Each command writes to `await live.ref()` and hands the unawaited write to `live.track()`, so it works offline, counts towards `waitingToSync`, and reports a rejection.
    - `testing/` holds an in-memory fake of that service for component tests.
 2. Add an entry to `prototypeRoutes` in `src/app/prototypes.routes.ts` with `loadChildren` and a `title`, which becomes the link on home.
 3. Store per-user data under `users/{uid}/<collection>`, and add a delimited section to `firestore.rules` (and `storage.rules` if needed) that opens it to its owner only.
 4. Add `scripts/seed/prototype-<name>.mjs` for demo data.
 5. Write the tests (see `docs/agents/testing.md`):
    - Component tests render through `renderApp` and pass the fake with `providers: [{ provide: NotesData, useValue: new FakeNotesData(...) }]`. `renderApp` has no default for a Prototype's service, so the Baseline's tests never depend on one.
-   - Integration tests for the service, and rules tests covering the owner allowed and other users and signed-out visitors denied.
+   - Integration tests for the service covering its mapping, commands and ordering, and rules tests covering the owner allowed and other users and signed-out visitors denied. Sync, offline and sign-out behaviour belong to `injectLiveData()` and are tested there, not per Prototype.
 
 ## Keep Firestore behind the lazy route
 
 The Firestore SDK is most of Firebase's weight, so it loads on first use, never with the initial bundle (ADR 0003). For a Prototype that means:
 
-- Only files reached through its `loadChildren` import values from `firebase/firestore`. Its data-access service gets Firestore with `await inject(FIRESTORE)()`.
+- Only files reached through its `loadChildren` import values from `firebase/firestore` or `injectLiveData()`. Its data-access service gets Firestore through `injectLiveData()`, or with `await inject(FIRESTORE)()` for anything else.
 - Nothing outside the Prototype's folder imports from it, except the `loadChildren` in its route entry.
 - `npm run build` warns when the initial bundle passes 500 kB: that usually means a value import from `firebase/firestore` slipped into `main`.
 
