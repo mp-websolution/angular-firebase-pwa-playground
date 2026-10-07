@@ -17,8 +17,9 @@ The non-obvious choices are recorded as ADRs:
 - [0003: Lazy Firestore loader token](docs/adr/0003-lazy-firestore-loader-token.md)
 - [0004: Testing Library for component tests](docs/adr/0004-testing-library-for-component-tests.md)
 
-## Project Setup
-  run `npx skills install` to add skills referenced in `skills-lock.json`
+## Agent skills
+
+Run `npx skills install` to add the skills referenced in `skills-lock.json`.
 
 ## Development
 
@@ -84,14 +85,14 @@ In the [Firebase console](https://console.firebase.google.com):
 1. Create a project. Google Analytics isn't used.
 2. **Firestore Database** → Create database, location `europe-west3` (Frankfurt), production mode. The deploy replaces its rules with `firestore.rules`.
 3. **Storage** → Get started, location `europe-west3`. New Storage buckets need the pay-as-you-go Blaze plan; set a budget alert in Google Cloud billing. The deploy replaces its rules with `storage.rules`.
-4. Project settings → Your apps → add a **Web app** (no Firebase Hosting). Its config object is the web config for step 4 below.
+4. Project settings → Your apps → add a **Web app** (no Firebase Hosting). Its config object is the web config for [section 4](#4-web-config).
 
 The location of Firestore and Storage can't be changed later.
 
 ### 3. Authentication
 
 1. **Authentication** → Sign-in method: enable **Email/Password** and **Google**.
-2. **Authentication** → Settings → **Authorised domains**: add the production domain, e.g. `playground.example.com`. Without it Google sign-in fails there. (`localhost` is already listed.)
+2. **Authentication** → Settings → **Authorized domains**: add the production domain, e.g. `playground.example.com`. Without it Google sign-in fails there. (`localhost` is already listed.)
 
 ### 4. Web config
 
@@ -159,14 +160,14 @@ Dependabot (`.github/dependabot.yml`) checks weekly and opens grouped PRs:
 
 | Group | Contents |
 |---|---|
-| `angular` | `@angular/*` and the tooling that moves with it: `angular-eslint`, `typescript`. |
+| `angular` | `@angular/*`, `@angular-devkit/*`, `@schematics/angular`, `angular-eslint`, `@angular-eslint/*`, `typescript` and `typescript-eslint`. |
 | `firebase` | `firebase`, `firebase-tools` and `@firebase/*`. |
 | `other` | Every other npm package. |
 | `github-actions` | The actions used in `.github/workflows/` (pinned by commit SHA). |
 
 The PR checks run on each one. Nothing merges automatically: merge a group by hand once its checks pass. If one fails, fix it on the Dependabot branch or in a separate PR.
 
-Major Angular upgrades don't come from Dependabot (it ignores them), because they need Angular's migrations. Do them on a branch with `ng update`, following [the update guide](https://angular.dev/update-guide):
+Major upgrades of Angular, its tooling and TypeScript don't come from Dependabot (it ignores them), because they need Angular's migrations. Do them on a branch with `ng update`, following [the update guide](https://angular.dev/update-guide):
 
 ```bash
 npx ng update @angular/core @angular/cli angular-eslint

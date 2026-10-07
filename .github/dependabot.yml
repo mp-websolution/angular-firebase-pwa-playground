@@ -6,6 +6,7 @@ updates:
     schedule:
       interval: weekly
     # Major Angular upgrades need `ng update`'s migrations, so Dependabot leaves them alone.
+    # Keep this list in step with the `angular` group below.
     ignore:
       - dependency-name: '@angular/*'
         update-types: ['version-update:semver-major']
@@ -17,8 +18,11 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: '@angular-eslint/*'
         update-types: ['version-update:semver-major']
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
     groups:
-      # Angular and the tooling that must move with it. The compiler pins the TypeScript range.
+      # Angular and the tooling that must move with it. The compiler pins the TypeScript range,
+      # and typescript-eslint must support that TypeScript version.
       angular:
         patterns:
           - '@angular/*'
@@ -27,6 +31,7 @@ updates:
           - 'angular-eslint'
           - '@angular-eslint/*'
           - 'typescript'
+          - 'typescript-eslint'
       firebase:
         patterns:
           - 'firebase'
