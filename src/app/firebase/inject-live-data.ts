@@ -72,7 +72,7 @@ export function injectLiveData<Ref extends Listenable, T, Listened extends Liste
   const loadFailed = signal(false);
 
   const ref = async (): Promise<Ref> => options.ref(await loadFirestore(), uid);
-  const listenTo = options.listenTo ?? ((ref: Ref) => ref as unknown as Listened);
+  const listenTo = options.listenTo ?? ((resolvedRef: Ref) => resolvedRef as unknown as Listened);
 
   let unsubscribe: Unsubscribe | undefined;
   let destroyed = false;
@@ -111,7 +111,8 @@ export function injectLiveData<Ref extends Listenable, T, Listened extends Liste
     value: value.asReadonly(),
     // Online, every change is pending for a moment too; only `fromCache` means the listener has
     // lost the server. A deleted document leaves a query's snapshot, and its pending write with
-    // it, so every write counts until the server has it.
+    // it, so every write counts until the server has it. A write still queued from before a reload
+    // isn't counted.
     waitingToSync: computed(
       () => snapshotFromCache() && (snapshotHasPendingWrites() || unconfirmedWrites() > 0),
     ),
