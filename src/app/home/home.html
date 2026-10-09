@@ -1,0 +1,27 @@
+<main class="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-4 p-6">
+  <h1 class="text-3xl font-bold tracking-tight">Angular Firebase PWA Playground</h1>
+  @if (session.user(); as user) {
+    <p class="text-slate-600">Signed in as {{ user.email ?? user.displayName }}</p>
+  }
+  <div class="flex items-center gap-4">
+    <a routerLink="/profile" class="underline">Profile</a>
+    <button
+      type="button"
+      class="rounded border border-slate-300 px-4 py-2 font-medium disabled:opacity-50"
+      [disabled]="signingOut()"
+      (click)="signOut()"
+    >
+      Sign out
+    </button>
+  </div>
+  @if (prototypeRoutes.length > 0) {
+    <nav aria-label="Prototypes" class="flex gap-4">
+      @for (prototype of prototypeRoutes; track prototype.path) {
+        <a class="underline" [routerLink]="'/' + prototype.path">{{ prototype.title }}</a>
+      }
+    </nav>
+  }
+  @if (error(); as message) {
+    <p role="alert" class="text-red-700">{{ message }}</p>
+  }
+</main>

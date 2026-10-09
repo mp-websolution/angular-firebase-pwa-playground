@@ -8,20 +8,7 @@ import { injectReturnUrl } from '../return-url';
 @Component({
   selector: 'app-sign-up',
   imports: [CredentialsForm, RouterLink],
-  template: `
-    <main class="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
-      <h1 class="text-3xl font-bold tracking-tight">Create account</h1>
-      <app-credentials-form
-        submitLabel="Create account"
-        passwordAutocomplete="new-password"
-        [action]="signUp"
-      />
-      <p class="text-slate-600">
-        Already have an account?
-        <a routerLink="/sign-in" queryParamsHandling="preserve" class="underline">Sign in</a>
-      </p>
-    </main>
-  `,
+  templateUrl: './sign-up.html',
 })
 export class SignUp {
   readonly #session = inject(AuthSession);

@@ -8,44 +8,7 @@ import { RELOAD_PAGE } from '../browser/reload-page';
 @Component({
   selector: 'app-update-prompt',
   host: { '(document:visibilitychange)': 'checkForUpdateIfVisible()' },
-  template: `
-    @let panelClass =
-      'fixed inset-x-4 bottom-4 mx-auto flex max-w-md flex-wrap items-center gap-3 rounded border border-slate-300 bg-white p-4 shadow-lg';
-    <!-- Always rendered, so screen readers announce the prompt when it appears inside. -->
-    <div aria-live="polite">
-      @if (prompt() === 'new-version') {
-        <div [class]="panelClass">
-          <p class="flex-1">A new version is available.</p>
-          <button
-            type="button"
-            class="rounded bg-slate-900 px-4 py-2 font-medium text-white"
-            (click)="reloadPage()"
-          >
-            Reload
-          </button>
-          <button
-            type="button"
-            class="rounded border border-slate-300 px-4 py-2 font-medium"
-            (click)="dismissed.set(true)"
-          >
-            Later
-          </button>
-        </div>
-      }
-    </div>
-    @if (prompt() === 'broken') {
-      <div role="alert" [class]="panelClass">
-        <p class="flex-1">This version of the app stopped working. Reload to get the latest one.</p>
-        <button
-          type="button"
-          class="rounded bg-slate-900 px-4 py-2 font-medium text-white"
-          (click)="reloadPage()"
-        >
-          Reload
-        </button>
-      </div>
-    }
-  `,
+  templateUrl: './update-prompt.html',
 })
 export class UpdatePrompt {
   readonly #swUpdate = inject(SwUpdate);

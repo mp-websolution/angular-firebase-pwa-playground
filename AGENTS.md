@@ -26,6 +26,10 @@ Don't pull small duplicates into helpers. Bundling domain data into a named type
 
 Report duplication only, unless the copies are long, likely to drift apart, or in 3+ places.
 
+### Component templates
+
+Templates longer than 10 lines go in a separate `<name>.html` file next to the component, referenced with `templateUrl`. Shorter templates stay inline in `template`. This overrides the `angular-developer` skill's "inline for small templates" guidance.
+
 ## Workflow
 
 ### Branches and pull requests
