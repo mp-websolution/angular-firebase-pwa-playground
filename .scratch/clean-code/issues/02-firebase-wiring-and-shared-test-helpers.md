@@ -12,8 +12,8 @@
 
 **Status:** ready-for-agent
 
-- [ ] No comments in function bodies in the Firebase wiring, the Live data module or their specs
-- [ ] Public interfaces of `injectLiveData`, `LiveData`, providers and tokens unchanged
-- [ ] Shared setup helpers exist once and every integration spec uses them; `docs/agents/testing.md` names them if it names the setup
-- [ ] Test names read as Live data's specification; vague ones renamed
-- [ ] `npm run lint`, `npm test`, `npm run test:integration`, `npm run build` pass; initial bundle under budget (ADR 0003)
+- [x] No comments in function bodies in the Firebase wiring, the Live data module or their specs
+- [x] Public interfaces of `injectLiveData`, `LiveData`, providers and tokens unchanged
+- [x] Shared setup helpers exist once and every integration spec uses them; `docs/agents/testing.md` names them if it names the setup
+- [x] Test names read as Live data's specification; vague ones renamed
+- [x] `npm run lint`, `npm test`, `npm run test:integration`, `npm run build` pass; initial bundle under budget (ADR 0003)
