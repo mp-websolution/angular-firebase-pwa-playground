@@ -9,12 +9,12 @@ import { provideFirebase } from '../firebase/provide-firebase';
 import { tearDownFirebase } from '../firebase/testing/tear-down-firebase';
 import { ProfileData } from './profile-data';
 import { enablePersistentCacheInJsdom } from '../firebase/testing/persistent-cache-in-jsdom';
-import { slowEmulatorTimeout } from '../firebase/testing/slow-emulator';
+import { slowEmulatorTestTimeout, slowEmulatorTimeout } from '../firebase/testing/slow-emulator';
 
 // Tests run in Node, but only see the browser's types.
 declare const process: { getBuiltinModule(id: 'node:buffer'): { Blob: typeof Blob } };
 
-describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
+describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
   let testEnv: RulesTestEnvironment;
 
   beforeAll(async () => {

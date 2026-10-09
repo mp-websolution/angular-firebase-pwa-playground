@@ -9,9 +9,9 @@ import { provideFirebase } from '../firebase/provide-firebase';
 import { tearDownFirebase } from '../firebase/testing/tear-down-firebase';
 import { NotesData } from './notes-data';
 import { enablePersistentCacheInJsdom } from '../firebase/testing/persistent-cache-in-jsdom';
-import { slowEmulatorTimeout } from '../firebase/testing/slow-emulator';
+import { slowEmulatorTestTimeout, slowEmulatorTimeout } from '../firebase/testing/slow-emulator';
 
-describe('NotesData against the emulators', { timeout: 20_000 }, () => {
+describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
   let testEnv: RulesTestEnvironment;
 
   beforeAll(async () => {

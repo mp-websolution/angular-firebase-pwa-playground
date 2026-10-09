@@ -25,7 +25,7 @@ import { injectLiveData } from './inject-live-data';
 import { FIRESTORE, provideFirebase } from './provide-firebase';
 import { tearDownFirebase } from './testing/tear-down-firebase';
 import { enablePersistentCacheInJsdom } from './testing/persistent-cache-in-jsdom';
-import { slowEmulatorTimeout } from './testing/slow-emulator';
+import { slowEmulatorTestTimeout, slowEmulatorTimeout } from './testing/slow-emulator';
 
 const projectIsolatingTheseRules = 'demo-live-data';
 
@@ -40,7 +40,7 @@ service cloud.firestore {
   }
 }`;
 
-describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
+describe('injectLiveData against the emulators', slowEmulatorTestTimeout, () => {
   let testEnv: RulesTestEnvironment;
   const reportError = vi.fn<(error: unknown) => void>();
 
