@@ -1,3 +1,4 @@
+import { ComponentFixture } from '@angular/core/testing';
 import { screen, waitForElementToBeRemoved } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { FakeAuthSession } from '../../auth/testing/fake-auth-session';
@@ -11,9 +12,16 @@ async function changeDisplayName(displayName: string) {
   await user.click(screen.getByRole('button', { name: 'Save' }));
 }
 
-/** A picked file of `size` bytes, as the file dialog hands it over. */
-function file(name: string, type: string, size = 1024) {
+function pickedFile(name: string, type: string, size = 1024) {
   return new File([new Uint8Array(size)], name, { type });
+}
+
+function aUserWhoSwitchesTheFileDialogToAllFiles() {
+  return userEvent.setup({ applyAccept: false });
+}
+
+function waitForRenderingSinceNothingChangesToFind(fixture: ComponentFixture<unknown>) {
+  return fixture.whenStable();
 }
 
 describe('EditProfile', () => {
@@ -174,8 +182,7 @@ describe('EditProfile', () => {
     await userEvent.setup().type(await screen.findByLabelText('Display name'), ' Lovelace');
 
     profile.changeElsewhere('Countess of Lovelace');
-    // Nothing to find when nothing changes: wait for the page to finish rendering instead.
-    await fixture.whenStable();
+    await waitForRenderingSinceNothingChangesToFind(fixture);
 
     expect(screen.getByLabelText('Display name')).toHaveValue('Ada Lovelace');
   });
@@ -264,7 +271,7 @@ describe('EditProfile', () => {
 
     await userEvent
       .setup()
-      .upload(await screen.findByLabelText('Avatar'), file('ada.png', 'image/png'));
+      .upload(await screen.findByLabelText('Avatar'), pickedFile('ada.png', 'image/png'));
 
     expect(await screen.findByRole('img', { name: 'Your avatar' })).toHaveAttribute(
       'src',
@@ -282,7 +289,7 @@ describe('EditProfile', () => {
       .setup()
       .upload(
         await screen.findByLabelText('Avatar'),
-        file('ada.png', 'image/png', 2 * 1024 * 1024),
+        pickedFile('ada.png', 'image/png', 2 * 1024 * 1024),
       );
 
     expect(await screen.findByRole('img', { name: 'Your avatar' })).toHaveAttribute(
@@ -302,7 +309,7 @@ describe('EditProfile', () => {
       .setup()
       .upload(
         await screen.findByLabelText('Avatar'),
-        file('ada.png', 'image/png', 2 * 1024 * 1024 + 1),
+        pickedFile('ada.png', 'image/png', 2 * 1024 * 1024 + 1),
       );
 
     expect(await screen.findByText('Choose an image of at most 2 MB.')).toBeVisible();
@@ -320,7 +327,7 @@ describe('EditProfile', () => {
       profile: new FakeProfileData({ displayName: 'Ada' }),
     });
 
-    await userEvent.setup().upload(await screen.findByLabelText('Avatar'), file(name, type));
+    await userEvent.setup().upload(await screen.findByLabelText('Avatar'), pickedFile(name, type));
 
     expect(await screen.findByRole('img', { name: 'Your avatar' })).toHaveAttribute(
       'src',
@@ -337,10 +344,9 @@ describe('EditProfile', () => {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile,
     });
-    // The file dialog only suggests these types; the user can still switch it to all files.
-    const user = userEvent.setup({ applyAccept: false });
+    const user = aUserWhoSwitchesTheFileDialogToAllFiles();
 
-    await user.upload(await screen.findByLabelText('Avatar'), file(name, type));
+    await user.upload(await screen.findByLabelText('Avatar'), pickedFile(name, type));
 
     expect(await screen.findByText('Choose a PNG, JPEG, WebP or GIF image.')).toBeVisible();
     expect(screen.getByLabelText('Avatar')).toBeInvalid();
@@ -356,7 +362,7 @@ describe('EditProfile', () => {
 
     await userEvent
       .setup()
-      .upload(await screen.findByLabelText('Avatar'), file('ada.png', 'image/png'));
+      .upload(await screen.findByLabelText('Avatar'), pickedFile('ada.png', 'image/png'));
 
     expect(await screen.findByText('Uploading…')).toBeVisible();
     expect(screen.getByLabelText('Avatar')).toBeDisabled();
@@ -376,7 +382,7 @@ describe('EditProfile', () => {
 
     await userEvent
       .setup()
-      .upload(await screen.findByLabelText('Avatar'), file('ada.png', 'image/png'));
+      .upload(await screen.findByLabelText('Avatar'), pickedFile('ada.png', 'image/png'));
 
     expect(
       await screen.findByText(
@@ -393,7 +399,7 @@ describe('EditProfile', () => {
       profile,
     });
     const user = userEvent.setup();
-    const image = file('ada.png', 'image/png');
+    const image = pickedFile('ada.png', 'image/png');
     await user.upload(await screen.findByLabelText('Avatar'), image);
     const uploading = await screen.findByText('Uploading…');
     profile.finishUpload();

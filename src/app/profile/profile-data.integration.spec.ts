@@ -12,8 +12,11 @@ import { ProfileData } from './profile-data';
 import { enablePersistentCacheInJsdom } from '../firebase/testing/persistent-cache-in-jsdom';
 import { slowEmulatorTestTimeout, slowEmulatorTimeout } from '../firebase/testing/slow-emulator';
 
-// Tests run in Node, but only see the browser's types.
 declare const process: { getBuiltinModule(id: 'node:buffer'): { Blob: typeof Blob } };
+
+function letStorageSendBlobsThroughNodeFetch() {
+  vi.stubGlobal('Blob', process.getBuiltinModule('node:buffer').Blob);
+}
 
 describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
   let testEnv: RulesTestEnvironment;
@@ -41,8 +44,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
 
   afterEach(tearDownFirebase);
 
-  /** What the server has, read past the rules. */
-  async function storedProfile(uid: string): Promise<unknown> {
+  async function profileOnTheServerPastTheRules(uid: string): Promise<unknown> {
     let profile: unknown;
     await testEnv.withSecurityRulesDisabled(async (context) => {
       profile = (await getDoc(doc(context.firestore(), 'profiles', uid))).data();
@@ -87,7 +89,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
       slowEmulatorTimeout,
     );
     await vi.waitFor(
-      async () => expect(await storedProfile(uid)).toEqual({ displayName: 'Ada' }),
+      async () => expect(await profileOnTheServerPastTheRules(uid)).toEqual({ displayName: 'Ada' }),
       slowEmulatorTimeout,
     );
   });
@@ -109,26 +111,28 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
     await enableNetwork(firestore);
 
     await vi.waitFor(() => expect(profileData.waitingToSync()).toBe(false), slowEmulatorTimeout);
-    expect(await storedProfile(uid)).toEqual({ displayName: 'Ada' });
+    expect(await profileOnTheServerPastTheRules(uid)).toEqual({ displayName: 'Ada' });
   });
 
   describe('avatar', () => {
     beforeEach(() => {
-      // Storage's Node build sends uploads with Node's fetch, which can't read jsdom's Blobs.
-      vi.stubGlobal('Blob', process.getBuiltinModule('node:buffer').Blob);
+      letStorageSendBlobsThroughNodeFetch();
     });
 
     afterEach(() => {
       vi.unstubAllGlobals();
     });
 
-    /** A stand-in for an image file; Storage only looks at its bytes and type. */
-    function image(bytes: number[]): Blob {
+    function cutTheConnectionToStorageAndStopRetryingSoon() {
+      TestBed.inject(FIREBASE_STORAGE).maxUploadRetryTime = 100;
+      vi.stubGlobal('fetch', () => Promise.reject(new TypeError('fetch failed')));
+    }
+
+    function pngWithBytes(bytes: number[]): Blob {
       return new Blob([new Uint8Array(bytes)], { type: 'image/png' });
     }
 
-    /** Downloads the avatar like an `<img>` would: without signing in. */
-    async function download(avatarUrl: string | undefined) {
+    async function downloadWithoutSigningInLikeAnImg(avatarUrl: string | undefined) {
       const response = await fetch(avatarUrl!);
       return {
         contentType: response.headers.get('content-type'),
@@ -144,7 +148,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
       const profileData = TestBed.inject(ProfileData);
       await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
 
-      await profileData.uploadAvatar(image([1, 2, 3]));
+      await profileData.uploadAvatar(pngWithBytes([1, 2, 3]));
 
       await vi.waitFor(
         () => expect(profileData.profile()?.avatarUrl).toBeDefined(),
@@ -152,9 +156,16 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
       );
       const { avatarUrl } = profileData.profile()!;
       expect(profileData.profile()).toEqual({ displayName: 'Ada', avatarUrl });
-      expect(await download(avatarUrl)).toEqual({ contentType: 'image/png', bytes: [1, 2, 3] });
+      expect(await downloadWithoutSigningInLikeAnImg(avatarUrl)).toEqual({
+        contentType: 'image/png',
+        bytes: [1, 2, 3],
+      });
       await vi.waitFor(
-        async () => expect(await storedProfile(uid)).toEqual({ displayName: 'Ada', avatarUrl }),
+        async () =>
+          expect(await profileOnTheServerPastTheRules(uid)).toEqual({
+            displayName: 'Ada',
+            avatarUrl,
+          }),
         slowEmulatorTimeout,
       );
     });
@@ -166,24 +177,24 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
       });
       const profileData = TestBed.inject(ProfileData);
       await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
-      await profileData.uploadAvatar(image([1, 2, 3]));
+      await profileData.uploadAvatar(pngWithBytes([1, 2, 3]));
       await vi.waitFor(
         () => expect(profileData.profile()?.avatarUrl).toBeDefined(),
         slowEmulatorTimeout,
       );
       const firstUrl = profileData.profile()?.avatarUrl;
 
-      await profileData.uploadAvatar(image([4, 5, 6]));
+      await profileData.uploadAvatar(pngWithBytes([4, 5, 6]));
 
       await vi.waitFor(
         () => expect(profileData.profile()?.avatarUrl).not.toBe(firstUrl),
         slowEmulatorTimeout,
       );
-      expect(await download(profileData.profile()?.avatarUrl)).toEqual({
+      expect(await downloadWithoutSigningInLikeAnImg(profileData.profile()?.avatarUrl)).toEqual({
         contentType: 'image/png',
         bytes: [4, 5, 6],
       });
-      expect((await download(firstUrl)).bytes).not.toEqual([1, 2, 3]);
+      expect((await downloadWithoutSigningInLikeAnImg(firstUrl)).bytes).not.toEqual([1, 2, 3]);
     });
 
     it('needs a connection to upload an avatar, unlike a display name change', async () => {
@@ -193,10 +204,9 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
       });
       const profileData = TestBed.inject(ProfileData);
       await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
-      TestBed.inject(FIREBASE_STORAGE).maxUploadRetryTime = 100;
-      vi.stubGlobal('fetch', () => Promise.reject(new TypeError('fetch failed')));
+      cutTheConnectionToStorageAndStopRetryingSoon();
 
-      await expect(profileData.uploadAvatar(image([1, 2, 3]))).rejects.toThrow();
+      await expect(profileData.uploadAvatar(pngWithBytes([1, 2, 3]))).rejects.toThrow();
 
       expect(profileData.profile()).toEqual({ displayName: 'Ada' });
     });
@@ -206,7 +216,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
       const profileData = TestBed.inject(ProfileData);
       await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
 
-      await profileData.uploadAvatar(image([1, 2, 3]));
+      await profileData.uploadAvatar(pngWithBytes([1, 2, 3]));
 
       await vi.waitFor(
         () =>
@@ -219,7 +229,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
         () => expect(profileData.profile()).toEqual({ displayName: '' }),
         slowEmulatorTimeout,
       );
-      expect(await storedProfile(uid)).toBeUndefined();
+      expect(await profileOnTheServerPastTheRules(uid)).toBeUndefined();
     });
 
     it('rejects an upload that Storage refuses, and keeps the profile as it was', async () => {
