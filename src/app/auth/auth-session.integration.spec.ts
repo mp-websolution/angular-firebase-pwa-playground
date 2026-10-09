@@ -27,11 +27,13 @@ function closeTheGooglePopupBeforeFinishing() {
   );
 }
 
-function failToDeleteFirestoreCache() {
+function failToDeleteFirestoreCache(
+  because: Error = new DOMException('Disk is busy', 'UnknownError'),
+) {
   const deleteDatabase = indexedDB.deleteDatabase.bind(indexedDB);
   const spy = vi.spyOn(indexedDB, 'deleteDatabase').mockImplementation((name) => {
     if (name.startsWith('firestore/')) {
-      throw new DOMException('Disk is busy', 'UnknownError');
+      throw because;
     }
     return deleteDatabase(name);
   });
@@ -153,6 +155,16 @@ describe('AuthSession against the Auth emulator', () => {
     expect(session.user()).not.toBeNull();
     expect(TestBed.inject(FIREBASE_AUTH).currentUser).not.toBeNull();
     expect(reloadPage).not.toHaveBeenCalled();
+  });
+
+  it('asks to close the other tabs when one holds on to the cache', async () => {
+    const session = TestBed.inject(AuthSession);
+    await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
+    failToDeleteFirestoreCache(new FirebaseError('failed-precondition', 'Cache in use.'));
+
+    await expect(session.signOut()).rejects.toMatchObject({ reason: 'other-tabs-open' });
+
+    expect(session.user()).not.toBeNull();
   });
 
   it('signs in with Google in a popup', async () => {
