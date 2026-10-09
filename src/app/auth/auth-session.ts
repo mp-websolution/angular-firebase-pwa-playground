@@ -59,6 +59,7 @@ export class AuthSession {
     );
   }
 
+  // No redirect: it needs Firebase Hosting's same-origin auth handler, which our webspace lacks.
   async signInWithGoogle(): Promise<void> {
     await this.#signInAndSetTheUserRightAway(() =>
       signInWithPopup(this.#auth, new GoogleAuthProvider()),

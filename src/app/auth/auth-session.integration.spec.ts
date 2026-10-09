@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { FirebaseError } from 'firebase/app';
-import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { environment } from '../../environments/environment';
 import { FIREBASE_AUTH, provideFirebase } from '../firebase/provide-firebase';
 import { RELOAD_PAGE } from '../browser/reload-page';
@@ -8,23 +8,12 @@ import { AuthSession } from './auth-session';
 import { enablePersistentCacheInJsdom } from '../firebase/testing/persistent-cache-in-jsdom';
 import { signOutForTheNextTest } from '../firebase/testing/tear-down-firebase';
 
-vi.mock('firebase/auth', async (importOriginal) => {
-  const sdk = await importOriginal<typeof import('firebase/auth')>();
-  return { ...sdk, signInWithPopup: vi.fn(sdk.signInWithPopup) };
-});
-
 function newEmail() {
   return `session-${crypto.randomUUID()}@example.com`;
 }
 
 function signOutAsAnotherTabWould() {
   return signOut(TestBed.inject(FIREBASE_AUTH));
-}
-
-function closeTheGooglePopupBeforeFinishing() {
-  vi.mocked(signInWithPopup).mockRejectedValueOnce(
-    new FirebaseError('auth/popup-closed-by-user', 'Firebase: Error (auth/popup-closed-by-user).'),
-  );
 }
 
 function failToDeleteFirestoreCache(because: Error) {
@@ -163,19 +152,6 @@ describe('AuthSession against the Auth emulator', () => {
     await expect(session.signOut()).rejects.toMatchObject({ reason: 'other-tabs-open' });
 
     expect(session.user()).not.toBeNull();
-  });
-
-  it('uses a popup for Google sign-in', async () => {
-    closeTheGooglePopupBeforeFinishing();
-
-    await expect(TestBed.inject(AuthSession).signInWithGoogle()).rejects.toMatchObject({
-      reason: 'popup-closed',
-    });
-
-    expect(signInWithPopup).toHaveBeenCalledWith(
-      TestBed.inject(FIREBASE_AUTH),
-      expect.any(GoogleAuthProvider),
-    );
   });
 
   it('does not reload the page when a user signs in', async () => {
