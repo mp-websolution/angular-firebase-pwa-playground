@@ -19,7 +19,7 @@ import { Note } from './note.model';
 @Service()
 export class NotesData {
   readonly #live = injectLiveData({
-    ref: (firestore, uid) => collection(firestore, 'users', uid, 'notes'),
+    refFor: (firestore, uid) => collection(firestore, 'users', uid, 'notes'),
     // A note created on this device sorts first while its server timestamp is still pending.
     listenTo: (notesRef) => query(notesRef, orderBy('createdAt', 'desc')),
     map: (snapshot): Note[] =>

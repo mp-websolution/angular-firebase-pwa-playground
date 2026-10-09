@@ -13,7 +13,7 @@ import { Profile } from './profile.model';
 export class ProfileData {
   readonly #storage = inject(FIREBASE_STORAGE);
   readonly #live = injectLiveData({
-    ref: (firestore, uid) => doc(firestore, 'profiles', uid),
+    refFor: (firestore, uid) => doc(firestore, 'profiles', uid),
     map: (snapshot): Profile => ({
       displayName: snapshot.get('displayName') ?? '',
       avatarUrl: snapshot.get('avatarUrl'),
