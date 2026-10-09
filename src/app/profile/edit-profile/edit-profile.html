@@ -30,7 +30,6 @@
         </label>
         <p id="avatar-message" aria-live="polite" class="text-sm text-red-700">
           @if (!profile.displayName) {
-            <!-- The Firestore rules only take an avatar URL on a profile with a display name. -->
             <span class="text-slate-600">Save a display name first.</span>
           }
           @switch (avatarStatus()) {
