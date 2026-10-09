@@ -92,14 +92,14 @@ function followTheStoredNameButKeepUnsavedTyping(
     : { displayName };
 }
 
-function whatTheFirestoreRulesWouldRejectInTheTrimmedName(displayName: string): ValidationResult {
-  if (!displayName) {
+function whatTheFirestoreRulesWouldRejectInTheTrimmedName(trimmedName: string): ValidationResult {
+  if (!trimmedName) {
     return { kind: 'required', message: 'Enter a display name.' };
   }
-  if (displayName.length < 2) {
+  if (trimmedName.length < 2) {
     return { kind: 'minLength', message: 'Use at least 2 characters.' };
   }
-  return displayName.length > 50
+  return trimmedName.length > 50
     ? { kind: 'maxLength', message: 'Use at most 50 characters.' }
     : undefined;
 }

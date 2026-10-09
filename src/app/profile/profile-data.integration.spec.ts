@@ -197,7 +197,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
       expect((await downloadWithoutSigningInLikeAnImg(firstUrl)).bytes).not.toEqual([1, 2, 3]);
     });
 
-    it('needs a connection to upload an avatar, unlike a display name change', async () => {
+    it('rejects an avatar upload without a connection, and keeps the profile as it was', async () => {
       const uid = await signInAsNewUser();
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'profiles', uid), { displayName: 'Ada' });
@@ -211,7 +211,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
       expect(profileData.profile()).toEqual({ displayName: 'Ada' });
     });
 
-    it('keeps no avatar on a profile without a display name, and reports that as a bug', async () => {
+    it('records no avatar URL on a profile without a display name, and reports the refused write as a bug', async () => {
       const uid = await signInAsNewUser();
       const profileData = TestBed.inject(ProfileData);
       await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
