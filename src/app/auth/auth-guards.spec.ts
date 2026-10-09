@@ -28,6 +28,15 @@ describe('auth guards', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
   });
 
+  it('remembers no return URL for home', async () => {
+    await renderApp('/');
+
+    expect(await screen.findByRole('link', { name: 'Create one' })).toHaveAttribute(
+      'href',
+      '/sign-up',
+    );
+  });
+
   it("waits for the previous visit's session to be restored before deciding", async () => {
     const session = new FakeAuthSession({ restoring: 'ada@example.com' });
     setTimeout(() => session.finishRestoring(), 50);
@@ -35,6 +44,15 @@ describe('auth guards', () => {
     await renderApp('/', { session });
 
     expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
+  });
+
+  it('remembers the requested page in the return URL', async () => {
+    await renderApp('/deep/page', { extraRoutes: deepRoutes });
+
+    expect(await screen.findByRole('link', { name: 'Create one' })).toHaveAttribute(
+      'href',
+      '/sign-up?returnUrl=%2Fdeep%2Fpage',
+    );
   });
 
   it('returns to the requested page after sign-in', async () => {
