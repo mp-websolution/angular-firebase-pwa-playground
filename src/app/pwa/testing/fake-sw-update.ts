@@ -1,7 +1,6 @@
 import type { SwUpdate, UnrecoverableStateEvent, VersionEvent } from '@angular/service-worker';
 import { Subject } from 'rxjs';
 
-// `implements SwUpdate` would also demand its private fields; this keeps only the public ones.
 type PublicApi<T> = { [K in keyof T]: T[K] };
 
 export interface FakeSwUpdateOptions {
@@ -11,14 +10,12 @@ export interface FakeSwUpdateOptions {
   offline?: boolean;
 }
 
-/** An in-memory stand-in for Angular's `SwUpdate`, driven by the test like a deploy would drive it. */
 export class FakeSwUpdate implements PublicApi<SwUpdate> {
   readonly #versionUpdates = new Subject<VersionEvent>();
   readonly #unrecoverable = new Subject<UnrecoverableStateEvent>();
   readonly #slowDownload: boolean;
   #offline: boolean;
-  /** The tab keeps running the version it loaded until it reloads, which tests can't do. */
-  readonly #tabVersion = 1;
+  readonly #versionTheTabRunsUntilItReloads = 1;
   #foundVersion = 1;
   #deployedVersion = 1;
   #finishDownload?: () => void;
@@ -32,17 +29,14 @@ export class FakeSwUpdate implements PublicApi<SwUpdate> {
     this.#offline = offline;
   }
 
-  /** A new version goes live on the server. The app finds it on its next update check. */
   deployNewVersion(): void {
     this.#deployedVersion++;
   }
 
-  /** Ends the download started by an update check with the `slowDownload` option. */
   finishDownload(): void {
     this.#finishDownload?.();
   }
 
-  /** The version serving this tab broke, e.g. its files are gone from the server and the cache. */
   breakCurrentVersion(): void {
     this.#unrecoverable.next({
       type: 'UNRECOVERABLE_STATE',
@@ -62,7 +56,7 @@ export class FakeSwUpdate implements PublicApi<SwUpdate> {
       return false;
     }
     this.#foundVersion = this.#deployedVersion;
-    const currentVersion = { hash: `v${this.#tabVersion}` };
+    const currentVersion = { hash: `v${this.#versionTheTabRunsUntilItReloads}` };
     const latestVersion = { hash: `v${this.#foundVersion}` };
     this.#versionUpdates.next({ type: 'VERSION_DETECTED', version: latestVersion });
     if (this.#slowDownload) {

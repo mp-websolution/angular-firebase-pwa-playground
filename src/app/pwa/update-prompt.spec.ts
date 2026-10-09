@@ -4,10 +4,7 @@ import { renderApp } from '../testing/render-app';
 import { FakeSwUpdate } from './testing/fake-sw-update';
 
 describe('Update prompt', () => {
-  afterEach(() => {
-    // Drop the own property `returnToTab` sets, so `document` reports jsdom's state again.
-    Reflect.deleteProperty(document, 'visibilityState');
-  });
+  afterEach(letTheDocumentReportJsdomsVisibilityAgain);
 
   it('stays hidden while the app is up to date', async () => {
     await renderApp('/sign-in');
@@ -32,7 +29,7 @@ describe('Update prompt', () => {
     await renderApp('/sign-in', { swUpdate });
     swUpdate.deployNewVersion();
 
-    returnToTab();
+    returnToTheTabOrInstalledApp();
 
     expect(await screen.findByText('A new version is available.')).toBeVisible();
   });
@@ -45,7 +42,7 @@ describe('Update prompt', () => {
     expect(liveRegion).toBeInTheDocument();
 
     swUpdate.deployNewVersion();
-    returnToTab();
+    returnToTheTabOrInstalledApp();
 
     expect(liveRegion).toContainElement(await screen.findByText('A new version is available.'));
   });
@@ -58,7 +55,7 @@ describe('Update prompt', () => {
     expect(screen.queryByText('A new version is available.')).not.toBeInTheDocument();
 
     swUpdate.goOnline();
-    returnToTab();
+    returnToTheTabOrInstalledApp();
 
     expect(await screen.findByText('A new version is available.')).toBeVisible();
   });
@@ -109,7 +106,7 @@ describe('Update prompt', () => {
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Later' }));
     swUpdate.deployNewVersion();
 
-    returnToTab();
+    returnToTheTabOrInstalledApp();
 
     expect(await screen.findByText('A new version is available.')).toBeVisible();
   });
@@ -140,8 +137,11 @@ describe('Update prompt', () => {
   });
 });
 
-/** The user switches back to this tab, or brings the installed app to the front. */
-function returnToTab(): void {
+function returnToTheTabOrInstalledApp(): void {
   Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
   document.dispatchEvent(new Event('visibilitychange'));
+}
+
+function letTheDocumentReportJsdomsVisibilityAgain(): void {
+  Reflect.deleteProperty(document, 'visibilityState');
 }
