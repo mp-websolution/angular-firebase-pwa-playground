@@ -14,7 +14,7 @@ export const routes: Routes = [
   },
   {
     path: 'profile',
-    // Lazy: the profile page is where the Firestore SDK first gets imported (ADR 0003).
+    // Lazy, or the Firestore SDK joins the initial bundle.
     loadComponent: () => import('./profile/edit-profile/edit-profile').then((m) => m.EditProfile),
     canActivate: [signedInGuard],
     title: 'Profile',

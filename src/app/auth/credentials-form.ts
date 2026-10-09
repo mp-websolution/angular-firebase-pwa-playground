@@ -3,7 +3,6 @@ import { FormField, email, form, required, submit } from '@angular/forms/signals
 import { messageOf } from './auth-session-error';
 import { Credentials } from './credentials.model';
 
-/** Email and password fields that run `action` on submit and show why it failed. */
 @Component({
   selector: 'app-credentials-form',
   imports: [FormField],

@@ -4,10 +4,7 @@ import { renderApp } from '../testing/render-app';
 import { FakeSwUpdate } from './testing/fake-sw-update';
 
 describe('Update prompt', () => {
-  afterEach(() => {
-    // Drop the own property `returnToTab` sets, so `document` reports jsdom's state again.
-    Reflect.deleteProperty(document, 'visibilityState');
-  });
+  afterEach(letTheDocumentReportJsdomsVisibilityAgain);
 
   it('stays hidden while the app is up to date', async () => {
     await renderApp('/sign-in');
@@ -32,7 +29,33 @@ describe('Update prompt', () => {
     await renderApp('/sign-in', { swUpdate });
     swUpdate.deployNewVersion();
 
-    returnToTab();
+    returnToTheTabOrInstalledApp();
+
+    expect(await screen.findByText('A new version is available.')).toBeVisible();
+  });
+
+  it('announces a new version to screen-reader users through a live region already on the page', async () => {
+    const swUpdate = new FakeSwUpdate();
+    const { container } = await renderApp('/sign-in', { swUpdate });
+    await screen.findByRole('heading', { level: 1, name: 'Sign in' });
+    const liveRegion = container.querySelector('[aria-live="polite"]');
+    expect(liveRegion).toBeInTheDocument();
+
+    swUpdate.deployNewVersion();
+    returnToTheTabOrInstalledApp();
+
+    expect(liveRegion).toContainElement(await screen.findByText('A new version is available.'));
+  });
+
+  it('shows nothing when an update check fails offline, and offers the reload after the next check', async () => {
+    const swUpdate = new FakeSwUpdate({ offline: true });
+    swUpdate.deployNewVersion();
+    await renderApp('/sign-in', { swUpdate });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
+    expect(screen.queryByText('A new version is available.')).not.toBeInTheDocument();
+
+    swUpdate.goOnline();
+    returnToTheTabOrInstalledApp();
 
     expect(await screen.findByText('A new version is available.')).toBeVisible();
   });
@@ -83,7 +106,7 @@ describe('Update prompt', () => {
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Later' }));
     swUpdate.deployNewVersion();
 
-    returnToTab();
+    returnToTheTabOrInstalledApp();
 
     expect(await screen.findByText('A new version is available.')).toBeVisible();
   });
@@ -114,8 +137,11 @@ describe('Update prompt', () => {
   });
 });
 
-/** The user switches back to this tab, or brings the installed app to the front. */
-function returnToTab(): void {
+function returnToTheTabOrInstalledApp(): void {
   Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
   document.dispatchEvent(new Event('visibilitychange'));
+}
+
+function letTheDocumentReportJsdomsVisibilityAgain(): void {
+  Reflect.deleteProperty(document, 'visibilityState');
 }

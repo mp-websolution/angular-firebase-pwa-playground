@@ -15,7 +15,7 @@
 
 **Status:** ready-for-agent
 
-- [ ] Rules files read through named functions; Prototype markers and SVG warning kept
-- [ ] Existing rules specs pass unchanged; test names reviewed as documentation
-- [ ] Config files keep only reason/warning comments
-- [ ] `npm run lint`, `npm test`, `npm run test:integration`, `npm run build` pass; the `checks` workflow still runs green on the PR
+- [x] Rules files read through named functions; Prototype markers and SVG warning kept
+- [x] Existing rules specs pass unchanged; test names reviewed as documentation
+- [x] Config files keep only reason/warning comments
+- [x] `npm run lint`, `npm test`, `npm run test:integration`, `npm run build` pass; the `checks` workflow still runs green on the PR

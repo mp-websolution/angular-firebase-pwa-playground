@@ -16,7 +16,7 @@
 
 **Status:** ready-for-agent
 
-- [ ] No comments in function bodies, specs or the profile template
-- [ ] Every contract fact from the removed TSDoc and template comment is pinned by a named test
-- [ ] Public interface of `ProfileData` unchanged, so the fake is too
-- [ ] `npm run lint`, `npm test`, `npm run test:integration`, `npm run build` pass
+- [x] No comments in function bodies, specs or the profile template
+- [x] Every contract fact from the removed TSDoc and template comment is pinned by a named test
+- [x] Public interface of `ProfileData` unchanged, so the fake is too
+- [x] `npm run lint`, `npm test`, `npm run test:integration`, `npm run build` pass

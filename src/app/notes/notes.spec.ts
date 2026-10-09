@@ -171,6 +171,28 @@ describe('Notes', () => {
     expect(screen.getByLabelText('Note')).toHaveValue('Buy milk');
   });
 
+  it('changes one note at a time, leaving the first as it was when another is edited', async () => {
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [
+        { provide: NotesData, useValue: new FakeNotesData({ notes: ['Call Grace', 'Buy milk'] }) },
+      ],
+    });
+    const user = userEvent.setup();
+    const first = await screen.findByRole('listitem', { name: 'Call Grace' });
+    await user.click(within(first).getByRole('button', { name: 'Edit' }));
+    await user.type(screen.getByLabelText('Note'), ' today');
+
+    await user.click(
+      within(screen.getByRole('listitem', { name: 'Buy milk' })).getByRole('button', {
+        name: 'Edit',
+      }),
+    );
+
+    expect(screen.getAllByLabelText('Note')).toEqual([screen.getByDisplayValue('Buy milk')]);
+    expect(screen.getByRole('listitem', { name: 'Call Grace' })).toBeVisible();
+  });
+
   it('keeps the note as it was when the change is cancelled', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
     await renderApp('/notes', {

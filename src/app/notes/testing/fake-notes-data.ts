@@ -2,7 +2,6 @@ import { signal } from '@angular/core';
 import type { NotesData } from '../notes-data';
 import { Note } from '../note.model';
 
-// `implements NotesData` would also demand its `#private` fields; this keeps only the public ones.
 type PublicApi<T> = { [K in keyof T]: T[K] };
 
 export interface FakeNotesDataOptions {
@@ -14,7 +13,6 @@ export interface FakeNotesDataOptions {
   loadFails?: boolean;
 }
 
-/** An in-memory stand-in for `NotesData` that behaves like Firestore for component tests. */
 export class FakeNotesData implements PublicApi<NotesData> {
   readonly #notes = signal<Note[] | undefined>(undefined);
   readonly #waitingToSync = signal(false);
@@ -35,7 +33,6 @@ export class FakeNotesData implements PublicApi<NotesData> {
     this.#offline = offline;
   }
 
-  /** Stores a new note as if the user created it on another device or in another tab. */
   createElsewhere(text: string): void {
     this.#notes.update((notes = []) => [{ id: crypto.randomUUID(), text }, ...notes]);
   }

@@ -2,7 +2,6 @@ import { signal } from '@angular/core';
 import type { ProfileData } from '../profile-data';
 import { Profile } from '../profile.model';
 
-// `implements ProfileData` would also demand its `#private` fields; this keeps only the public ones.
 type PublicApi<T> = { [K in keyof T]: T[K] };
 
 export interface FakeProfileDataOptions {
@@ -20,7 +19,6 @@ export interface FakeProfileDataOptions {
   slowUpload?: boolean;
 }
 
-/** An in-memory stand-in for `ProfileData` that behaves like Firestore for component tests. */
 export class FakeProfileData implements PublicApi<ProfileData> {
   readonly #profile = signal<Profile | undefined>(undefined);
   readonly #waitingToSync = signal(false);
@@ -53,12 +51,10 @@ export class FakeProfileData implements PublicApi<ProfileData> {
     this.#slowUpload = slowUpload;
   }
 
-  /** Stores a display name as if the user changed it on another device or in another tab. */
   changeElsewhere(displayName: string): void {
     this.#profile.update((profile) => ({ ...profile, displayName }));
   }
 
-  /** Ends the upload held by the `slowUpload` option. */
   finishUpload(): void {
     this.#finishUpload?.();
   }
@@ -68,7 +64,6 @@ export class FakeProfileData implements PublicApi<ProfileData> {
     this.#waitingToSync.set(this.#offline);
   }
 
-  /** Stores the avatar at `https://storage.example/avatars/<file name>`. */
   async uploadAvatar(image: Blob): Promise<void> {
     if (this.#slowUpload) {
       await new Promise<void>((resolve) => (this.#finishUpload = resolve));
@@ -76,7 +71,11 @@ export class FakeProfileData implements PublicApi<ProfileData> {
     if (this.#uploadFails) {
       throw new Error('Upload failed.');
     }
-    const avatarUrl = `https://storage.example/avatars/${image instanceof File ? image.name : 'avatar'}`;
+    const avatarUrl = avatarUrlNamedAfterTheFile(image);
     this.#profile.update((profile) => ({ displayName: '', ...profile, avatarUrl }));
   }
+}
+
+function avatarUrlNamedAfterTheFile(image: Blob): string {
+  return `https://storage.example/avatars/${image instanceof File ? image.name : 'avatar'}`;
 }

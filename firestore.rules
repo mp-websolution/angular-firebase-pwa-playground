@@ -1,58 +1,67 @@
 rules_version = '2';
 
-// Deny everything by default. Each collection opens access in its own match block.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /{document=**} {
       allow read, write: if false;
     }
 
-    function isSignedInAs(uid) {
-      return request.auth != null && request.auth.uid == uid;
+    function isSignedInAsOwner(ownerUid) {
+      return request.auth != null && request.auth.uid == ownerUid;
     }
 
-    // Baseline: one profile per user, keyed by user ID. Only its owner can read or change it.
-    match /profiles/{uid} {
-      allow read, delete: if isSignedInAs(uid);
-      allow create, update: if isSignedInAs(uid) && isValidProfile(request.resource.data);
+    function isTrimmedTextOfLength(text, minLength, maxLength) {
+      return text is string
+        && text == text.trim()
+        && text.size() >= minLength
+        && text.size() <= maxLength;
+    }
 
-      // A profile always has a display name: the profile page only offers an avatar upload once
-      // one is saved.
+    match /profiles/{uid} {
+      allow read, delete: if isSignedInAsOwner(uid);
+      allow create, update: if isSignedInAsOwner(uid) && isValidProfile(request.resource.data);
+
       function isValidProfile(profile) {
         return profile.keys().hasOnly(['displayName', 'avatarUrl'])
           && isValidDisplayName(profile.displayName)
-          && (!('avatarUrl' in profile) || profile.avatarUrl is string);
+          && hasNoAvatarUrlOrATextOne(profile);
       }
 
-      // The profile page saves display names trimmed, so 2 characters means 2 visible ones.
       function isValidDisplayName(displayName) {
-        return displayName is string
-          && displayName == displayName.trim()
-          && displayName.size() >= 2
-          && displayName.size() <= 50;
+        return isTrimmedTextOfLength(displayName, 2, 50);
+      }
+
+      function hasNoAvatarUrlOrATextOne(profile) {
+        return !('avatarUrl' in profile) || profile.avatarUrl is string;
       }
     }
 
     // ---- Prototype: notes (src/app/notes) --------------------------------------------------
     // Delete this section together with the Prototype.
 
-    // Each user's notes, under their user ID. Only their owner can read or change them.
     match /users/{uid}/notes/{noteId} {
-      allow read, delete: if isSignedInAs(uid);
-      allow create: if isSignedInAs(uid)
-        && request.resource.data.keys().hasOnly(['text', 'createdAt'])
-        && isValidNoteText(request.resource.data.text)
-        && request.resource.data.createdAt == request.time;
-      allow update: if isSignedInAs(uid)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text'])
+      allow read, delete: if isSignedInAsOwner(uid);
+      allow create: if isSignedInAsOwner(uid) && isValidNewNote(request.resource.data);
+      allow update: if isSignedInAsOwner(uid)
+        && changesOnlyTheText(resource.data, request.resource.data)
         && isValidNoteText(request.resource.data.text);
 
-      // The notes page saves texts trimmed, so 1 character means 1 visible one.
+      function isValidNewNote(note) {
+        return note.keys().hasOnly(['text', 'createdAt'])
+          && isValidNoteText(note.text)
+          && isCreatedAtTheServerTime(note);
+      }
+
+      function isCreatedAtTheServerTime(note) {
+        return note.createdAt == request.time;
+      }
+
+      function changesOnlyTheText(before, after) {
+        return after.diff(before).affectedKeys().hasOnly(['text']);
+      }
+
       function isValidNoteText(text) {
-        return text is string
-          && text == text.trim()
-          && text.size() >= 1
-          && text.size() <= 1000;
+        return isTrimmedTextOfLength(text, 1, 1000);
       }
     }
 

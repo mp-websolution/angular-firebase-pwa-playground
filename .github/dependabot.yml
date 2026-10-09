@@ -1,4 +1,4 @@
-# Grouped update PRs. CI checks them; a human merges every one (no auto-merge).
+# No auto-merge: a human merges every update PR.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -21,8 +21,7 @@ updates:
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
     groups:
-      # Angular and the tooling that must move with it. The compiler pins the TypeScript range,
-      # and typescript-eslint must support that TypeScript version.
+      # The compiler pins the TypeScript range, and typescript-eslint must support that TypeScript version.
       angular:
         patterns:
           - '@angular/*'
@@ -37,7 +36,7 @@ updates:
           - 'firebase'
           - 'firebase-tools'
           - '@firebase/*'
-      # Everything else. Groups are matched in order, so this only gets what's left.
+      # Groups are matched in order, so this catch-all must stay last.
       other:
         patterns:
           - '*'
