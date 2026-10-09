@@ -1,12 +1,13 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
+import { RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import { Timestamp, collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
-import { AuthSession } from '../auth/auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
 import { provideFirebase } from '../firebase/provide-firebase';
 import { tearDownFirebase } from '../firebase/testing/tear-down-firebase';
+import { testEnvironmentWithDeployedFirestoreRules } from '../firebase/testing/deployed-firestore-rules';
+import { signInAsNewUser } from '../firebase/testing/sign-in-as-new-user';
 import { NotesData } from './notes-data';
 import { enablePersistentCacheInJsdom } from '../firebase/testing/persistent-cache-in-jsdom';
 import { slowEmulatorTestTimeout, slowEmulatorTimeout } from '../firebase/testing/slow-emulator';
@@ -15,12 +16,7 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
   let testEnv: RulesTestEnvironment;
 
   beforeAll(async () => {
-    // Writes notes as another device would, past the rules. Finds the emulator through
-    // FIRESTORE_EMULATOR_HOST, set by `emulators:exec`.
-    testEnv = await initializeTestEnvironment({
-      projectId: environment.firebase.options.projectId,
-      firestore: {},
-    });
+    testEnv = await testEnvironmentWithDeployedFirestoreRules();
   });
 
   afterAll(async () => {
@@ -39,16 +35,6 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
   });
 
   afterEach(tearDownFirebase);
-
-  /** Signs a new user in, as the guard makes sure before the notes page loads. */
-  async function signUp(): Promise<string> {
-    const session = TestBed.inject(AuthSession);
-    await session.signUpWithEmail({
-      email: `notes-${crypto.randomUUID()}@example.com`,
-      password: 'correct-horse',
-    });
-    return session.user()!.uid;
-  }
 
   /** Stores a note past the rules, as if written on another device. */
   async function storeNote(uid: string, id: string, text: string, createdAt: Date): Promise<void> {
@@ -71,7 +57,7 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
   }
 
   it('has no notes for a new user', async () => {
-    await signUp();
+    await signInAsNewUser();
 
     const notesData = TestBed.inject(NotesData);
 
@@ -79,7 +65,7 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
   });
 
   it("lists the signed-in user's notes, newest first", async () => {
-    const uid = await signUp();
+    const uid = await signInAsNewUser();
     await storeNote(uid, 'older', 'Buy milk', new Date('2026-01-01'));
     await storeNote(uid, 'newer', 'Call Grace', new Date('2026-01-02'));
 
@@ -96,7 +82,7 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
   });
 
   it('creates a note on top of the list and syncs it to the server', async () => {
-    const uid = await signUp();
+    const uid = await signInAsNewUser();
     await storeNote(uid, 'older', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
     await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
@@ -114,7 +100,7 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
   });
 
   it("changes a note's text and syncs it to the server", async () => {
-    const uid = await signUp();
+    const uid = await signInAsNewUser();
     await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
     await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
@@ -132,7 +118,7 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
   });
 
   it('deletes a note and syncs it to the server', async () => {
-    const uid = await signUp();
+    const uid = await signInAsNewUser();
     await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
     await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
@@ -144,7 +130,7 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
   });
 
   it('shows notes added, changed and deleted elsewhere, e.g. on another device', async () => {
-    const uid = await signUp();
+    const uid = await signInAsNewUser();
     await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
     await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);

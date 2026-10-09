@@ -40,7 +40,10 @@ export interface LiveData<Ref extends Listenable, T> {
    * delete still queued from before a page reload.
    */
   readonly waitingToSync: Signal<boolean>;
-  /** True when the data can't be loaded, e.g. Firestore refused to read it. */
+  /**
+   * True when the data can't be loaded, e.g. Firestore refused to read it. Stays false when
+   * sign-out, here or in another tab, shuts Firestore down.
+   */
   readonly loadFailed: Signal<boolean>;
   /** Where the signed-in user's data lives, for commands to write to. */
   ref(): Promise<Ref>;

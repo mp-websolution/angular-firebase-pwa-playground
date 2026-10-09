@@ -1,11 +1,6 @@
-import {
-  RulesTestEnvironment,
-  assertFails,
-  assertSucceeds,
-  initializeTestEnvironment,
-} from '@firebase/rules-unit-testing';
+import { RulesTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { environment } from '../../environments/environment';
+import { testEnvironmentWithDeployedFirestoreRules } from '../firebase/testing/deployed-firestore-rules';
 
 describe('Firestore rules for profiles', () => {
   let testEnv: RulesTestEnvironment;
@@ -13,12 +8,7 @@ describe('Firestore rules for profiles', () => {
   let grace: string;
 
   beforeAll(async () => {
-    // No rules passed: the emulator already runs firestore.rules, the file that gets deployed.
-    // `emulators:exec` tells it where the Firestore emulator is (FIRESTORE_EMULATOR_HOST).
-    testEnv = await initializeTestEnvironment({
-      projectId: environment.firebase.options.projectId,
-      firestore: {},
-    });
+    testEnv = await testEnvironmentWithDeployedFirestoreRules();
   });
 
   afterAll(async () => {

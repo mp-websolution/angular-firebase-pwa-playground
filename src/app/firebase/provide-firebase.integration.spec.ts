@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Auth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { Auth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getApp } from 'firebase/app';
 import { Firestore, doc, getDoc, getFirestore, terminate } from 'firebase/firestore';
 import { getDownloadURL, ref } from 'firebase/storage';
@@ -12,6 +12,7 @@ import {
   signOutAndClearCache,
 } from './provide-firebase';
 import { enablePersistentCacheInJsdom } from './testing/persistent-cache-in-jsdom';
+import { signOutForTheNextTest } from './testing/tear-down-firebase';
 
 const { emulators } = environment.firebase;
 
@@ -25,12 +26,8 @@ function readPathNoRuleOpens(firestore: Firestore) {
   return getDoc(doc(firestore, 'probe/doc'));
 }
 
-async function signOutSinceAuthKeepsTheUserAcrossApps(): Promise<void> {
-  await signOut(TestBed.inject(FIREBASE_AUTH));
-}
-
 describe('provideFirebase against the emulators', () => {
-  afterEach(signOutSinceAuthKeepsTheUserAcrossApps);
+  afterEach(signOutForTheNextTest);
 
   describe('with the memory cache', () => {
     beforeEach(() => {

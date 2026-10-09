@@ -1,12 +1,13 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
+import { RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
-import { AuthSession } from '../auth/auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
 import { provideFirebase } from '../firebase/provide-firebase';
 import { tearDownFirebase } from '../firebase/testing/tear-down-firebase';
+import { testEnvironmentWithDeployedFirestoreRules } from '../firebase/testing/deployed-firestore-rules';
+import { signInAsNewUser } from '../firebase/testing/sign-in-as-new-user';
 import { ProfileData } from './profile-data';
 import { enablePersistentCacheInJsdom } from '../firebase/testing/persistent-cache-in-jsdom';
 import { slowEmulatorTestTimeout, slowEmulatorTimeout } from '../firebase/testing/slow-emulator';
@@ -18,12 +19,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
   let testEnv: RulesTestEnvironment;
 
   beforeAll(async () => {
-    // Writes profiles as they'd be there already, past the rules. Finds the emulator through
-    // FIRESTORE_EMULATOR_HOST, set by `emulators:exec`.
-    testEnv = await initializeTestEnvironment({
-      projectId: environment.firebase.options.projectId,
-      firestore: {},
-    });
+    testEnv = await testEnvironmentWithDeployedFirestoreRules();
   });
 
   afterAll(async () => {
@@ -43,16 +39,6 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
 
   afterEach(tearDownFirebase);
 
-  /** Signs a new user in, as the guard makes sure before the profile page loads. */
-  async function signUp(): Promise<string> {
-    const session = TestBed.inject(AuthSession);
-    await session.signUpWithEmail({
-      email: `profile-${crypto.randomUUID()}@example.com`,
-      password: 'correct-horse',
-    });
-    return session.user()!.uid;
-  }
-
   /** What the server has, read past the rules. */
   async function storedProfile(uid: string): Promise<unknown> {
     let profile: unknown;
@@ -63,7 +49,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
   }
 
   it("reads the signed-in user's stored profile", async () => {
-    const uid = await signUp();
+    const uid = await signInAsNewUser();
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(doc(context.firestore(), 'profiles', uid), { displayName: 'Ada' });
     });
@@ -77,7 +63,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
   });
 
   it('has no display name for a user who never set one', async () => {
-    await signUp();
+    await signInAsNewUser();
 
     const profileData = TestBed.inject(ProfileData);
 
@@ -88,7 +74,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
   });
 
   it('changes the display name and syncs it to the server', async () => {
-    const uid = await signUp();
+    const uid = await signInAsNewUser();
     const profileData = TestBed.inject(ProfileData);
     await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
 
@@ -129,7 +115,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
     }
 
     it('uploads an avatar that anyone can download, and the profile shows it', async () => {
-      const uid = await signUp();
+      const uid = await signInAsNewUser();
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'profiles', uid), { displayName: 'Ada' });
       });
@@ -152,7 +138,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
     });
 
     it('replaces the avatar under a new URL, so browsers show the new image', async () => {
-      const uid = await signUp();
+      const uid = await signInAsNewUser();
       await testEnv.withSecurityRulesDisabled(async (context) => {
         await setDoc(doc(context.firestore(), 'profiles', uid), { displayName: 'Ada' });
       });
@@ -178,7 +164,7 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
     });
 
     it('rejects an upload that Storage refuses, and keeps the profile as it was', async () => {
-      await signUp();
+      await signInAsNewUser();
       const profileData = TestBed.inject(ProfileData);
       await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
 

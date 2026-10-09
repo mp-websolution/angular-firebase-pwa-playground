@@ -24,6 +24,7 @@ import { RELOAD_PAGE } from '../browser/reload-page';
 import { injectLiveData } from './inject-live-data';
 import { FIRESTORE, provideFirebase } from './provide-firebase';
 import { tearDownFirebase } from './testing/tear-down-firebase';
+import { signInAsNewUser } from './testing/sign-in-as-new-user';
 import { enablePersistentCacheInJsdom } from './testing/persistent-cache-in-jsdom';
 import { slowEmulatorTestTimeout, slowEmulatorTimeout } from './testing/slow-emulator';
 
@@ -72,15 +73,6 @@ describe('injectLiveData against the emulators', slowEmulatorTestTimeout, () => 
   });
 
   afterEach(tearDownFirebase);
-
-  async function signInAsNewUser(): Promise<string> {
-    const session = TestBed.inject(AuthSession);
-    await session.signUpWithEmail({
-      email: `live-data-${crypto.randomUUID()}@example.com`,
-      password: 'correct-horse',
-    });
-    return session.user()!.uid;
-  }
 
   async function writeAsAnotherDevicePastTheRules(
     path: string,
