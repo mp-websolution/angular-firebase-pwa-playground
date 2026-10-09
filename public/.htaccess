@@ -1,5 +1,3 @@
-# Apache config for the webspace (ADR 0002): SPA fallback and caching that never serves a stale app.
-
 <IfModule mod_mime.c>
   AddType application/manifest+json .webmanifest
 </IfModule>
@@ -7,19 +5,16 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
-  # Existing files and directories are served as they are.
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
-  # Other paths with a file extension stay 404s, like the service worker's navigation URLs, so a
-  # missing chunk never gets index.html. Every other unknown path is an app route.
+  # Paths with a file extension stay 404s, as for the service worker, so a missing chunk never gets index.html.
   RewriteCond %{REQUEST_URI} !\.[^/]+$
   RewriteRule ^ index.html [L]
 </IfModule>
 
 <IfModule mod_headers.c>
-  # Revalidate on every request: the entry point, the service worker and the files it checks for
-  # updates. A cached copy of any of them would keep serving the old version.
+  # A cached copy of any of these would keep serving the old version.
   <FilesMatch "^(index\.html|ngsw\.json|ngsw-worker\.js|safety-worker\.js|worker-basic\.min\.js|manifest\.webmanifest)$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
