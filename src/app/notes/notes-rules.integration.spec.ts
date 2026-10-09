@@ -11,6 +11,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { testEnvironmentWithDeployedFirestoreRules } from '../firebase/testing/deployed-firestore-rules';
+import { uidNoOtherTestUses } from '../firebase/testing/uid-no-other-test-uses';
 
 describe('Firestore rules for notes', () => {
   let testEnv: RulesTestEnvironment;
@@ -26,9 +27,8 @@ describe('Firestore rules for notes', () => {
   });
 
   beforeEach(async () => {
-    // Fresh users per test, so tests never see each other's notes.
-    ada = `ada-${crypto.randomUUID()}`;
-    grace = `grace-${crypto.randomUUID()}`;
+    ada = uidNoOtherTestUses('ada');
+    grace = uidNoOtherTestUses('grace');
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(doc(context.firestore(), 'users', ada, 'notes', 'note-1'), {
         text: 'Buy milk',
@@ -37,7 +37,6 @@ describe('Firestore rules for notes', () => {
     });
   });
 
-  /** `ownerUid`'s notes, as `uid` sees them (`null`: signed out). */
   function notesAs(uid: string | null, ownerUid: string) {
     const context = uid ? testEnv.authenticatedContext(uid) : testEnv.unauthenticatedContext();
     return collection(context.firestore(), 'users', ownerUid, 'notes');
@@ -80,13 +79,12 @@ describe('Firestore rules for notes', () => {
     await assertFails(deleteDoc(noteAs(null, ada)));
   });
 
-  // Each bad text is tried on a new note and on an existing one.
   it.each([
     ['is blank', '   '],
     ['is longer than 1000 characters', 'x'.repeat(1001)],
     ['has surrounding spaces', ' Buy milk '],
     ['is not text', 42],
-  ])('rejects a text that %s', async (_case, text) => {
+  ])('rejects a text that %s, on a new note and on an existing one', async (_case, text) => {
     await assertFails(setDoc(noteAs(ada, ada, 'note-2'), { text, createdAt: serverTimestamp() }));
     await assertFails(updateDoc(noteAs(ada, ada), { text }));
   });
