@@ -2,6 +2,10 @@ import { RulesTestEnvironment, assertFails, assertSucceeds } from '@firebase/rul
 import { deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { testEnvironmentWithDeployedFirestoreRules } from '../firebase/testing/deployed-firestore-rules';
 
+function uidNoOtherTestUses(name: string) {
+  return `${name}-${crypto.randomUUID()}`;
+}
+
 describe('Firestore rules for profiles', () => {
   let testEnv: RulesTestEnvironment;
   let ada: string;
@@ -16,9 +20,8 @@ describe('Firestore rules for profiles', () => {
   });
 
   beforeEach(async () => {
-    // Fresh users per test, so tests never see each other's profiles.
-    ada = `ada-${crypto.randomUUID()}`;
-    grace = `grace-${crypto.randomUUID()}`;
+    ada = uidNoOtherTestUses('ada');
+    grace = uidNoOtherTestUses('grace');
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(doc(context.firestore(), 'profiles', ada), { displayName: 'Ada' });
     });
@@ -54,17 +57,19 @@ describe('Firestore rules for profiles', () => {
     await assertFails(deleteDoc(profileAs(null, ada)));
   });
 
-  // Each bad name is tried on a new profile (grace) and on an existing one (ada).
   it.each([
     ['is blank', '   '],
     ['is shorter than 2 characters', 'A'],
     ['is longer than 50 characters', 'x'.repeat(51)],
     ['has surrounding spaces', ' Ada '],
     ['is not text', 42],
-  ])('rejects a display name that %s', async (_case, displayName) => {
-    await assertFails(setDoc(profileAs(grace, grace), { displayName }));
-    await assertFails(updateDoc(profileAs(ada, ada), { displayName }));
-  });
+  ])(
+    'rejects a display name that %s, on a new profile and on an existing one',
+    async (_case, displayName) => {
+      await assertFails(setDoc(profileAs(grace, grace), { displayName }));
+      await assertFails(updateDoc(profileAs(ada, ada), { displayName }));
+    },
+  );
 
   it('accepts display names of 2 and of 50 characters', async () => {
     await assertSucceeds(setDoc(profileAs(grace, grace), { displayName: 'Gr' }));
