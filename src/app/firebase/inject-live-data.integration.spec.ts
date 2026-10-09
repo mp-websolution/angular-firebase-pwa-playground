@@ -1,10 +1,15 @@
 // jsdom has no IndexedDB; Firestore's persistent cache needs one.
 import 'fake-indexeddb/auto';
-import { ErrorHandler } from '@angular/core';
+import {
+  EnvironmentInjector,
+  ErrorHandler,
+  createEnvironmentInjector,
+  runInInjectionContext,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { signOut } from 'firebase/auth';
 import {
+  DocumentReference,
   collection,
   deleteDoc,
   disableNetwork,
@@ -14,13 +19,13 @@ import {
   orderBy,
   query,
   setDoc,
-  terminate,
 } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { AuthSession } from '../auth/auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
 import { injectLiveData } from './inject-live-data';
-import { FIREBASE_AUTH, FIRESTORE, provideFirebase } from './provide-firebase';
+import { FIRESTORE, provideFirebase } from './provide-firebase';
+import { tearDownFirebase } from './testing/tear-down-firebase';
 
 // Its own project, so these rules don't replace firestore.rules for the other integration tests.
 const projectId = 'demo-live-data';
@@ -69,14 +74,7 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
     });
   });
 
-  afterEach(async () => {
-    // Auth keeps the signed-in user across app instances; don't let it leak into the next test.
-    await signOut(TestBed.inject(FIREBASE_AUTH));
-    // TestBed's teardown shuts Firestore down without waiting, so it could still be at it when
-    // this file's jsdom goes away, and fail on the missing `window`. Wait for it here instead.
-    await terminate(await TestBed.inject(FIRESTORE)());
-    vi.unstubAllEnvs();
-  });
+  afterEach(tearDownFirebase);
 
   /** Signs a new user in, as the guards make sure before a page with live data loads. */
   async function signUp(): Promise<string> {
@@ -108,7 +106,7 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
     function injectSettings() {
       return TestBed.runInInjectionContext(() =>
         injectLiveData({
-          ref: (firestore, uid) => doc(firestore, 'scratch', uid),
+          refFor: (firestore, uid) => doc(firestore, 'scratch', uid),
           map: (snapshot): string => snapshot.get('theme') ?? 'system',
         }),
       );
@@ -188,7 +186,7 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
 
       const forbidden = TestBed.runInInjectionContext(() =>
         injectLiveData({
-          ref: (firestore, uid) => doc(firestore, 'forbidden', uid),
+          refFor: (firestore, uid) => doc(firestore, 'forbidden', uid),
           map: (snapshot) => snapshot.data(),
         }),
       );
@@ -198,6 +196,25 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
       expect(reportError).toHaveBeenCalledWith(
         expect.objectContaining({ code: 'permission-denied' }),
       );
+    });
+
+    it('reports no failure once destroyed, even if the data then fails to load', async () => {
+      await signUp();
+      const injector = createEnvironmentInjector([], TestBed.inject(EnvironmentInjector));
+      const failing = runInInjectionContext(injector, () =>
+        injectLiveData({
+          refFor: (): DocumentReference => {
+            throw new Error('Firestore failed to load.');
+          },
+          map: (snapshot) => snapshot.data(),
+        }),
+      );
+
+      injector.destroy();
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(failing.loadFailed()).toBe(false);
+      expect(reportError).not.toHaveBeenCalled();
     });
 
     it('reports no failure when sign-out shuts Firestore down', async () => {
@@ -222,7 +239,7 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
     function injectTodos() {
       return TestBed.runInInjectionContext(() =>
         injectLiveData({
-          ref: (firestore, uid) => collection(firestore, 'scratch', uid, 'todos'),
+          refFor: (firestore, uid) => collection(firestore, 'scratch', uid, 'todos'),
           listenTo: (todosRef) => query(todosRef, orderBy('rank')),
           map: (snapshot) => snapshot.docs.map((todo) => todo.id),
         }),

@@ -3,20 +3,12 @@ import 'fake-indexeddb/auto';
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { signOut } from 'firebase/auth';
-import {
-  Timestamp,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  setDoc,
-  terminate,
-} from 'firebase/firestore';
+import { Timestamp, collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { AuthSession } from '../auth/auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
-import { FIREBASE_AUTH, FIRESTORE, provideFirebase } from '../firebase/provide-firebase';
+import { provideFirebase } from '../firebase/provide-firebase';
+import { tearDownFirebase } from '../firebase/testing/tear-down-firebase';
 import { NotesData } from './notes-data';
 
 // On a cold CI runner the emulator can take seconds to answer, but `vi.waitFor` gives up after 1 s.
@@ -50,14 +42,7 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
     });
   });
 
-  afterEach(async () => {
-    // Auth keeps the signed-in user across app instances; don't let it leak into the next test.
-    await signOut(TestBed.inject(FIREBASE_AUTH));
-    // TestBed's teardown shuts Firestore down without waiting, so it could still be at it when
-    // this file's jsdom goes away, and fail on the missing `window`. Wait for it here instead.
-    await terminate(await TestBed.inject(FIRESTORE)());
-    vi.unstubAllEnvs();
-  });
+  afterEach(tearDownFirebase);
 
   /** Signs a new user in, as the guard makes sure before the notes page loads. */
   async function signUp(): Promise<string> {

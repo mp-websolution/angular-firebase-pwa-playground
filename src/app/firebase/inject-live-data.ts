@@ -20,15 +20,15 @@ import { AuthSession } from '../auth/auth-session';
 import { FIRESTORE } from './provide-firebase';
 
 type Listenable = DocumentReference | Query;
-type SnapshotOf<Listened> = Listened extends DocumentReference ? DocumentSnapshot : QuerySnapshot;
+type SnapshotOf<Target> = Target extends DocumentReference ? DocumentSnapshot : QuerySnapshot;
 
-export interface LiveDataOptions<Ref extends Listenable, Listened extends Listenable, T> {
+export interface LiveDataOptions<Ref extends Listenable, ListenTarget extends Listenable, T> {
   /** Where the signed-in user's data lives. */
-  ref: (firestore: Firestore, uid: string) => Ref;
+  refFor: (firestore: Firestore, uid: string) => Ref;
   /** What to listen to, e.g. an ordered query on a collection `ref`; defaults to `ref` itself. */
-  listenTo?: (ref: Ref) => Listened;
+  listenTo?: (ref: Ref) => ListenTarget;
   /** Turns each snapshot into `value`. */
-  map: (snapshot: SnapshotOf<Listened>) => T;
+  map: (snapshot: SnapshotOf<ListenTarget>) => T;
 }
 
 export interface LiveData<Ref extends Listenable, T> {
@@ -53,8 +53,8 @@ export interface LiveData<Ref extends Listenable, T> {
  * context is destroyed. Call it in a field initializer of a page's data-access service. Imports
  * the Firestore SDK, so only lazy routes may reach it (ADR 0003).
  */
-export function injectLiveData<Ref extends Listenable, T, Listened extends Listenable = Ref>(
-  options: LiveDataOptions<Ref, Listened, T>,
+export function injectLiveData<Ref extends Listenable, T, ListenTarget extends Listenable = Ref>(
+  options: LiveDataOptions<Ref, ListenTarget, T>,
 ): LiveData<Ref, T> {
   assertInInjectionContext(injectLiveData);
   const loadFirestore = inject(FIRESTORE);
@@ -71,8 +71,9 @@ export function injectLiveData<Ref extends Listenable, T, Listened extends Liste
   const unconfirmedWrites = signal(0);
   const loadFailed = signal(false);
 
-  const ref = async (): Promise<Ref> => options.ref(await loadFirestore(), uid);
-  const listenTo = options.listenTo ?? ((resolvedRef: Ref) => resolvedRef as unknown as Listened);
+  const ref = async (): Promise<Ref> => options.refFor(await loadFirestore(), uid);
+  const listenTo =
+    options.listenTo ?? ((resolvedRef: Ref) => resolvedRef as unknown as ListenTarget);
 
   let unsubscribe: Unsubscribe | undefined;
   let destroyed = false;
@@ -81,6 +82,9 @@ export function injectLiveData<Ref extends Listenable, T, Listened extends Liste
     unsubscribe?.();
   });
   const onError = (error: unknown) => {
+    if (destroyed) {
+      return;
+    }
     loadFailed.set(true);
     errorHandler.handleError(error);
   };
@@ -94,7 +98,7 @@ export function injectLiveData<Ref extends Listenable, T, Listened extends Liste
       listenTo(resolvedRef) as Query,
       { includeMetadataChanges: true },
       (snapshot) => {
-        value.set(options.map(snapshot as SnapshotOf<Listened>));
+        value.set(options.map(snapshot as SnapshotOf<ListenTarget>));
         snapshotHasPendingWrites.set(snapshot.metadata.hasPendingWrites);
         snapshotFromCache.set(snapshot.metadata.fromCache);
       },
