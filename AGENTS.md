@@ -30,7 +30,7 @@ Report duplication only, unless the copies are long, likely to drift apart, or i
 
 Names and tests carry the documentation. A comment that explains code marks a missing name or test.
 
-- **Keep function bodies to code**, in every TypeScript and script file. Turn each explanation into a small function whose name says why the step exists; delete it if it only restates the code.
+- **Write no comments inside function bodies**, in any TypeScript or script file, spec files included. Move each explanation to where it can't drift: a behaviour goes into a test name, a reason for a step into the name of a small extracted function. Delete an explanation that only restates the code.
 
   ```ts
   // Before
@@ -41,20 +41,24 @@ Names and tests carry the documentation. A comment that explains code marks a mi
   this.#letTheSameFileBePickedAgain(input);
   ```
 
-- **Let tests document behaviour.** Name each test after the behaviour it pins (see `docs/agents/testing.md`), so a module's test list reads as its specification. A comment describing behaviour no test pins becomes that test: write it, see it pass, delete the comment. Spec files carry no comments.
-- **Write TSDoc on generic code used in many places** (Live data, the Firebase providers and tokens, `renderApp`, the fakes' options, shared test helpers), and on an extracted function whose name alone would mislead. ADR references go in the TSDoc of the generic piece they constrain.
-- **Match name length to scope.** Functions get long names in a small scope (`#` methods, module-local functions) and short ones in a large scope (public API). Variables get the inverse: short in a few lines, descriptive across a module or class. Rename variables only in code you touch anyway.
+- **Pin behaviour with tests.** A comment describing behaviour no test pins becomes that test: write it, see it pass against the current code, then delete the comment. Name tests as `docs/agents/testing.md` says, so a module's test list reads as its specification.
+- **Write TSDoc only on generic code used in many places**, e.g. `injectLiveData`, the Firebase providers and tokens, `renderApp`, the fakes' options and shared test helpers. Feature data-access services and components carry none. The one exception is an extracted function whose name alone would mislead. Mention an ADR only in the TSDoc of the generic piece it constrains.
+- **Match name length to scope.** Give functions long names in a small scope (`#` methods, module-local functions) and short ones in a large scope (public API). Give variables the inverse: short when they live a few lines, descriptive when they span a module or class. Keep existing public names (`injectLiveData`, `track`, `ref`, the `AuthSession` commands, service signals), so interfaces and fakes stay put, and rename variables only in code you touch anyway. In this example, the public method and the module constant travel far, the private method is called once, and `m` lives for one expression:
 
   ```ts
-  const maxAvatarBytes = 2 * 1024 * 1024; // module scope: descriptive
+  const maxAvatarBytes = 2 * 1024 * 1024;
 
-  uploadAvatar(image: File) {} // public, called across the app: short
-  #avatarPathOnlyTheOwnerMayWrite(uid: string) {} // private: says why
-  avatarTypes.some((t) => t === image.type); // one-expression scope: short
+  uploadAvatar(image: Blob): Promise<void>
+  #storeAvatarWhereOnlyItsOwnerMayWrite(uid: string, image: Blob): Promise<string>
+
+  import('./notes/notes.routes').then((m) => m.notesRoutes)
   ```
 
-- **Keep as comments** only a one-line warning of a consequence no name or test can carry (e.g. `// No SVG: it can carry scripts.`) and the Prototype begin/end markers in rules files.
-- **In config, workflow and server-config files**, keep only comments that give a reason or a warning. In rules files, turn explanations into named rule functions. In workflows, state intent in step `name:` fields. In HTML templates, replace a comment with a test where a test can pin it.
+- **Keep as comments** only:
+  - a one-line warning of a consequence no name or test can carry, above the declaration or rule it guards (e.g. `// No SVG: it can carry scripts.`);
+  - the Prototype begin/end markers in rules files;
+  - tool directives such as `// @vitest-environment node` or lint suppressions.
+- **In config, workflow and server-config files**, keep only comments that give a reason or a warning, and state intent in step `name:` fields where the format allows. In rules files, express each check as a named rule function. In HTML templates, replace a comment with a test wherever a test can pin it.
 
 ### Component templates
 
