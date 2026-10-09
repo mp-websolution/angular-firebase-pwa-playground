@@ -45,8 +45,12 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
 
   afterEach(tearDownFirebase);
 
-  /** Stores a note past the rules, as if written on another device. */
-  async function storeNote(uid: string, id: string, text: string, createdAt: Date): Promise<void> {
+  async function storeNoteAsAnotherDevicePastTheRules(
+    uid: string,
+    id: string,
+    text: string,
+    createdAt: Date,
+  ): Promise<void> {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(doc(context.firestore(), 'users', uid, 'notes', id), {
         text,
@@ -55,8 +59,7 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
     });
   }
 
-  /** The texts the server has, read past the rules. */
-  async function storedTexts(uid: string): Promise<string[]> {
+  async function textsOnTheServerPastTheRules(uid: string): Promise<string[]> {
     let texts: string[] = [];
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const snapshot = await getDocs(collection(context.firestore(), 'users', uid, 'notes'));
@@ -65,18 +68,19 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
     return texts.sort();
   }
 
-  it('has no notes for a new user', async () => {
+  it('has no list until the notes have loaded, then an empty one for a new user', async () => {
     await signInAsNewUser();
 
     const notesData = TestBed.inject(NotesData);
 
+    expect(notesData.notes()).toBeUndefined();
     await vi.waitFor(() => expect(notesData.notes()).toEqual([]), slowEmulatorTimeout);
   });
 
   it("lists the signed-in user's notes, newest first", async () => {
     const uid = await signInAsNewUser();
-    await storeNote(uid, 'older', 'Buy milk', new Date('2026-01-01'));
-    await storeNote(uid, 'newer', 'Call Grace', new Date('2026-01-02'));
+    await storeNoteAsAnotherDevicePastTheRules(uid, 'older', 'Buy milk', new Date('2026-01-01'));
+    await storeNoteAsAnotherDevicePastTheRules(uid, 'newer', 'Call Grace', new Date('2026-01-02'));
 
     const notesData = TestBed.inject(NotesData);
 
@@ -92,7 +96,7 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
 
   it('creates a note on top of the list and syncs it to the server', async () => {
     const uid = await signInAsNewUser();
-    await storeNote(uid, 'older', 'Buy milk', new Date('2026-01-01'));
+    await storeNoteAsAnotherDevicePastTheRules(uid, 'older', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
     await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
@@ -103,14 +107,15 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
       slowEmulatorTimeout,
     );
     await vi.waitFor(
-      async () => expect(await storedTexts(uid)).toEqual(['Buy milk', 'Call Grace']),
+      async () =>
+        expect(await textsOnTheServerPastTheRules(uid)).toEqual(['Buy milk', 'Call Grace']),
       slowEmulatorTimeout,
     );
   });
 
   it("changes a note's text and syncs it to the server", async () => {
     const uid = await signInAsNewUser();
-    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
+    await storeNoteAsAnotherDevicePastTheRules(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
     await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
@@ -121,26 +126,29 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
       slowEmulatorTimeout,
     );
     await vi.waitFor(
-      async () => expect(await storedTexts(uid)).toEqual(['Buy oat milk']),
+      async () => expect(await textsOnTheServerPastTheRules(uid)).toEqual(['Buy oat milk']),
       slowEmulatorTimeout,
     );
   });
 
   it('deletes a note and syncs it to the server', async () => {
     const uid = await signInAsNewUser();
-    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
+    await storeNoteAsAnotherDevicePastTheRules(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
     await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
     await notesData.delete('milk');
 
     await vi.waitFor(() => expect(notesData.notes()).toEqual([]), slowEmulatorTimeout);
-    await vi.waitFor(async () => expect(await storedTexts(uid)).toEqual([]), slowEmulatorTimeout);
+    await vi.waitFor(
+      async () => expect(await textsOnTheServerPastTheRules(uid)).toEqual([]),
+      slowEmulatorTimeout,
+    );
   });
 
   it('creates a note offline, on top of the list while its creation time waits for the server, and syncs it once back online', async () => {
     const uid = await signInAsNewUser();
-    await storeNote(uid, 'newer', 'Buy milk', new Date('2999-01-01'));
+    await storeNoteAsAnotherDevicePastTheRules(uid, 'newer', 'Buy milk', new Date('2999-01-01'));
     const notesData = TestBed.inject(NotesData);
     await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
     const firestore = await TestBed.inject(FIRESTORE)();
@@ -156,12 +164,12 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
     await enableNetwork(firestore);
 
     await vi.waitFor(() => expect(notesData.waitingToSync()).toBe(false), slowEmulatorTimeout);
-    expect(await storedTexts(uid)).toEqual(['Buy milk', 'Call Grace']);
+    expect(await textsOnTheServerPastTheRules(uid)).toEqual(['Buy milk', 'Call Grace']);
   });
 
   it("changes a note's text offline straight away and syncs it once back online", async () => {
     const uid = await signInAsNewUser();
-    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
+    await storeNoteAsAnotherDevicePastTheRules(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
     await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
     const firestore = await TestBed.inject(FIRESTORE)();
@@ -177,12 +185,12 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
     await enableNetwork(firestore);
 
     await vi.waitFor(() => expect(notesData.waitingToSync()).toBe(false), slowEmulatorTimeout);
-    expect(await storedTexts(uid)).toEqual(['Buy oat milk']);
+    expect(await textsOnTheServerPastTheRules(uid)).toEqual(['Buy oat milk']);
   });
 
   it('deletes a note offline straight away and syncs it once back online', async () => {
     const uid = await signInAsNewUser();
-    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
+    await storeNoteAsAnotherDevicePastTheRules(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
     await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
     const firestore = await TestBed.inject(FIRESTORE)();
@@ -198,22 +206,22 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
     await enableNetwork(firestore);
 
     await vi.waitFor(() => expect(notesData.waitingToSync()).toBe(false), slowEmulatorTimeout);
-    expect(await storedTexts(uid)).toEqual([]);
+    expect(await textsOnTheServerPastTheRules(uid)).toEqual([]);
   });
 
   it('shows notes added, changed and deleted elsewhere, e.g. on another device', async () => {
     const uid = await signInAsNewUser();
-    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
+    await storeNoteAsAnotherDevicePastTheRules(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
     await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
-    await storeNote(uid, 'grace', 'Call Grace', new Date('2026-01-02'));
+    await storeNoteAsAnotherDevicePastTheRules(uid, 'grace', 'Call Grace', new Date('2026-01-02'));
     await vi.waitFor(
       () => expect(notesData.notes()?.map(({ text }) => text)).toEqual(['Call Grace', 'Buy milk']),
       slowEmulatorTimeout,
     );
 
-    await storeNote(uid, 'milk', 'Buy oat milk', new Date('2026-01-01'));
+    await storeNoteAsAnotherDevicePastTheRules(uid, 'milk', 'Buy oat milk', new Date('2026-01-01'));
     await vi.waitFor(
       () =>
         expect(notesData.notes()?.map(({ text }) => text)).toEqual(['Call Grace', 'Buy oat milk']),
