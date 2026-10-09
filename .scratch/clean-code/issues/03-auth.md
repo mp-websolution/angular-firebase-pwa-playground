@@ -20,3 +20,7 @@
 - [ ] Every contract fact from the removed TSDoc is pinned by a named test
 - [x] Public interface of `AuthSession` unchanged, so the fake is too
 - [x] `npm run lint`, `npm test`, `npm run test:integration`, `npm run build` pass
+
+## Comments
+
+- "Google sign-in uses a popup" is not pinned by a test: Auth's Node build rejects popup and redirect alike (`operation-not-supported`), and `vi.mock('firebase/auth')` breaks the full integration run. The reason stays as a one-line warning above `signInWithGoogle`, as the spec allows for warnings no test can carry.
