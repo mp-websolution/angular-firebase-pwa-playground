@@ -1,6 +1,6 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormField, form, submit, validate } from '@angular/forms/signals';
+import { FormField, ValidationResult, form, submit, validate } from '@angular/forms/signals';
 import { ProfileData } from '../profile-data';
 
 // Same limits as the Storage rules. No SVG: it can carry scripts.
@@ -22,32 +22,16 @@ export class EditProfile {
   protected readonly profileForm = form(
     linkedSignal<string, ProfileForm>({
       source: () => this.profileData.profile()?.displayName ?? '',
-      // Follows the stored display name, e.g. once it has loaded or after a change in another
-      // tab, but keeps what the user typed and hasn't saved yet.
-      computation: (displayName, previous) =>
-        previous && previous.value.displayName !== previous.source
-          ? previous.value
-          : { displayName },
+      computation: followTheStoredNameButKeepUnsavedTyping,
     }),
     (path) => {
-      validate(path.displayName, ({ value }) => {
-        const displayName = value().trim();
-        if (!displayName) {
-          return { kind: 'required', message: 'Enter a display name.' };
-        }
-        // Same limits as the Firestore rules, which see the trimmed name.
-        if (displayName.length < 2) {
-          return { kind: 'minLength', message: 'Use at least 2 characters.' };
-        }
-        return displayName.length > 50
-          ? { kind: 'maxLength', message: 'Use at most 50 characters.' }
-          : undefined;
-      });
+      validate(path.displayName, ({ value }) =>
+        whatTheFirestoreRulesWouldRejectInTheTrimmedName(value().trim()),
+      );
     },
   );
 
   readonly #savedDisplayName = signal<string | undefined>(undefined);
-  /** Whether the form shows what was just saved, so "Saved." goes away once the user edits. */
   protected readonly saved = computed(
     () => this.#savedDisplayName() === this.profileForm.displayName().value(),
   );
@@ -60,13 +44,10 @@ export class EditProfile {
   protected async uploadAvatar(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const image = input.files?.[0];
-    // Browsers only report a change when the selection changes; clear it so the same file can be
-    // picked again, e.g. to retry a failed upload.
-    input.value = '';
+    this.#letTheSameFileBePickedAgain(input);
     if (!image) {
       return;
     }
-    // `accept` only suggests these types; the user can still pick any file.
     if (!avatarTypes.includes(image.type)) {
       this.avatarStatus.set('wrong-type');
       return;
@@ -87,10 +68,38 @@ export class EditProfile {
   protected saveProfile(): void {
     submit(this.profileForm, async () => {
       const displayName = this.profileForm.displayName().value().trim();
-      // Show what gets stored; also ends the draft, so the form follows the stored name again.
-      this.profileForm.displayName().value.set(displayName);
+      this.#showWhatGetsStoredAndFollowTheStoredNameAgain(displayName);
       await this.profileData.updateDisplayName(displayName);
       this.#savedDisplayName.set(displayName);
     });
   }
+
+  #letTheSameFileBePickedAgain(input: HTMLInputElement): void {
+    input.value = '';
+  }
+
+  #showWhatGetsStoredAndFollowTheStoredNameAgain(displayName: string): void {
+    this.profileForm.displayName().value.set(displayName);
+  }
+}
+
+function followTheStoredNameButKeepUnsavedTyping(
+  displayName: string,
+  previous?: { source: string; value: ProfileForm },
+): ProfileForm {
+  return previous && previous.value.displayName !== previous.source
+    ? previous.value
+    : { displayName };
+}
+
+function whatTheFirestoreRulesWouldRejectInTheTrimmedName(trimmedName: string): ValidationResult {
+  if (!trimmedName) {
+    return { kind: 'required', message: 'Enter a display name.' };
+  }
+  if (trimmedName.length < 2) {
+    return { kind: 'minLength', message: 'Use at least 2 characters.' };
+  }
+  return trimmedName.length > 50
+    ? { kind: 'maxLength', message: 'Use at most 50 characters.' }
+    : undefined;
 }

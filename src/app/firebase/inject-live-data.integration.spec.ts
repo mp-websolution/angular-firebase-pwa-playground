@@ -1,5 +1,3 @@
-// jsdom has no IndexedDB; Firestore's persistent cache needs one.
-import 'fake-indexeddb/auto';
 import {
   EnvironmentInjector,
   ErrorHandler,
@@ -25,14 +23,16 @@ import { AuthSession } from '../auth/auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
 import { injectLiveData } from './inject-live-data';
 import { FIRESTORE, provideFirebase } from './provide-firebase';
-import { tearDownFirebase } from './testing/tear-down-firebase';
+import {
+  enablePersistentCacheInJsdom,
+  signInAsNewUser,
+  slowEmulatorTimeout,
+  tearDownFirebase,
+} from './testing/testing-utils';
 
-// Its own project, so these rules don't replace firestore.rules for the other integration tests.
-const projectId = 'demo-live-data';
+const projectIsolatingTheseRules = 'demo-live-data';
 
-// Anything goes under a user's scratch path, except a write marked to be rejected. Every other
-// path is denied, so it can't be loaded.
-const rules = `
+const rulesOpenOnScratchExceptRejectedWrites = `
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -43,17 +43,15 @@ service cloud.firestore {
   }
 }`;
 
-// On a cold CI runner the emulator can take seconds to answer, but `vi.waitFor` gives up after 1 s.
-const emulatorReply = { timeout: 5_000 };
-
-describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
+describe('injectLiveData against the emulators', () => {
   let testEnv: RulesTestEnvironment;
   const reportError = vi.fn<(error: unknown) => void>();
 
   beforeAll(async () => {
-    // Loads the rules, and writes data as another device would. Finds the emulator through
-    // FIRESTORE_EMULATOR_HOST, set by `emulators:exec`.
-    testEnv = await initializeTestEnvironment({ projectId, firestore: { rules } });
+    testEnv = await initializeTestEnvironment({
+      projectId: projectIsolatingTheseRules,
+      firestore: { rules: rulesOpenOnScratchExceptRejectedWrites },
+    });
   });
 
   afterAll(async () => {
@@ -62,12 +60,14 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
 
   beforeEach(() => {
     reportError.mockReset();
-    // Tests load Firestore's Node build, which only uses IndexedDB with its own test switch on.
-    vi.stubEnv('USE_MOCK_PERSISTENCE', 'YES');
+    enablePersistentCacheInJsdom();
     const { firebase } = environment;
     TestBed.configureTestingModule({
       providers: [
-        provideFirebase({ ...firebase, options: { ...firebase.options, projectId } }),
+        provideFirebase({
+          ...firebase,
+          options: { ...firebase.options, projectId: projectIsolatingTheseRules },
+        }),
         { provide: RELOAD_PAGE, useValue: vi.fn() },
         { provide: ErrorHandler, useValue: { handleError: reportError } },
       ],
@@ -76,30 +76,31 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
 
   afterEach(tearDownFirebase);
 
-  /** Signs a new user in, as the guards make sure before a page with live data loads. */
-  async function signUp(): Promise<string> {
-    const session = TestBed.inject(AuthSession);
-    await session.signUpWithEmail({
-      email: `live-data-${crypto.randomUUID()}@example.com`,
-      password: 'correct-horse',
-    });
-    return session.user()!.uid;
-  }
-
-  /** Writes past the rules, as if on another device. */
-  async function storeElsewhere(path: string, data: Record<string, unknown>): Promise<void> {
+  async function writeAsAnotherDeviceWithDisabledRules(
+    path: string,
+    data: Record<string, unknown>,
+  ): Promise<void> {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(doc(context.firestore(), path), data);
     });
   }
 
-  /** What the server has, read past the rules. */
-  async function stored(path: string): Promise<unknown> {
+  async function readFromServerWithDisabledRules(path: string): Promise<unknown> {
     let data: unknown;
     await testEnv.withSecurityRulesDisabled(async (context) => {
       data = (await getDoc(doc(context.firestore(), path))).data();
     });
     return data;
+  }
+
+  async function deleteAsAnotherDeviceWithDisabledRules(path: string): Promise<void> {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await deleteDoc(doc(context.firestore(), path));
+    });
+  }
+
+  function giveFirestoreTimeToNotifyListenersOfShutdown(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   describe('of a document', () => {
@@ -113,37 +114,40 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
     }
 
     it('shows the stored document, and every change made elsewhere', async () => {
-      const uid = await signUp();
-      await storeElsewhere(`scratch/${uid}`, { theme: 'dark' });
+      const uid = await signInAsNewUser();
+      await writeAsAnotherDeviceWithDisabledRules(`scratch/${uid}`, { theme: 'dark' });
 
       const settings = injectSettings();
 
-      await vi.waitFor(() => expect(settings.value()).toBe('dark'), emulatorReply);
-      await storeElsewhere(`scratch/${uid}`, { theme: 'light' });
-      await vi.waitFor(() => expect(settings.value()).toBe('light'), emulatorReply);
+      await vi.waitFor(() => expect(settings.value()).toBe('dark'), slowEmulatorTimeout);
+      await writeAsAnotherDeviceWithDisabledRules(`scratch/${uid}`, { theme: 'light' });
+      await vi.waitFor(() => expect(settings.value()).toBe('light'), slowEmulatorTimeout);
       expect(settings.waitingToSync()).toBe(false);
       expect(settings.loadFailed()).toBe(false);
     });
 
-    it('shows a tracked write straight away and syncs it to the server', async () => {
-      const uid = await signUp();
+    it('shows a tracked write straight away and, while online, saves it without waiting to sync', async () => {
+      const uid = await signInAsNewUser();
       const settings = injectSettings();
-      await vi.waitFor(() => expect(settings.value()).toBe('system'), emulatorReply);
+      await vi.waitFor(() => expect(settings.value()).toBe('system'), slowEmulatorTimeout);
 
       settings.track(setDoc(await settings.ref(), { theme: 'dark' }));
 
-      await vi.waitFor(() => expect(settings.value()).toBe('dark'), emulatorReply);
+      await vi.waitFor(() => expect(settings.value()).toBe('dark'), slowEmulatorTimeout);
       expect(settings.waitingToSync()).toBe(false);
       await vi.waitFor(
-        async () => expect(await stored(`scratch/${uid}`)).toEqual({ theme: 'dark' }),
-        emulatorReply,
+        async () =>
+          expect(await readFromServerWithDisabledRules(`scratch/${uid}`)).toEqual({
+            theme: 'dark',
+          }),
+        slowEmulatorTimeout,
       );
     });
 
     it('shows a write made offline straight away and syncs it once back online', async () => {
-      const uid = await signUp();
+      const uid = await signInAsNewUser();
       const settings = injectSettings();
-      await vi.waitFor(() => expect(settings.value()).toBe('system'), emulatorReply);
+      await vi.waitFor(() => expect(settings.value()).toBe('system'), slowEmulatorTimeout);
       const firestore = await TestBed.inject(FIRESTORE)();
       await disableNetwork(firestore);
 
@@ -152,20 +156,20 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
       await vi.waitFor(() => {
         expect(settings.value()).toBe('dark');
         expect(settings.waitingToSync()).toBe(true);
-      }, emulatorReply);
+      }, slowEmulatorTimeout);
 
       await enableNetwork(firestore);
 
-      await vi.waitFor(() => expect(settings.waitingToSync()).toBe(false), emulatorReply);
-      expect(await stored(`scratch/${uid}`)).toEqual({ theme: 'dark' });
+      await vi.waitFor(() => expect(settings.waitingToSync()).toBe(false), slowEmulatorTimeout);
+      expect(await readFromServerWithDisabledRules(`scratch/${uid}`)).toEqual({ theme: 'dark' });
       expect(reportError).not.toHaveBeenCalled();
     });
 
     it('reports a write the server rejects, and shows what the server kept', async () => {
-      const uid = await signUp();
-      await storeElsewhere(`scratch/${uid}`, { theme: 'dark' });
+      const uid = await signInAsNewUser();
+      await writeAsAnotherDeviceWithDisabledRules(`scratch/${uid}`, { theme: 'dark' });
       const settings = injectSettings();
-      await vi.waitFor(() => expect(settings.value()).toBe('dark'), emulatorReply);
+      await vi.waitFor(() => expect(settings.value()).toBe('dark'), slowEmulatorTimeout);
 
       settings.track(setDoc(await settings.ref(), { theme: 'light', rejected: true }));
 
@@ -174,15 +178,15 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
           expect(reportError).toHaveBeenCalledWith(
             expect.objectContaining({ code: 'permission-denied' }),
           ),
-        emulatorReply,
+        slowEmulatorTimeout,
       );
-      await vi.waitFor(() => expect(settings.value()).toBe('dark'), emulatorReply);
+      await vi.waitFor(() => expect(settings.value()).toBe('dark'), slowEmulatorTimeout);
       expect(settings.waitingToSync()).toBe(false);
       expect(settings.loadFailed()).toBe(false);
     });
 
     it('says when the data cannot be loaded, and reports why', async () => {
-      await signUp();
+      await signInAsNewUser();
 
       const forbidden = TestBed.runInInjectionContext(() =>
         injectLiveData({
@@ -191,7 +195,7 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
         }),
       );
 
-      await vi.waitFor(() => expect(forbidden.loadFailed()).toBe(true), emulatorReply);
+      await vi.waitFor(() => expect(forbidden.loadFailed()).toBe(true), slowEmulatorTimeout);
       expect(forbidden.value()).toBeUndefined();
       expect(reportError).toHaveBeenCalledWith(
         expect.objectContaining({ code: 'permission-denied' }),
@@ -199,7 +203,7 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
     });
 
     it('reports no failure once destroyed, even if the data then fails to load', async () => {
-      await signUp();
+      await signInAsNewUser();
       const injector = createEnvironmentInjector([], TestBed.inject(EnvironmentInjector));
       const failing = runInInjectionContext(injector, () =>
         injectLiveData({
@@ -218,19 +222,18 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
     });
 
     it('reports no failure when sign-out shuts Firestore down', async () => {
-      await signUp();
+      await signInAsNewUser();
       const settings = injectSettings();
-      await vi.waitFor(() => expect(settings.value()).toBe('system'), emulatorReply);
+      await vi.waitFor(() => expect(settings.value()).toBe('system'), slowEmulatorTimeout);
 
       await TestBed.inject(AuthSession).signOut();
-      // Firestore tells listeners about the shutdown asynchronously; give it the chance.
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await giveFirestoreTimeToNotifyListenersOfShutdown();
 
       expect(settings.loadFailed()).toBe(false);
       expect(reportError).not.toHaveBeenCalled();
     });
 
-    it('needs a signed-in user', () => {
+    it('throws without a signed-in user', () => {
       expect(() => injectSettings()).toThrow('injectLiveData needs a signed-in user.');
     });
   });
@@ -247,25 +250,26 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
     }
 
     it('lists the query, and every change made elsewhere', async () => {
-      const uid = await signUp();
-      await storeElsewhere(`scratch/${uid}/todos/second`, { rank: 2 });
+      const uid = await signInAsNewUser();
+      await writeAsAnotherDeviceWithDisabledRules(`scratch/${uid}/todos/second`, { rank: 2 });
 
       const todos = injectTodos();
 
-      await vi.waitFor(() => expect(todos.value()).toEqual(['second']), emulatorReply);
-      await storeElsewhere(`scratch/${uid}/todos/first`, { rank: 1 });
-      await vi.waitFor(() => expect(todos.value()).toEqual(['first', 'second']), emulatorReply);
-      await testEnv.withSecurityRulesDisabled(async (context) => {
-        await deleteDoc(doc(context.firestore(), `scratch/${uid}/todos/second`));
-      });
-      await vi.waitFor(() => expect(todos.value()).toEqual(['first']), emulatorReply);
+      await vi.waitFor(() => expect(todos.value()).toEqual(['second']), slowEmulatorTimeout);
+      await writeAsAnotherDeviceWithDisabledRules(`scratch/${uid}/todos/first`, { rank: 1 });
+      await vi.waitFor(
+        () => expect(todos.value()).toEqual(['first', 'second']),
+        slowEmulatorTimeout,
+      );
+      await deleteAsAnotherDeviceWithDisabledRules(`scratch/${uid}/todos/second`);
+      await vi.waitFor(() => expect(todos.value()).toEqual(['first']), slowEmulatorTimeout);
     });
 
     it('counts a delete made offline as waiting to sync until back online', async () => {
-      const uid = await signUp();
-      await storeElsewhere(`scratch/${uid}/todos/first`, { rank: 1 });
+      const uid = await signInAsNewUser();
+      await writeAsAnotherDeviceWithDisabledRules(`scratch/${uid}/todos/first`, { rank: 1 });
       const todos = injectTodos();
-      await vi.waitFor(() => expect(todos.value()).toEqual(['first']), emulatorReply);
+      await vi.waitFor(() => expect(todos.value()).toEqual(['first']), slowEmulatorTimeout);
       const firestore = await TestBed.inject(FIRESTORE)();
       await disableNetwork(firestore);
 
@@ -274,12 +278,12 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
       await vi.waitFor(() => {
         expect(todos.value()).toEqual([]);
         expect(todos.waitingToSync()).toBe(true);
-      }, emulatorReply);
+      }, slowEmulatorTimeout);
 
       await enableNetwork(firestore);
 
-      await vi.waitFor(() => expect(todos.waitingToSync()).toBe(false), emulatorReply);
-      expect(await stored(`scratch/${uid}/todos/first`)).toBeUndefined();
+      await vi.waitFor(() => expect(todos.waitingToSync()).toBe(false), slowEmulatorTimeout);
+      expect(await readFromServerWithDisabledRules(`scratch/${uid}/todos/first`)).toBeUndefined();
       expect(reportError).not.toHaveBeenCalled();
     });
   });

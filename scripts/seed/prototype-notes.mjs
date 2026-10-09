@@ -1,6 +1,3 @@
-// Prototype: notes (src/app/notes). Sample notes for the demo user, so the notes page isn't empty.
-// Delete this file together with the Prototype.
-
 import { demoUser } from './01-demo-user.mjs';
 
 const notes = [
@@ -10,23 +7,26 @@ const notes = [
 ];
 
 export default async function seed({ projectId }) {
-  for (const { id, text, minutesAgo } of notes) {
-    const createdAt = new Date(Date.now() - minutesAgo * 60_000).toISOString();
-    // The Firestore emulator accepts `Bearer owner` as admin credentials, which skips the rules.
-    const response = await fetch(
-      `http://${process.env.FIRESTORE_EMULATOR_HOST}/v1/projects/${projectId}/databases/(default)/documents/users/${demoUser.uid}/notes/${id}`,
-      {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
-        body: JSON.stringify({
-          fields: { text: { stringValue: text }, createdAt: { timestampValue: createdAt } },
-        }),
-      },
-    );
+  for (const note of notes) {
+    const response = await writeNoteAsFirestoreEmulatorAdminSkippingTheRules(projectId, note);
     if (!response.ok) {
       throw new Error(
-        `Creating demo note "${id}" failed: ${response.status} ${await response.text()}`,
+        `Creating demo note "${note.id}" failed: ${response.status} ${await response.text()}`,
       );
     }
   }
+}
+
+function writeNoteAsFirestoreEmulatorAdminSkippingTheRules(projectId, { id, text, minutesAgo }) {
+  const createdAt = new Date(Date.now() - minutesAgo * 60_000).toISOString();
+  return fetch(
+    `http://${process.env.FIRESTORE_EMULATOR_HOST}/v1/projects/${projectId}/databases/(default)/documents/users/${demoUser.uid}/notes/${id}`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
+      body: JSON.stringify({
+        fields: { text: { stringValue: text }, createdAt: { timestampValue: createdAt } },
+      }),
+    },
+  );
 }

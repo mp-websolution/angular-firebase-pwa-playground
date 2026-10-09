@@ -16,6 +16,6 @@ Leave the existing `TODO human-review` note alone.
 
 **Status:** ready-for-agent
 
-- [ ] Section added to AGENTS.md, short and imperative, with one example each of the naming rule and of extracting a comment into a name
-- [ ] `docs/agents/testing.md` points to it where it says how to name tests
+- [x] Section added to AGENTS.md, short and imperative, with one example each of the naming rule and of extracting a comment into a name
+- [x] `docs/agents/testing.md` points to it where it says how to name tests
 - [ ] Merged before any other ticket of this spec

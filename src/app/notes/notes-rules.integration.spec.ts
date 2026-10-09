@@ -1,9 +1,4 @@
-import {
-  RulesTestEnvironment,
-  assertFails,
-  assertSucceeds,
-  initializeTestEnvironment,
-} from '@firebase/rules-unit-testing';
+import { RulesTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import {
   Timestamp,
   collection,
@@ -15,7 +10,7 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
-import { environment } from '../../environments/environment';
+import { testEnvironmentWithDeployedFirestoreRules } from '../firebase/testing/testing-utils';
 
 describe('Firestore rules for notes', () => {
   let testEnv: RulesTestEnvironment;
@@ -23,12 +18,7 @@ describe('Firestore rules for notes', () => {
   let grace: string;
 
   beforeAll(async () => {
-    // No rules passed: the emulator already runs firestore.rules, the file that gets deployed.
-    // `emulators:exec` tells it where the Firestore emulator is (FIRESTORE_EMULATOR_HOST).
-    testEnv = await initializeTestEnvironment({
-      projectId: environment.firebase.options.projectId,
-      firestore: {},
-    });
+    testEnv = await testEnvironmentWithDeployedFirestoreRules();
   });
 
   afterAll(async () => {
@@ -36,7 +26,6 @@ describe('Firestore rules for notes', () => {
   });
 
   beforeEach(async () => {
-    // Fresh users per test, so tests never see each other's notes.
     ada = `ada-${crypto.randomUUID()}`;
     grace = `grace-${crypto.randomUUID()}`;
     await testEnv.withSecurityRulesDisabled(async (context) => {
@@ -47,7 +36,6 @@ describe('Firestore rules for notes', () => {
     });
   });
 
-  /** `ownerUid`'s notes, as `uid` sees them (`null`: signed out). */
   function notesAs(uid: string | null, ownerUid: string) {
     const context = uid ? testEnv.authenticatedContext(uid) : testEnv.unauthenticatedContext();
     return collection(context.firestore(), 'users', ownerUid, 'notes');
@@ -90,13 +78,12 @@ describe('Firestore rules for notes', () => {
     await assertFails(deleteDoc(noteAs(null, ada)));
   });
 
-  // Each bad text is tried on a new note and on an existing one.
   it.each([
     ['is blank', '   '],
     ['is longer than 1000 characters', 'x'.repeat(1001)],
     ['has surrounding spaces', ' Buy milk '],
     ['is not text', 42],
-  ])('rejects a text that %s', async (_case, text) => {
+  ])('rejects a text that %s, on a new note and on an existing one', async (_case, text) => {
     await assertFails(setDoc(noteAs(ada, ada, 'note-2'), { text, createdAt: serverTimestamp() }));
     await assertFails(updateDoc(noteAs(ada, ada), { text }));
   });

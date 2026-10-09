@@ -1,29 +1,33 @@
-// jsdom has no IndexedDB; Firestore's persistent cache needs one.
-import 'fake-indexeddb/auto';
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { Timestamp, collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
+import { RulesTestEnvironment } from '@firebase/rules-unit-testing';
+import {
+  Timestamp,
+  collection,
+  deleteDoc,
+  disableNetwork,
+  doc,
+  enableNetwork,
+  getDocs,
+  setDoc,
+} from 'firebase/firestore';
 import { environment } from '../../environments/environment';
-import { AuthSession } from '../auth/auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
-import { provideFirebase } from '../firebase/provide-firebase';
-import { tearDownFirebase } from '../firebase/testing/tear-down-firebase';
+import { FIRESTORE, provideFirebase } from '../firebase/provide-firebase';
+import {
+  enablePersistentCacheInJsdom,
+  signInAsNewUser,
+  slowEmulatorTimeout,
+  tearDownFirebase,
+  testEnvironmentWithDeployedFirestoreRules,
+} from '../firebase/testing/testing-utils';
 import { NotesData } from './notes-data';
 
-// On a cold CI runner the emulator can take seconds to answer, but `vi.waitFor` gives up after 1 s.
-const emulatorReply = { timeout: 5_000 };
-
-describe('NotesData against the emulators', { timeout: 20_000 }, () => {
+describe('NotesData against the emulators', () => {
   let testEnv: RulesTestEnvironment;
 
   beforeAll(async () => {
-    // Writes notes as another device would, past the rules. Finds the emulator through
-    // FIRESTORE_EMULATOR_HOST, set by `emulators:exec`.
-    testEnv = await initializeTestEnvironment({
-      projectId: environment.firebase.options.projectId,
-      firestore: {},
-    });
+    testEnv = await testEnvironmentWithDeployedFirestoreRules();
   });
 
   afterAll(async () => {
@@ -31,8 +35,7 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
   });
 
   beforeEach(() => {
-    // Tests load Firestore's Node build, which only uses IndexedDB with its own test switch on.
-    vi.stubEnv('USE_MOCK_PERSISTENCE', 'YES');
+    enablePersistentCacheInJsdom();
     TestBed.configureTestingModule({
       providers: [
         provideFirebase(environment.firebase),
@@ -44,18 +47,12 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
 
   afterEach(tearDownFirebase);
 
-  /** Signs a new user in, as the guard makes sure before the notes page loads. */
-  async function signUp(): Promise<string> {
-    const session = TestBed.inject(AuthSession);
-    await session.signUpWithEmail({
-      email: `notes-${crypto.randomUUID()}@example.com`,
-      password: 'correct-horse',
-    });
-    return session.user()!.uid;
-  }
-
-  /** Stores a note past the rules, as if written on another device. */
-  async function storeNote(uid: string, id: string, text: string, createdAt: Date): Promise<void> {
+  async function storeNoteAsAnotherDeviceWithDisabledRules(
+    uid: string,
+    id: string,
+    text: string,
+    createdAt: Date,
+  ): Promise<void> {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(doc(context.firestore(), 'users', uid, 'notes', id), {
         text,
@@ -64,8 +61,7 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
     });
   }
 
-  /** The texts the server has, read past the rules. */
-  async function storedTexts(uid: string): Promise<string[]> {
+  async function textsOnTheServerWithDisabledRules(uid: string): Promise<string[]> {
     let texts: string[] = [];
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const snapshot = await getDocs(collection(context.firestore(), 'users', uid, 'notes'));
@@ -74,18 +70,29 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
     return texts.sort();
   }
 
-  it('has no notes for a new user', async () => {
-    await signUp();
+  it('has no list until the notes have loaded, then an empty one for a new user', async () => {
+    await signInAsNewUser();
 
     const notesData = TestBed.inject(NotesData);
 
-    await vi.waitFor(() => expect(notesData.notes()).toEqual([]), emulatorReply);
+    expect(notesData.notes()).toBeUndefined();
+    await vi.waitFor(() => expect(notesData.notes()).toEqual([]), slowEmulatorTimeout);
   });
 
   it("lists the signed-in user's notes, newest first", async () => {
-    const uid = await signUp();
-    await storeNote(uid, 'older', 'Buy milk', new Date('2026-01-01'));
-    await storeNote(uid, 'newer', 'Call Grace', new Date('2026-01-02'));
+    const uid = await signInAsNewUser();
+    await storeNoteAsAnotherDeviceWithDisabledRules(
+      uid,
+      'older',
+      'Buy milk',
+      new Date('2026-01-01'),
+    );
+    await storeNoteAsAnotherDeviceWithDisabledRules(
+      uid,
+      'newer',
+      'Call Grace',
+      new Date('2026-01-02'),
+    );
 
     const notesData = TestBed.inject(NotesData);
 
@@ -95,75 +102,135 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
           { id: 'newer', text: 'Call Grace' },
           { id: 'older', text: 'Buy milk' },
         ]),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
   });
 
   it('creates a note on top of the list and syncs it to the server', async () => {
-    const uid = await signUp();
-    await storeNote(uid, 'older', 'Buy milk', new Date('2026-01-01'));
+    const uid = await signInAsNewUser();
+    await storeNoteAsAnotherDeviceWithDisabledRules(
+      uid,
+      'older',
+      'Buy milk',
+      new Date('2026-01-01'),
+    );
     const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), emulatorReply);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
     await notesData.create('Call Grace');
 
     await vi.waitFor(
       () => expect(notesData.notes()?.map(({ text }) => text)).toEqual(['Call Grace', 'Buy milk']),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
     await vi.waitFor(
-      async () => expect(await storedTexts(uid)).toEqual(['Buy milk', 'Call Grace']),
-      emulatorReply,
+      async () =>
+        expect(await textsOnTheServerWithDisabledRules(uid)).toEqual(['Buy milk', 'Call Grace']),
+      slowEmulatorTimeout,
     );
   });
 
   it("changes a note's text and syncs it to the server", async () => {
-    const uid = await signUp();
-    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
+    const uid = await signInAsNewUser();
+    await storeNoteAsAnotherDeviceWithDisabledRules(
+      uid,
+      'milk',
+      'Buy milk',
+      new Date('2026-01-01'),
+    );
     const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), emulatorReply);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
     await notesData.update('milk', 'Buy oat milk');
 
     await vi.waitFor(
       () => expect(notesData.notes()).toEqual([{ id: 'milk', text: 'Buy oat milk' }]),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
     await vi.waitFor(
-      async () => expect(await storedTexts(uid)).toEqual(['Buy oat milk']),
-      emulatorReply,
+      async () => expect(await textsOnTheServerWithDisabledRules(uid)).toEqual(['Buy oat milk']),
+      slowEmulatorTimeout,
     );
   });
 
   it('deletes a note and syncs it to the server', async () => {
-    const uid = await signUp();
-    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
+    const uid = await signInAsNewUser();
+    await storeNoteAsAnotherDeviceWithDisabledRules(
+      uid,
+      'milk',
+      'Buy milk',
+      new Date('2026-01-01'),
+    );
     const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), emulatorReply);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
     await notesData.delete('milk');
 
-    await vi.waitFor(() => expect(notesData.notes()).toEqual([]), emulatorReply);
-    await vi.waitFor(async () => expect(await storedTexts(uid)).toEqual([]), emulatorReply);
+    await vi.waitFor(() => expect(notesData.notes()).toEqual([]), slowEmulatorTimeout);
+    await vi.waitFor(
+      async () => expect(await textsOnTheServerWithDisabledRules(uid)).toEqual([]),
+      slowEmulatorTimeout,
+    );
+  });
+
+  it('lists a note created offline on top while its creation time waits for the server', async () => {
+    const uid = await signInAsNewUser();
+    await storeNoteAsAnotherDeviceWithDisabledRules(
+      uid,
+      'far-future',
+      'Buy milk',
+      new Date('2999-01-01'),
+    );
+    const notesData = TestBed.inject(NotesData);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
+    const firestore = await TestBed.inject(FIRESTORE)();
+    await disableNetwork(firestore);
+
+    await notesData.create('Call Grace');
+
+    await vi.waitFor(() => {
+      expect(notesData.notes()?.map(({ text }) => text)).toEqual(['Call Grace', 'Buy milk']);
+      expect(notesData.waitingToSync()).toBe(true);
+    }, slowEmulatorTimeout);
+
+    await enableNetwork(firestore);
+
+    await vi.waitFor(() => expect(notesData.waitingToSync()).toBe(false), slowEmulatorTimeout);
+    expect(await textsOnTheServerWithDisabledRules(uid)).toEqual(['Buy milk', 'Call Grace']);
   });
 
   it('shows notes added, changed and deleted elsewhere, e.g. on another device', async () => {
-    const uid = await signUp();
-    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
+    const uid = await signInAsNewUser();
+    await storeNoteAsAnotherDeviceWithDisabledRules(
+      uid,
+      'milk',
+      'Buy milk',
+      new Date('2026-01-01'),
+    );
     const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), emulatorReply);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
-    await storeNote(uid, 'grace', 'Call Grace', new Date('2026-01-02'));
+    await storeNoteAsAnotherDeviceWithDisabledRules(
+      uid,
+      'grace',
+      'Call Grace',
+      new Date('2026-01-02'),
+    );
     await vi.waitFor(
       () => expect(notesData.notes()?.map(({ text }) => text)).toEqual(['Call Grace', 'Buy milk']),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
 
-    await storeNote(uid, 'milk', 'Buy oat milk', new Date('2026-01-01'));
+    await storeNoteAsAnotherDeviceWithDisabledRules(
+      uid,
+      'milk',
+      'Buy oat milk',
+      new Date('2026-01-01'),
+    );
     await vi.waitFor(
       () =>
         expect(notesData.notes()?.map(({ text }) => text)).toEqual(['Call Grace', 'Buy oat milk']),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
 
     await testEnv.withSecurityRulesDisabled(async (context) => {
@@ -171,7 +238,7 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
     });
     await vi.waitFor(
       () => expect(notesData.notes()).toEqual([{ id: 'milk', text: 'Buy oat milk' }]),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
   });
 });

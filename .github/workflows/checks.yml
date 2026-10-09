@@ -1,6 +1,5 @@
 name: Checks
 
-# Lint, tests and the production build. PRs run them, and every deploy runs them first.
 on:
   workflow_call:
     inputs:
@@ -25,8 +24,8 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      # Lint, tests and build work without dependency install scripts, so don't run them.
-      - run: npm ci --ignore-scripts
+      - name: Install dependencies without their install scripts, which lint, tests and build don't need
+        run: npm ci --ignore-scripts
       - run: npm run lint
       - run: npm run format:check
       - run: npm test -- --watch=false
@@ -52,6 +51,6 @@ jobs:
         with:
           path: ~/.cache/firebase/emulators
           key: firebase-emulators-${{ hashFiles('package-lock.json') }}
-      # The emulators and the integration tests also work without dependency install scripts.
-      - run: npm ci --ignore-scripts
+      - name: Install dependencies without their install scripts, which the emulators and integration tests don't need
+        run: npm ci --ignore-scripts
       - run: npm run test:integration

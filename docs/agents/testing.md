@@ -11,7 +11,7 @@ A component test renders the whole app through the router and drives it the way 
 - **Act** with `userEvent.setup()`: `type`, `click`.
 - **Query** through `screen` in Testing Library's priority order: `getByRole` (with `name`), `getByLabelText`, then `getByText`. Use `findBy*` for whatever appears after a render, navigation or action: it retries until the element is in the DOM, so the test needs no fixture or change-detection call.
 - **Assert** with jest-dom matchers: `toBeVisible`, `toHaveTextContent`, `toBeInvalid`.
-- **Name** each test after the behaviour a user sees ("says so when the password is wrong").
+- **Name** each test after the behaviour a user sees ("says so when the password is wrong"). Test names replace comments: see "Comments and naming" in `AGENTS.md`.
 
 ## Integration tests
 
@@ -23,7 +23,7 @@ What every service built on `injectLiveData()` shares (live updates, `waitingToS
 
 Each collection's rules get a `*-rules.integration.spec.ts` beside its data-access service, e.g. `src/app/profile/profile-rules.integration.spec.ts`. They use `@firebase/rules-unit-testing`:
 
-- `initializeTestEnvironment` with `firestore: {}` and no rules: the emulator already runs `firestore.rules`, and `emulators:exec` sets `FIRESTORE_EMULATOR_HOST`.
+- `testEnvironmentWithDeployedFirestoreRules()` from `src/app/firebase/testing/testing-utils.ts` in `beforeAll`: it passes no rules, since the emulator already runs `firestore.rules`, and `emulators:exec` sets `FIRESTORE_EMULATOR_HOST`.
 - Write the starting documents in `withSecurityRulesDisabled`, under fresh IDs per test (`crypto.randomUUID()`), so tests never see each other's data. Don't call `clearFirestore`: other test files share the emulator.
 - Act as a user through `authenticatedContext(uid)` or `unauthenticatedContext()`, using the modular SDK on `context.firestore()`, and check with `assertSucceeds` / `assertFails`.
 - Cover the owner being allowed, other users and signed-out visitors being denied, and every data check in the rules.

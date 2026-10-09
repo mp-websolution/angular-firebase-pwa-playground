@@ -17,8 +17,8 @@
 
 **Status:** ready-for-agent
 
-- [ ] No comments in function bodies, specs or these templates
-- [ ] Contract facts from removed TSDoc and template comments pinned by named tests
-- [ ] Public interfaces of `NotesData` and the renderer unchanged
-- [ ] Deleting the notes Prototype still leaves the Baseline intact (`docs/prototypes.md`)
-- [ ] `npm run lint`, `npm test`, `npm run test:integration`, `npm run build` pass
+- [x] No comments in function bodies, specs or these templates
+- [x] Contract facts from removed TSDoc and template comments pinned by named tests
+- [x] Public interfaces of `NotesData` and the renderer unchanged
+- [x] Deleting the notes Prototype still leaves the Baseline intact (`docs/prototypes.md`)
+- [x] `npm run lint`, `npm test`, `npm run test:integration`, `npm run build` pass

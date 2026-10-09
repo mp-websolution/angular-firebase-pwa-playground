@@ -1,14 +1,32 @@
-// jsdom has no IndexedDB; Firestore's persistent cache needs one.
-import 'fake-indexeddb/auto';
 import { TestBed } from '@angular/core/testing';
+import { FirebaseError } from 'firebase/app';
 import { signOut } from 'firebase/auth';
 import { environment } from '../../environments/environment';
 import { FIREBASE_AUTH, provideFirebase } from '../firebase/provide-firebase';
 import { RELOAD_PAGE } from '../browser/reload-page';
 import { AuthSession } from './auth-session';
+import {
+  enablePersistentCacheInJsdom,
+  signOutForTheNextTest,
+} from '../firebase/testing/testing-utils';
 
 function newEmail() {
   return `session-${crypto.randomUUID()}@example.com`;
+}
+
+function signOutAsAnotherTabWould() {
+  return signOut(TestBed.inject(FIREBASE_AUTH));
+}
+
+function failToDeleteFirestoreCache(because: Error) {
+  const deleteDatabase = indexedDB.deleteDatabase.bind(indexedDB);
+  const spy = vi.spyOn(indexedDB, 'deleteDatabase').mockImplementation((name) => {
+    if (name.startsWith('firestore/')) {
+      throw because;
+    }
+    return deleteDatabase(name);
+  });
+  onTestFinished(() => spy.mockRestore());
 }
 
 describe('AuthSession against the Auth emulator', () => {
@@ -16,8 +34,7 @@ describe('AuthSession against the Auth emulator', () => {
 
   beforeEach(() => {
     reloadPage.mockReset();
-    // Tests load Firestore's Node build, which only uses IndexedDB with its own test switch on.
-    vi.stubEnv('USE_MOCK_PERSISTENCE', 'YES');
+    enablePersistentCacheInJsdom();
     TestBed.configureTestingModule({
       providers: [
         provideFirebase(environment.firebase),
@@ -27,8 +44,7 @@ describe('AuthSession against the Auth emulator', () => {
   });
 
   afterEach(async () => {
-    // Auth keeps the signed-in user across app instances; don't let it leak into the next test.
-    await signOut(TestBed.inject(FIREBASE_AUTH));
+    await signOutForTheNextTest();
     vi.unstubAllEnvs();
   });
 
@@ -74,7 +90,7 @@ describe('AuthSession against the Auth emulator', () => {
     );
   });
 
-  it('rejects an email no account uses just like a wrong password', async () => {
+  it('rejects an email no account uses just like a wrong password, so it reveals no accounts', async () => {
     await expect(
       TestBed.inject(AuthSession).signInWithEmail({ email: newEmail(), password: 'correct-horse' }),
     ).rejects.toMatchObject({ reason: 'invalid-credential' });
@@ -113,10 +129,31 @@ describe('AuthSession against the Auth emulator', () => {
     const session = TestBed.inject(AuthSession);
     await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
 
-    // What this tab's Auth sees when another tab signs out.
-    await signOut(TestBed.inject(FIREBASE_AUTH));
+    await signOutAsAnotherTabWould();
 
     expect(reloadPage).toHaveBeenCalled();
+  });
+
+  it('keeps the user signed in when sign-out cannot delete the cache', async () => {
+    const session = TestBed.inject(AuthSession);
+    await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
+    failToDeleteFirestoreCache(new DOMException('Disk is busy', 'UnknownError'));
+
+    await expect(session.signOut()).rejects.toMatchObject({ reason: 'unknown' });
+
+    expect(session.user()).not.toBeNull();
+    expect(TestBed.inject(FIREBASE_AUTH).currentUser).not.toBeNull();
+    expect(reloadPage).not.toHaveBeenCalled();
+  });
+
+  it('asks to close the other tabs when one holds on to the cache', async () => {
+    const session = TestBed.inject(AuthSession);
+    await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
+    failToDeleteFirestoreCache(new FirebaseError('failed-precondition', 'Cache in use.'));
+
+    await expect(session.signOut()).rejects.toMatchObject({ reason: 'other-tabs-open' });
+
+    expect(session.user()).not.toBeNull();
   });
 
   it('does not reload the page when a user signs in', async () => {

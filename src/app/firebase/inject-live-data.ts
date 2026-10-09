@@ -11,6 +11,7 @@ import {
   DocumentReference,
   DocumentSnapshot,
   Firestore,
+  FirestoreError,
   Query,
   QuerySnapshot,
   Unsubscribe,
@@ -34,9 +35,15 @@ export interface LiveDataOptions<Ref extends Listenable, ListenTarget extends Li
 export interface LiveData<Ref extends Listenable, T> {
   /** The data, kept up to date; `undefined` until it has loaded. */
   readonly value: Signal<T | undefined>;
-  /** True while changes made on this device can't reach the server, e.g. offline. */
+  /**
+   * True while changes made on this device can't reach the server, e.g. offline. Misses a query's
+   * delete still queued from before a page reload.
+   */
   readonly waitingToSync: Signal<boolean>;
-  /** True when the data can't be loaded, e.g. Firestore refused to read it. */
+  /**
+   * True when the data can't be loaded, e.g. Firestore refused to read it. Stays false when
+   * sign-out, here or in another tab, shuts Firestore down.
+   */
   readonly loadFailed: Signal<boolean>;
   /** Where the signed-in user's data lives, for commands to write to. */
   ref(): Promise<Ref>;
@@ -50,8 +57,9 @@ export interface LiveData<Ref extends Listenable, T> {
 
 /**
  * The signed-in user's Live data (see `CONTEXT.md`): listens to it from now until the injection
- * context is destroyed. Call it in a field initializer of a page's data-access service. Imports
- * the Firestore SDK, so only lazy routes may reach it (ADR 0003).
+ * context is destroyed. Call it in a field initializer of a guarded page's data-access service; it
+ * reads the uid once, since sign-out reloads the page. Imports the Firestore SDK, so only lazy
+ * routes may reach it (ADR 0003).
  */
 export function injectLiveData<Ref extends Listenable, T, ListenTarget extends Listenable = Ref>(
   options: LiveDataOptions<Ref, ListenTarget, T>,
@@ -59,15 +67,10 @@ export function injectLiveData<Ref extends Listenable, T, ListenTarget extends L
   assertInInjectionContext(injectLiveData);
   const loadFirestore = inject(FIRESTORE);
   const errorHandler = inject(ErrorHandler);
-  // Pages with live data are guarded, so someone is signed in. Whenever that user goes away, the
-  // page reloads (see AuthSession), so the uid never changes for this instance.
-  const uid = inject(AuthSession).user()?.uid;
-  if (!uid) {
-    throw new Error('injectLiveData needs a signed-in user.');
-  }
+  const uid = uidOfSignedInUser(inject(AuthSession));
   const value = signal<T | undefined>(undefined);
   const snapshotHasPendingWrites = signal(false);
-  const snapshotFromCache = signal(false);
+  const listenerServedFromCache = signal(false);
   const unconfirmedWrites = signal(0);
   const loadFailed = signal(false);
 
@@ -81,7 +84,7 @@ export function injectLiveData<Ref extends Listenable, T, ListenTarget extends L
     destroyed = true;
     unsubscribe?.();
   });
-  const onError = (error: unknown) => {
+  const reportLoadFailureUnlessDestroyed = (error: unknown) => {
     if (destroyed) {
       return;
     }
@@ -92,45 +95,67 @@ export function injectLiveData<Ref extends Listenable, T, ListenTarget extends L
     if (destroyed) {
       return;
     }
-    // Metadata changes too, so `waitingToSync` follows the connection and the server's replies.
-    // `onSnapshot` takes either at runtime; its overloads just can't take the generic.
-    unsubscribe = onSnapshot(
-      listenTo(resolvedRef) as Query,
-      { includeMetadataChanges: true },
+    unsubscribe = listenToDocumentOrQueryIncludingMetadataChanges(
+      listenTo(resolvedRef),
       (snapshot) => {
-        value.set(options.map(snapshot as SnapshotOf<ListenTarget>));
+        value.set(options.map(snapshot));
         snapshotHasPendingWrites.set(snapshot.metadata.hasPendingWrites);
-        snapshotFromCache.set(snapshot.metadata.fromCache);
+        listenerServedFromCache.set(snapshot.metadata.fromCache);
       },
       (error) => {
-        // Sign-out, here or in another tab, shuts Firestore down and reloads the page: nothing failed.
-        if (error.code !== 'aborted') {
-          onError(error);
+        if (!isShutdownBySignOut(error)) {
+          reportLoadFailureUnlessDestroyed(error);
         }
       },
     );
-  }, onError);
+  }, reportLoadFailureUnlessDestroyed);
+  const reportRejectedWriteAsBug = (error: unknown) => errorHandler.handleError(error);
 
   return {
     value: value.asReadonly(),
-    // Online, every change is pending for a moment too; only `fromCache` means the listener has
-    // lost the server. A deleted document leaves a query's snapshot, and its pending write with
-    // it, so every write counts until the server has it. A write still queued from before a reload
-    // isn't counted.
-    waitingToSync: computed(
-      () => snapshotFromCache() && (snapshotHasPendingWrites() || unconfirmedWrites() > 0),
+    waitingToSync: computed(() =>
+      isWaitingToSync(listenerServedFromCache(), snapshotHasPendingWrites(), unconfirmedWrites()),
     ),
     loadFailed: loadFailed.asReadonly(),
     ref,
     track(write) {
       unconfirmedWrites.update((count) => count + 1);
       write
-        .catch((error: unknown) => {
-          // Pages only send what the rules accept, so a rejection is a bug. Firestore has already
-          // undone the change, so `value` shows what the server kept.
-          errorHandler.handleError(error);
-        })
+        .catch(reportRejectedWriteAsBug)
         .finally(() => unconfirmedWrites.update((count) => count - 1));
     },
   };
+}
+
+function uidOfSignedInUser(session: AuthSession): string {
+  const uid = session.user()?.uid;
+  if (!uid) {
+    throw new Error('injectLiveData needs a signed-in user.');
+  }
+  return uid;
+}
+
+function listenToDocumentOrQueryIncludingMetadataChanges<Target extends Listenable>(
+  target: Target,
+  onNext: (snapshot: SnapshotOf<Target>) => void,
+  onError: (error: FirestoreError) => void,
+): Unsubscribe {
+  return onSnapshot(
+    target as Query,
+    { includeMetadataChanges: true },
+    (snapshot) => onNext(snapshot as SnapshotOf<Target>),
+    onError,
+  );
+}
+
+function isShutdownBySignOut(error: FirestoreError): boolean {
+  return error.code === 'aborted';
+}
+
+function isWaitingToSync(
+  listenerServedFromCache: boolean,
+  snapshotHasPendingWrites: boolean,
+  unconfirmedTrackedWrites: number,
+): boolean {
+  return listenerServedFromCache && (snapshotHasPendingWrites || unconfirmedTrackedWrites > 0);
 }

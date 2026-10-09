@@ -82,7 +82,8 @@
           "configurations": {
             "integration": {
               "include": ["src/**/*.integration.spec.ts"],
-              "exclude": []
+              "exclude": [],
+              "runnerConfig": "vitest-integration.config.mts"
             }
           }
         },

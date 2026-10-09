@@ -22,6 +22,16 @@ describe('SignIn', () => {
     expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
   });
 
+  it('stays in the app when the return URL points to another site', async () => {
+    await renderApp('/sign-in?returnUrl=https%3A%2F%2Fevil.example.com', {
+      session: new FakeAuthSession({ accounts: [ada] }),
+    });
+
+    await signIn(ada);
+
+    expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
+  });
+
   it('says so when the password is wrong', async () => {
     await renderApp('/sign-in', { session: new FakeAuthSession({ accounts: [ada] }) });
 

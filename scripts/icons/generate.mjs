@@ -1,11 +1,3 @@
-// Renders the app icons from the SVGs beside this file: `npm run icons`.
-//
-// - `icon.svg` → `public/icons/icon-<size>.png` (manifest `purpose: any`) and `public/favicon.ico`
-// - `icon-maskable.svg` → `public/icons/icon-maskable-<size>.png` (manifest `purpose: maskable`)
-//
-// Rendering uses headless Chrome (set CHROME if it isn't `google-chrome` on the PATH). The file
-// names match `public/manifest.webmanifest`, so swapping the SVGs and re-running is enough.
-
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -15,7 +7,67 @@ const chrome = process.env.CHROME ?? 'google-chrome';
 const source = import.meta.dirname;
 const publicDir = join(source, '../../public');
 const icons = join(publicDir, 'icons');
-const temp = mkdtempSync(join(tmpdir(), 'icons-'));
+const icoHeaderSize = 6;
+const icoEntrySize = 16;
+
+renderManifestIcons();
+writeFaviconFromPngs(renderFaviconPngs());
+
+function renderManifestIcons() {
+  for (const size of [72, 96, 128, 144, 152, 192, 384, 512]) {
+    render('icon.svg', size, join(icons, `icon-${size}x${size}.png`));
+  }
+  for (const size of [192, 512]) {
+    render('icon-maskable.svg', size, join(icons, `icon-maskable-${size}x${size}.png`));
+  }
+}
+
+function renderFaviconPngs() {
+  const temp = mkdtempSync(join(tmpdir(), 'icons-'));
+  const pngs = [16, 32, 48].map((size) => {
+    const out = join(temp, `favicon-${size}.png`);
+    render('icon.svg', size, out);
+    return { size, data: readFileSync(out) };
+  });
+  rmSync(temp, { recursive: true });
+  return pngs;
+}
+
+function writeFaviconFromPngs(pngs) {
+  writeFileSync(join(publicDir, 'favicon.ico'), icoHoldingPngsAsTheyAre(pngs));
+}
+
+function icoHoldingPngsAsTheyAre(pngs) {
+  let offset = icoHeaderSize + icoEntrySize * pngs.length;
+  const entries = pngs.map(({ size, data }) => {
+    const entry = icoDirectoryEntry(size, data.length, offset);
+    offset += data.length;
+    return entry;
+  });
+  return Buffer.concat([icoHeader(pngs.length), ...entries, ...pngs.map(({ data }) => data)]);
+}
+
+function icoHeader(imageCount) {
+  const iconType = 1;
+  const header = Buffer.alloc(icoHeaderSize);
+  header.writeUInt16LE(iconType, 2);
+  header.writeUInt16LE(imageCount, 4);
+  return header;
+}
+
+function icoDirectoryEntry(size, byteLength, offset) {
+  const colourPlanes = 1;
+  const bitsPerPixel = 32;
+  const [width, height] = [size, size];
+  const entry = Buffer.alloc(icoEntrySize);
+  entry.writeUInt8(width, 0);
+  entry.writeUInt8(height, 1);
+  entry.writeUInt16LE(colourPlanes, 4);
+  entry.writeUInt16LE(bitsPerPixel, 6);
+  entry.writeUInt32LE(byteLength, 8);
+  entry.writeUInt32LE(offset, 12);
+  return entry;
+}
 
 function render(svg, size, out) {
   execFileSync(
@@ -32,39 +84,3 @@ function render(svg, size, out) {
     { stdio: 'ignore' },
   );
 }
-
-for (const size of [72, 96, 128, 144, 152, 192, 384, 512]) {
-  render('icon.svg', size, join(icons, `icon-${size}x${size}.png`));
-}
-for (const size of [192, 512]) {
-  render('icon-maskable.svg', size, join(icons, `icon-maskable-${size}x${size}.png`));
-}
-
-// An ICO file may hold PNGs as they are: a header, one directory entry per image, then the images.
-const faviconPngs = [16, 32, 48].map((size) => {
-  const out = join(temp, `favicon-${size}.png`);
-  render('icon.svg', size, out);
-  return { size, data: readFileSync(out) };
-});
-const entrySize = 16;
-const header = Buffer.alloc(6);
-header.writeUInt16LE(1, 2); // type: icon
-header.writeUInt16LE(faviconPngs.length, 4);
-let offset = header.length + entrySize * faviconPngs.length;
-const entries = faviconPngs.map(({ size, data }) => {
-  const entry = Buffer.alloc(entrySize);
-  entry.writeUInt8(size, 0); // width
-  entry.writeUInt8(size, 1); // height
-  entry.writeUInt16LE(1, 4); // colour planes
-  entry.writeUInt16LE(32, 6); // bits per pixel
-  entry.writeUInt32LE(data.length, 8);
-  entry.writeUInt32LE(offset, 12);
-  offset += data.length;
-  return entry;
-});
-writeFileSync(
-  join(publicDir, 'favicon.ico'),
-  Buffer.concat([header, ...entries, ...faviconPngs.map(({ data }) => data)]),
-);
-
-rmSync(temp, { recursive: true });

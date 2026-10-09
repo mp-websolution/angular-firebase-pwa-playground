@@ -16,7 +16,6 @@ interface NoteForm {
   text: string;
 }
 
-// For new notes and changed ones alike.
 const noteSchema = schema<NoteForm>((path) => {
   validate(path.text, ({ value }) => {
     const text = value().trim();
@@ -40,10 +39,8 @@ export class Notes {
 
   protected readonly newNoteForm = form(signal<NoteForm>({ text: '' }), noteSchema);
 
-  /** The note being changed, if any; one at a time. */
   protected readonly editingId = signal<string | undefined>(undefined);
   protected readonly editNoteForm = form(signal<NoteForm>({ text: '' }), noteSchema);
-  // Not `#editTextarea`: Angular's queries can't use ES private fields.
   private readonly editTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('editTextarea');
 
   protected addNote(): void {
@@ -56,16 +53,19 @@ export class Notes {
   protected startEditing(note: Note): void {
     this.editNoteForm().reset({ text: note.text });
     this.editingId.set(note.id);
-    // The Edit button is gone once the form shows; keep keyboard users where they were.
-    afterNextRender(() => this.editTextarea()?.nativeElement.focus(), {
-      injector: this.#injector,
-    });
+    this.#keepKeyboardUsersInTheNoteOnceItsEditButtonIsGone();
   }
 
   protected saveNote(id: string): void {
     submit(this.editNoteForm, async () => {
       await this.notesData.update(id, this.editNoteForm.text().value().trim());
       this.editingId.set(undefined);
+    });
+  }
+
+  #keepKeyboardUsersInTheNoteOnceItsEditButtonIsGone(): void {
+    afterNextRender(() => this.editTextarea()?.nativeElement.focus(), {
+      injector: this.#injector,
     });
   }
 }
