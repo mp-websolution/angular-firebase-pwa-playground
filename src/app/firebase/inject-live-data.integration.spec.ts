@@ -14,6 +14,7 @@ import {
   orderBy,
   query,
   setDoc,
+  terminate,
 } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { AuthSession } from '../auth/auth-session';
@@ -71,6 +72,9 @@ describe('injectLiveData against the emulators', { timeout: 20_000 }, () => {
   afterEach(async () => {
     // Auth keeps the signed-in user across app instances; don't let it leak into the next test.
     await signOut(TestBed.inject(FIREBASE_AUTH));
+    // TestBed's teardown shuts Firestore down without waiting, so it could still be at it when
+    // this file's jsdom goes away, and fail on the missing `window`. Wait for it here instead.
+    await terminate(await TestBed.inject(FIRESTORE)());
     vi.unstubAllEnvs();
   });
 
