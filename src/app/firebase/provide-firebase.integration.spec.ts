@@ -1,5 +1,3 @@
-// jsdom has no IndexedDB; Firestore's persistent cache needs one.
-import 'fake-indexeddb/auto';
 import { TestBed } from '@angular/core/testing';
 import { Auth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getApp } from 'firebase/app';
@@ -13,6 +11,7 @@ import {
   provideFirebase,
   signOutAndClearCache,
 } from './provide-firebase';
+import { enablePersistentCacheInJsdom } from './testing/persistent-cache-in-jsdom';
 
 const { emulators } = environment.firebase;
 
@@ -84,8 +83,7 @@ describe('provideFirebase against the emulators', () => {
 
   describe('with the persistent cache', () => {
     beforeEach(() => {
-      // Tests load Firestore's Node build, which only uses IndexedDB with its own test switch on.
-      vi.stubEnv('USE_MOCK_PERSISTENCE', 'YES');
+      enablePersistentCacheInJsdom();
       TestBed.configureTestingModule({ providers: [provideFirebase(environment.firebase)] });
     });
 

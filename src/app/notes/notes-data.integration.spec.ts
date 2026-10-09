@@ -1,5 +1,3 @@
-// jsdom has no IndexedDB; Firestore's persistent cache needs one.
-import 'fake-indexeddb/auto';
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
@@ -10,9 +8,8 @@ import { RELOAD_PAGE } from '../browser/reload-page';
 import { provideFirebase } from '../firebase/provide-firebase';
 import { tearDownFirebase } from '../firebase/testing/tear-down-firebase';
 import { NotesData } from './notes-data';
-
-// On a cold CI runner the emulator can take seconds to answer, but `vi.waitFor` gives up after 1 s.
-const emulatorReply = { timeout: 5_000 };
+import { enablePersistentCacheInJsdom } from '../firebase/testing/persistent-cache-in-jsdom';
+import { slowEmulatorTimeout } from '../firebase/testing/slow-emulator';
 
 describe('NotesData against the emulators', { timeout: 20_000 }, () => {
   let testEnv: RulesTestEnvironment;
@@ -31,8 +28,7 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
   });
 
   beforeEach(() => {
-    // Tests load Firestore's Node build, which only uses IndexedDB with its own test switch on.
-    vi.stubEnv('USE_MOCK_PERSISTENCE', 'YES');
+    enablePersistentCacheInJsdom();
     TestBed.configureTestingModule({
       providers: [
         provideFirebase(environment.firebase),
@@ -79,7 +75,7 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
 
     const notesData = TestBed.inject(NotesData);
 
-    await vi.waitFor(() => expect(notesData.notes()).toEqual([]), emulatorReply);
+    await vi.waitFor(() => expect(notesData.notes()).toEqual([]), slowEmulatorTimeout);
   });
 
   it("lists the signed-in user's notes, newest first", async () => {
@@ -95,7 +91,7 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
           { id: 'newer', text: 'Call Grace' },
           { id: 'older', text: 'Buy milk' },
         ]),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
   });
 
@@ -103,17 +99,17 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
     const uid = await signUp();
     await storeNote(uid, 'older', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), emulatorReply);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
     await notesData.create('Call Grace');
 
     await vi.waitFor(
       () => expect(notesData.notes()?.map(({ text }) => text)).toEqual(['Call Grace', 'Buy milk']),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
     await vi.waitFor(
       async () => expect(await storedTexts(uid)).toEqual(['Buy milk', 'Call Grace']),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
   });
 
@@ -121,17 +117,17 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
     const uid = await signUp();
     await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), emulatorReply);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
     await notesData.update('milk', 'Buy oat milk');
 
     await vi.waitFor(
       () => expect(notesData.notes()).toEqual([{ id: 'milk', text: 'Buy oat milk' }]),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
     await vi.waitFor(
       async () => expect(await storedTexts(uid)).toEqual(['Buy oat milk']),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
   });
 
@@ -139,31 +135,31 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
     const uid = await signUp();
     await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), emulatorReply);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
     await notesData.delete('milk');
 
-    await vi.waitFor(() => expect(notesData.notes()).toEqual([]), emulatorReply);
-    await vi.waitFor(async () => expect(await storedTexts(uid)).toEqual([]), emulatorReply);
+    await vi.waitFor(() => expect(notesData.notes()).toEqual([]), slowEmulatorTimeout);
+    await vi.waitFor(async () => expect(await storedTexts(uid)).toEqual([]), slowEmulatorTimeout);
   });
 
   it('shows notes added, changed and deleted elsewhere, e.g. on another device', async () => {
     const uid = await signUp();
     await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
     const notesData = TestBed.inject(NotesData);
-    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), emulatorReply);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
 
     await storeNote(uid, 'grace', 'Call Grace', new Date('2026-01-02'));
     await vi.waitFor(
       () => expect(notesData.notes()?.map(({ text }) => text)).toEqual(['Call Grace', 'Buy milk']),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
 
     await storeNote(uid, 'milk', 'Buy oat milk', new Date('2026-01-01'));
     await vi.waitFor(
       () =>
         expect(notesData.notes()?.map(({ text }) => text)).toEqual(['Call Grace', 'Buy oat milk']),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
 
     await testEnv.withSecurityRulesDisabled(async (context) => {
@@ -171,7 +167,7 @@ describe('NotesData against the emulators', { timeout: 20_000 }, () => {
     });
     await vi.waitFor(
       () => expect(notesData.notes()).toEqual([{ id: 'milk', text: 'Buy oat milk' }]),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
   });
 });

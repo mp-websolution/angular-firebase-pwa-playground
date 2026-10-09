@@ -1,5 +1,3 @@
-// jsdom has no IndexedDB; Firestore's persistent cache needs one.
-import 'fake-indexeddb/auto';
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
@@ -10,12 +8,11 @@ import { RELOAD_PAGE } from '../browser/reload-page';
 import { provideFirebase } from '../firebase/provide-firebase';
 import { tearDownFirebase } from '../firebase/testing/tear-down-firebase';
 import { ProfileData } from './profile-data';
+import { enablePersistentCacheInJsdom } from '../firebase/testing/persistent-cache-in-jsdom';
+import { slowEmulatorTimeout } from '../firebase/testing/slow-emulator';
 
 // Tests run in Node, but only see the browser's types.
 declare const process: { getBuiltinModule(id: 'node:buffer'): { Blob: typeof Blob } };
-
-// On a cold CI runner the emulator can take seconds to answer, but `vi.waitFor` gives up after 1 s.
-const emulatorReply = { timeout: 5_000 };
 
 describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
   let testEnv: RulesTestEnvironment;
@@ -34,8 +31,7 @@ describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
   });
 
   beforeEach(() => {
-    // Tests load Firestore's Node build, which only uses IndexedDB with its own test switch on.
-    vi.stubEnv('USE_MOCK_PERSISTENCE', 'YES');
+    enablePersistentCacheInJsdom();
     TestBed.configureTestingModule({
       providers: [
         provideFirebase(environment.firebase),
@@ -76,7 +72,7 @@ describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
 
     await vi.waitFor(
       () => expect(profileData.profile()).toEqual({ displayName: 'Ada' }),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
   });
 
@@ -87,24 +83,24 @@ describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
 
     await vi.waitFor(
       () => expect(profileData.profile()).toEqual({ displayName: '' }),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
   });
 
   it('changes the display name and syncs it to the server', async () => {
     const uid = await signUp();
     const profileData = TestBed.inject(ProfileData);
-    await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), emulatorReply);
+    await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
 
     await profileData.updateDisplayName('Ada');
 
     await vi.waitFor(
       () => expect(profileData.profile()).toEqual({ displayName: 'Ada' }),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
     await vi.waitFor(
       async () => expect(await storedProfile(uid)).toEqual({ displayName: 'Ada' }),
-      emulatorReply,
+      slowEmulatorTimeout,
     );
   });
 
@@ -138,17 +134,20 @@ describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
         await setDoc(doc(context.firestore(), 'profiles', uid), { displayName: 'Ada' });
       });
       const profileData = TestBed.inject(ProfileData);
-      await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), emulatorReply);
+      await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
 
       await profileData.uploadAvatar(image([1, 2, 3]));
 
-      await vi.waitFor(() => expect(profileData.profile()?.avatarUrl).toBeDefined(), emulatorReply);
+      await vi.waitFor(
+        () => expect(profileData.profile()?.avatarUrl).toBeDefined(),
+        slowEmulatorTimeout,
+      );
       const { avatarUrl } = profileData.profile()!;
       expect(profileData.profile()).toEqual({ displayName: 'Ada', avatarUrl });
       expect(await download(avatarUrl)).toEqual({ contentType: 'image/png', bytes: [1, 2, 3] });
       await vi.waitFor(
         async () => expect(await storedProfile(uid)).toEqual({ displayName: 'Ada', avatarUrl }),
-        emulatorReply,
+        slowEmulatorTimeout,
       );
     });
 
@@ -158,16 +157,19 @@ describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
         await setDoc(doc(context.firestore(), 'profiles', uid), { displayName: 'Ada' });
       });
       const profileData = TestBed.inject(ProfileData);
-      await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), emulatorReply);
+      await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
       await profileData.uploadAvatar(image([1, 2, 3]));
-      await vi.waitFor(() => expect(profileData.profile()?.avatarUrl).toBeDefined(), emulatorReply);
+      await vi.waitFor(
+        () => expect(profileData.profile()?.avatarUrl).toBeDefined(),
+        slowEmulatorTimeout,
+      );
       const firstUrl = profileData.profile()?.avatarUrl;
 
       await profileData.uploadAvatar(image([4, 5, 6]));
 
       await vi.waitFor(
         () => expect(profileData.profile()?.avatarUrl).not.toBe(firstUrl),
-        emulatorReply,
+        slowEmulatorTimeout,
       );
       expect(await download(profileData.profile()?.avatarUrl)).toEqual({
         contentType: 'image/png',
@@ -178,7 +180,7 @@ describe('ProfileData against the emulators', { timeout: 20_000 }, () => {
     it('rejects an upload that Storage refuses, and keeps the profile as it was', async () => {
       await signUp();
       const profileData = TestBed.inject(ProfileData);
-      await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), emulatorReply);
+      await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
 
       await expect(
         profileData.uploadAvatar(new Blob(['not an image'], { type: 'text/plain' })),

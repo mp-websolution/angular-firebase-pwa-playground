@@ -1,11 +1,10 @@
-// jsdom has no IndexedDB; Firestore's persistent cache needs one.
-import 'fake-indexeddb/auto';
 import { TestBed } from '@angular/core/testing';
 import { signOut } from 'firebase/auth';
 import { environment } from '../../environments/environment';
 import { FIREBASE_AUTH, provideFirebase } from '../firebase/provide-firebase';
 import { RELOAD_PAGE } from '../browser/reload-page';
 import { AuthSession } from './auth-session';
+import { enablePersistentCacheInJsdom } from '../firebase/testing/persistent-cache-in-jsdom';
 
 function newEmail() {
   return `session-${crypto.randomUUID()}@example.com`;
@@ -16,8 +15,7 @@ describe('AuthSession against the Auth emulator', () => {
 
   beforeEach(() => {
     reloadPage.mockReset();
-    // Tests load Firestore's Node build, which only uses IndexedDB with its own test switch on.
-    vi.stubEnv('USE_MOCK_PERSISTENCE', 'YES');
+    enablePersistentCacheInJsdom();
     TestBed.configureTestingModule({
       providers: [
         provideFirebase(environment.firebase),
