@@ -1,7 +1,6 @@
 import { AuthFailure } from './auth-failure.model';
 
 const messageByReason: Record<AuthFailure, string> = {
-  // Doesn't say whether the email or the password is wrong: that would reveal who has an account.
   'invalid-credential': 'Wrong email or password.',
   'invalid-email': 'Enter a valid email address.',
   'email-in-use': 'An account with this email already exists. Sign in instead.',
@@ -14,7 +13,6 @@ const messageByReason: Record<AuthFailure, string> = {
   unknown: 'Something went wrong. Try again.',
 };
 
-/** A failed auth session command. Its message is ready to show to the user. */
 export class AuthSessionError extends Error {
   override readonly name = 'AuthSessionError';
 
@@ -26,7 +24,6 @@ export class AuthSessionError extends Error {
   }
 }
 
-/** The message to show for an error thrown by an auth session command. */
 export function messageOf(error: unknown): string {
   return (error instanceof AuthSessionError ? error : new AuthSessionError('unknown')).message;
 }

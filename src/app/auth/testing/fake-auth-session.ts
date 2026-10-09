@@ -4,7 +4,6 @@ import { AuthSessionError } from '../auth-session-error';
 import { Credentials } from '../credentials.model';
 import { SessionUser } from '../session-user.model';
 
-// `implements AuthSession` would also demand its `#private` fields; this keeps only the public ones.
 type PublicApi<T> = { [K in keyof T]: T[K] }; //todo: after feature extract this to a common palce, exists at least 4 times.
 
 export interface FakeAuthSessionOptions {
@@ -20,7 +19,6 @@ export interface FakeAuthSessionOptions {
   otherTabsOpen?: boolean;
 }
 
-/** An in-memory stand-in for `AuthSession` that behaves like Firebase Auth for component tests. */
 export class FakeAuthSession implements PublicApi<AuthSession> {
   readonly #user = signal<SessionUser | null>(null);
   readonly #resolved = signal(true);
@@ -46,7 +44,7 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
       this.#passwords.set(email, password);
     }
     if (signedInAs) {
-      this.#user.set(fakeUser(signedInAs));
+      this.#user.set(fakeUserWithEmail(signedInAs));
     }
     this.#googlePopup = googlePopup;
     this.#restoring = restoring;
@@ -57,9 +55,8 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
     this.#otherTabsOpen = otherTabsOpen;
   }
 
-  /** Ends the restore started with the `restoring` option. */
   finishRestoring(): void {
-    this.#user.set(this.#restoring ? fakeUser(this.#restoring) : null);
+    this.#user.set(this.#restoring ? fakeUserWithEmail(this.#restoring) : null);
     this.#resolved.set(true);
     this.#finishResolving();
   }
@@ -76,21 +73,21 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
       throw new AuthSessionError('weak-password');
     }
     this.#passwords.set(email, password);
-    this.#user.set(fakeUser(email));
+    this.#user.set(fakeUserWithEmail(email));
   }
 
   async signInWithEmail({ email, password }: Credentials): Promise<void> {
     if (this.#passwords.get(email) !== password) {
       throw new AuthSessionError('invalid-credential');
     }
-    this.#user.set(fakeUser(email));
+    this.#user.set(fakeUserWithEmail(email));
   }
 
   async signInWithGoogle(): Promise<void> {
     if (this.#googlePopup === 'closed') {
       throw new AuthSessionError('popup-closed');
     }
-    this.#user.set(fakeUser(this.#googlePopup.email));
+    this.#user.set(fakeUserWithEmail(this.#googlePopup.email));
   }
 
   async signOut(): Promise<void> {
@@ -101,6 +98,6 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
   }
 }
 
-function fakeUser(email: string): SessionUser {
+function fakeUserWithEmail(email: string): SessionUser {
   return { uid: `uid-${email}`, email, displayName: null };
 }
