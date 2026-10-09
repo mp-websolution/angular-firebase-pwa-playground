@@ -70,7 +70,7 @@ export function injectLiveData<Ref extends Listenable, T, ListenTarget extends L
   const uid = uidOfSignedInUser(inject(AuthSession));
   const value = signal<T | undefined>(undefined);
   const snapshotHasPendingWrites = signal(false);
-  const listenerCutOffFromServer = signal(false);
+  const listenerServedFromCache = signal(false);
   const unconfirmedWrites = signal(0);
   const loadFailed = signal(false);
 
@@ -100,7 +100,7 @@ export function injectLiveData<Ref extends Listenable, T, ListenTarget extends L
       (snapshot) => {
         value.set(options.map(snapshot));
         snapshotHasPendingWrites.set(snapshot.metadata.hasPendingWrites);
-        listenerCutOffFromServer.set(snapshot.metadata.fromCache);
+        listenerServedFromCache.set(snapshot.metadata.fromCache);
       },
       (error) => {
         if (!isShutdownBySignOut(error)) {
@@ -114,7 +114,7 @@ export function injectLiveData<Ref extends Listenable, T, ListenTarget extends L
   return {
     value: value.asReadonly(),
     waitingToSync: computed(() =>
-      isWaitingToSync(listenerCutOffFromServer(), snapshotHasPendingWrites(), unconfirmedWrites()),
+      isWaitingToSync(listenerServedFromCache(), snapshotHasPendingWrites(), unconfirmedWrites()),
     ),
     loadFailed: loadFailed.asReadonly(),
     ref,
@@ -153,9 +153,9 @@ function isShutdownBySignOut(error: FirestoreError): boolean {
 }
 
 function isWaitingToSync(
-  listenerCutOffFromServer: boolean,
+  listenerServedFromCache: boolean,
   snapshotHasPendingWrites: boolean,
   unconfirmedTrackedWrites: number,
 ): boolean {
-  return listenerCutOffFromServer && (snapshotHasPendingWrites || unconfirmedTrackedWrites > 0);
+  return listenerServedFromCache && (snapshotHasPendingWrites || unconfirmedTrackedWrites > 0);
 }
