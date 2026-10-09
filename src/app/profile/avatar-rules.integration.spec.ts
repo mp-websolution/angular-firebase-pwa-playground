@@ -7,15 +7,12 @@ import {
 } from '@firebase/rules-unit-testing';
 import { deleteObject, getBytes, ref, uploadBytes } from 'firebase/storage';
 import { environment } from '../../environments/environment';
+import { uidNoOtherTestUses } from '../firebase/testing/uid-no-other-test-uses';
 
 const { projectId, storageBucket } = environment.firebase.options;
 
 function testEnvironmentWithDeployedStorageRules() {
   return initializeTestEnvironment({ projectId, storage: {} });
-}
-
-function uidNoOtherTestUses(name: string) {
-  return `${name}-${crypto.randomUUID()}`;
 }
 
 describe('Storage rules for avatars', () => {

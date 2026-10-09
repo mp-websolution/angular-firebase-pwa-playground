@@ -1,10 +1,7 @@
 import { RulesTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { testEnvironmentWithDeployedFirestoreRules } from '../firebase/testing/deployed-firestore-rules';
-
-function uidNoOtherTestUses(name: string) {
-  return `${name}-${crypto.randomUUID()}`;
-}
+import { uidNoOtherTestUses } from '../firebase/testing/uid-no-other-test-uses';
 
 describe('Firestore rules for profiles', () => {
   let testEnv: RulesTestEnvironment;
