@@ -11,6 +11,7 @@ service firebase.storage {
     }
 
     match /avatars/{uid} {
+      // Public: anyone with its download URL could read it anyway.
       allow read: if true;
       allow delete: if isSignedInAsOwner(uid);
       allow create, update: if isSignedInAsOwner(uid) && isAllowedAvatarImage(request.resource);

@@ -44,6 +44,7 @@ function refuse(message) {
   process.exit(1);
 }
 
+/** Each seeder's default export is an async function that receives `{ projectId }`. */
 async function runEverySeederInFilenameOrder(projectId) {
   const seeders = (await readdir(seedDir)).filter((file) => file.endsWith('.mjs')).sort();
   for (const file of seeders) {
