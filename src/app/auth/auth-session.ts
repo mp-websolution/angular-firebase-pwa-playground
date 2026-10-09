@@ -20,7 +20,7 @@ import { SessionUser } from './session-user.model';
 @Service()
 export class AuthSession {
   readonly #auth = inject(FIREBASE_AUTH);
-  readonly #loadFirestore = inject(FIRESTORE);
+  readonly #loadFirestoreOnlyOnSignOut = inject(FIRESTORE);
   readonly #reloadPage = inject(RELOAD_PAGE);
   readonly #user = signal<SessionUser | null>(null);
   readonly #resolved = signal(false);
@@ -67,7 +67,7 @@ export class AuthSession {
 
   async signOut(): Promise<void> {
     try {
-      await signOutAndClearCache(this.#auth, this.#loadFirestore);
+      await signOutAndClearCache(this.#auth, this.#loadFirestoreOnlyOnSignOut);
     } catch (error) {
       throw toSignOutError(error);
     }

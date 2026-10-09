@@ -27,9 +27,7 @@ function closeTheGooglePopupBeforeFinishing() {
   );
 }
 
-function failToDeleteFirestoreCache(
-  because: Error = new DOMException('Disk is busy', 'UnknownError'),
-) {
+function failToDeleteFirestoreCache(because: Error) {
   const deleteDatabase = indexedDB.deleteDatabase.bind(indexedDB);
   const spy = vi.spyOn(indexedDB, 'deleteDatabase').mockImplementation((name) => {
     if (name.startsWith('firestore/')) {
@@ -148,7 +146,7 @@ describe('AuthSession against the Auth emulator', () => {
   it('keeps the user signed in when sign-out cannot delete the cache', async () => {
     const session = TestBed.inject(AuthSession);
     await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
-    failToDeleteFirestoreCache();
+    failToDeleteFirestoreCache(new DOMException('Disk is busy', 'UnknownError'));
 
     await expect(session.signOut()).rejects.toMatchObject({ reason: 'unknown' });
 
@@ -167,7 +165,7 @@ describe('AuthSession against the Auth emulator', () => {
     expect(session.user()).not.toBeNull();
   });
 
-  it('signs in with Google in a popup', async () => {
+  it('uses a popup for Google sign-in', async () => {
     closeTheGooglePopupBeforeFinishing();
 
     await expect(TestBed.inject(AuthSession).signInWithGoogle()).rejects.toMatchObject({
