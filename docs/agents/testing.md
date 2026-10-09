@@ -23,7 +23,7 @@ What every service built on `injectLiveData()` shares (live updates, `waitingToS
 
 Each collection's rules get a `*-rules.integration.spec.ts` beside its data-access service, e.g. `src/app/profile/profile-rules.integration.spec.ts`. They use `@firebase/rules-unit-testing`:
 
-- `initializeTestEnvironment` with `firestore: {}` and no rules: the emulator already runs `firestore.rules`, and `emulators:exec` sets `FIRESTORE_EMULATOR_HOST`.
+- `testEnvironmentWithDeployedFirestoreRules()` from `src/app/firebase/testing/deployed-firestore-rules.ts` in `beforeAll`: it passes no rules, since the emulator already runs `firestore.rules`, and `emulators:exec` sets `FIRESTORE_EMULATOR_HOST`.
 - Write the starting documents in `withSecurityRulesDisabled`, under fresh IDs per test (`crypto.randomUUID()`), so tests never see each other's data. Don't call `clearFirestore`: other test files share the emulator.
 - Act as a user through `authenticatedContext(uid)` or `unauthenticatedContext()`, using the modular SDK on `context.firestore()`, and check with `assertSucceeds` / `assertFails`.
 - Cover the owner being allowed, other users and signed-out visitors being denied, and every data check in the rules.
