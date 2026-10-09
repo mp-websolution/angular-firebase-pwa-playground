@@ -16,7 +16,7 @@
 
 **Status:** ready-for-agent
 
-- [ ] No comments in function bodies; TSDoc only on the fake's options and any genuinely shared helper
+- [x] No comments in function bodies; TSDoc only on the fake's options and any genuinely shared helper
 - [ ] Every contract fact from the removed TSDoc is pinned by a named test
-- [ ] Public interface of `AuthSession` unchanged, so the fake is too
-- [ ] `npm run lint`, `npm test`, `npm run test:integration`, `npm run build` pass
+- [x] Public interface of `AuthSession` unchanged, so the fake is too
+- [x] `npm run lint`, `npm test`, `npm run test:integration`, `npm run build` pass
