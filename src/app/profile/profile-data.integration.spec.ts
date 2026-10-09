@@ -1,10 +1,10 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { disableNetwork, doc, enableNetwork, getDoc, setDoc } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { RELOAD_PAGE } from '../browser/reload-page';
-import { provideFirebase } from '../firebase/provide-firebase';
+import { FIREBASE_STORAGE, FIRESTORE, provideFirebase } from '../firebase/provide-firebase';
 import { tearDownFirebase } from '../firebase/testing/tear-down-firebase';
 import { testEnvironmentWithDeployedFirestoreRules } from '../firebase/testing/deployed-firestore-rules';
 import { signInAsNewUser } from '../firebase/testing/sign-in-as-new-user';
@@ -17,6 +17,7 @@ declare const process: { getBuiltinModule(id: 'node:buffer'): { Blob: typeof Blo
 
 describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
   let testEnv: RulesTestEnvironment;
+  const reportError = vi.fn();
 
   beforeAll(async () => {
     testEnv = await testEnvironmentWithDeployedFirestoreRules();
@@ -27,12 +28,13 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
   });
 
   beforeEach(() => {
+    reportError.mockReset();
     enablePersistentCacheInJsdom();
     TestBed.configureTestingModule({
       providers: [
         provideFirebase(environment.firebase),
         { provide: RELOAD_PAGE, useValue: vi.fn() },
-        { provide: ErrorHandler, useValue: { handleError: vi.fn() } },
+        { provide: ErrorHandler, useValue: { handleError: reportError } },
       ],
     });
   });
@@ -88,6 +90,26 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
       async () => expect(await storedProfile(uid)).toEqual({ displayName: 'Ada' }),
       slowEmulatorTimeout,
     );
+  });
+
+  it('saves a display name change offline and waits to sync it until back online', async () => {
+    const uid = await signInAsNewUser();
+    const profileData = TestBed.inject(ProfileData);
+    await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
+    const firestore = await TestBed.inject(FIRESTORE)();
+    await disableNetwork(firestore);
+
+    await profileData.updateDisplayName('Ada');
+
+    await vi.waitFor(() => {
+      expect(profileData.profile()).toEqual({ displayName: 'Ada' });
+      expect(profileData.waitingToSync()).toBe(true);
+    }, slowEmulatorTimeout);
+
+    await enableNetwork(firestore);
+
+    await vi.waitFor(() => expect(profileData.waitingToSync()).toBe(false), slowEmulatorTimeout);
+    expect(await storedProfile(uid)).toEqual({ displayName: 'Ada' });
   });
 
   describe('avatar', () => {
@@ -161,6 +183,43 @@ describe('ProfileData against the emulators', slowEmulatorTestTimeout, () => {
         contentType: 'image/png',
         bytes: [4, 5, 6],
       });
+      expect((await download(firstUrl)).bytes).not.toEqual([1, 2, 3]);
+    });
+
+    it('needs a connection to upload an avatar, unlike a display name change', async () => {
+      const uid = await signInAsNewUser();
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'profiles', uid), { displayName: 'Ada' });
+      });
+      const profileData = TestBed.inject(ProfileData);
+      await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
+      TestBed.inject(FIREBASE_STORAGE).maxUploadRetryTime = 100;
+      vi.stubGlobal('fetch', () => Promise.reject(new TypeError('fetch failed')));
+
+      await expect(profileData.uploadAvatar(image([1, 2, 3]))).rejects.toThrow();
+
+      expect(profileData.profile()).toEqual({ displayName: 'Ada' });
+    });
+
+    it('keeps no avatar on a profile without a display name, and reports that as a bug', async () => {
+      const uid = await signInAsNewUser();
+      const profileData = TestBed.inject(ProfileData);
+      await vi.waitFor(() => expect(profileData.profile()).toBeDefined(), slowEmulatorTimeout);
+
+      await profileData.uploadAvatar(image([1, 2, 3]));
+
+      await vi.waitFor(
+        () =>
+          expect(reportError).toHaveBeenCalledWith(
+            expect.objectContaining({ code: 'permission-denied' }),
+          ),
+        slowEmulatorTimeout,
+      );
+      await vi.waitFor(
+        () => expect(profileData.profile()).toEqual({ displayName: '' }),
+        slowEmulatorTimeout,
+      );
+      expect(await storedProfile(uid)).toBeUndefined();
     });
 
     it('rejects an upload that Storage refuses, and keeps the profile as it was', async () => {

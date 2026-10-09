@@ -180,6 +180,33 @@ describe('EditProfile', () => {
     expect(screen.getByLabelText('Display name')).toHaveValue('Ada Lovelace');
   });
 
+  it('follows changes made elsewhere again once the typed name is saved', async () => {
+    const profile = new FakeProfileData({ displayName: 'Ada' });
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      profile,
+    });
+    await changeDisplayName('  Ada Lovelace  ');
+    await screen.findByText('Saved.');
+
+    profile.changeElsewhere('Countess of Lovelace');
+
+    expect(await screen.findByDisplayValue('Countess of Lovelace')).toBeVisible();
+  });
+
+  it('stops saying it saved once the user edits the name again', async () => {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      profile: new FakeProfileData({ displayName: 'Ada' }),
+    });
+    await changeDisplayName('Ada Lovelace');
+    await screen.findByText('Saved.');
+
+    await userEvent.setup().type(screen.getByLabelText('Display name'), '!');
+
+    expect(screen.getByRole('status')).not.toHaveTextContent('Saved.');
+  });
+
   it("says so when the profile can't be loaded", async () => {
     await renderApp('/profile', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
