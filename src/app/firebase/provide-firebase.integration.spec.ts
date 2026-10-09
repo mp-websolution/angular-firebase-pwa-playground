@@ -15,20 +15,22 @@ import { enablePersistentCacheInJsdom } from './testing/persistent-cache-in-jsdo
 
 const { emulators } = environment.firebase;
 
+const ruleTraceOnlyTheEmulatorGives = expect.stringContaining("false for 'get' @ L");
+
 function signUpProbeUser(auth: Auth, email = `probe-${crypto.randomUUID()}@example.com`) {
   return createUserWithEmailAndPassword(auth, email, crypto.randomUUID());
 }
 
-// A path no rule will ever open, so the deny-all default answers it.
-function readProbeDoc(firestore: Firestore) {
+function readPathNoRuleOpens(firestore: Firestore) {
   return getDoc(doc(firestore, 'probe/doc'));
 }
 
+async function signOutSinceAuthKeepsTheUserAcrossApps(): Promise<void> {
+  await signOut(TestBed.inject(FIREBASE_AUTH));
+}
+
 describe('provideFirebase against the emulators', () => {
-  // Auth persists the signed-in user across app instances; don't let it leak into the next test.
-  afterEach(async () => {
-    await signOut(TestBed.inject(FIREBASE_AUTH));
-  });
+  afterEach(signOutSinceAuthKeepsTheUserAcrossApps);
 
   describe('with the memory cache', () => {
     beforeEach(() => {
@@ -48,10 +50,9 @@ describe('provideFirebase against the emulators', () => {
     it('is answered by the Firestore emulator, whose default rules deny reads', async () => {
       const firestore = await TestBed.inject(FIRESTORE)();
 
-      // Only the emulator explains a denial with its rule trace; Firebase says "Missing or insufficient permissions".
-      await expect(readProbeDoc(firestore)).rejects.toMatchObject({
+      await expect(readPathNoRuleOpens(firestore)).rejects.toMatchObject({
         code: 'permission-denied',
-        message: expect.stringContaining("false for 'get' @ L"),
+        message: ruleTraceOnlyTheEmulatorGives,
       });
     });
 
@@ -96,7 +97,7 @@ describe('provideFirebase against the emulators', () => {
       const loadFirestore = TestBed.inject(FIRESTORE);
       const firestore = await loadFirestore();
       await signUpProbeUser(auth);
-      await expect(readProbeDoc(firestore)).rejects.toThrow();
+      await expect(readPathNoRuleOpens(firestore)).rejects.toThrow();
       const cacheExists = async () =>
         (await indexedDB.databases()).some(({ name }) => name?.startsWith('firestore/'));
       expect(await cacheExists()).toBe(true);
@@ -104,7 +105,7 @@ describe('provideFirebase against the emulators', () => {
       await signOutAndClearCache(auth, loadFirestore);
 
       expect(auth.currentUser).toBeNull();
-      expect(() => readProbeDoc(firestore)).toThrow('terminated');
+      expect(() => readPathNoRuleOpens(firestore)).toThrow('terminated');
       expect(await cacheExists()).toBe(false);
     });
   });
