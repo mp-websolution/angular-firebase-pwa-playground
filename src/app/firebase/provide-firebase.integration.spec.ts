@@ -2,7 +2,8 @@
 import 'fake-indexeddb/auto';
 import { TestBed } from '@angular/core/testing';
 import { Auth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { Firestore, doc, getDoc } from 'firebase/firestore';
+import { getApp } from 'firebase/app';
+import { Firestore, doc, getDoc, getFirestore, terminate } from 'firebase/firestore';
 import { getDownloadURL, ref } from 'firebase/storage';
 import { environment } from '../../environments/environment';
 import {
@@ -68,6 +69,16 @@ describe('provideFirebase against the emulators', () => {
         expect.stringMatching(`^http://${emulators?.host}:${emulators?.storagePort}/`),
         expect.anything(),
       );
+    });
+
+    it('loads Firestore again on the next call after loading it failed', async () => {
+      const loadFirestore = TestBed.inject(FIRESTORE);
+      const blockingFirestore = getFirestore(getApp());
+      await expect(loadFirestore()).rejects.toMatchObject({ code: 'failed-precondition' });
+
+      await terminate(blockingFirestore);
+
+      await expect(loadFirestore()).resolves.toBeInstanceOf(Firestore);
     });
   });
 
