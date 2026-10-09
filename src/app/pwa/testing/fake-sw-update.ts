@@ -7,6 +7,8 @@ type PublicApi<T> = { [K in keyof T]: T[K] };
 export interface FakeSwUpdateOptions {
   /** Downloading a new version takes until `finishDownload()` instead of being done right away. */
   slowDownload?: boolean;
+  /** Update checks fail as if offline, until `goOnline()`. */
+  offline?: boolean;
 }
 
 /** An in-memory stand-in for Angular's `SwUpdate`, driven by the test like a deploy would drive it. */
@@ -14,6 +16,7 @@ export class FakeSwUpdate implements PublicApi<SwUpdate> {
   readonly #versionUpdates = new Subject<VersionEvent>();
   readonly #unrecoverable = new Subject<UnrecoverableStateEvent>();
   readonly #slowDownload: boolean;
+  #offline: boolean;
   /** The tab keeps running the version it loaded until it reloads, which tests can't do. */
   readonly #tabVersion = 1;
   #foundVersion = 1;
@@ -24,8 +27,9 @@ export class FakeSwUpdate implements PublicApi<SwUpdate> {
   readonly versionUpdates = this.#versionUpdates.asObservable();
   readonly unrecoverable = this.#unrecoverable.asObservable();
 
-  constructor({ slowDownload = false }: FakeSwUpdateOptions = {}) {
+  constructor({ slowDownload = false, offline = false }: FakeSwUpdateOptions = {}) {
     this.#slowDownload = slowDownload;
+    this.#offline = offline;
   }
 
   /** A new version goes live on the server. The app finds it on its next update check. */
@@ -46,7 +50,14 @@ export class FakeSwUpdate implements PublicApi<SwUpdate> {
     });
   }
 
+  goOnline(): void {
+    this.#offline = false;
+  }
+
   async checkForUpdate(): Promise<boolean> {
+    if (this.#offline) {
+      throw new Error('Failed to fetch');
+    }
     if (this.#deployedVersion === this.#foundVersion) {
       return false;
     }

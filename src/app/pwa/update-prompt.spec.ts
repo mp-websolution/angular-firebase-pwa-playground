@@ -37,6 +37,32 @@ describe('Update prompt', () => {
     expect(await screen.findByText('A new version is available.')).toBeVisible();
   });
 
+  it('announces a new version to screen-reader users through a live region already on the page', async () => {
+    const swUpdate = new FakeSwUpdate();
+    const { container } = await renderApp('/sign-in', { swUpdate });
+    await screen.findByRole('heading', { level: 1, name: 'Sign in' });
+    const liveRegion = container.querySelector('[aria-live="polite"]');
+    expect(liveRegion).toBeInTheDocument();
+
+    swUpdate.deployNewVersion();
+    returnToTab();
+
+    expect(liveRegion).toContainElement(await screen.findByText('A new version is available.'));
+  });
+
+  it('shows nothing when an update check fails offline, and offers the reload after the next check', async () => {
+    const swUpdate = new FakeSwUpdate({ offline: true });
+    swUpdate.deployNewVersion();
+    await renderApp('/sign-in', { swUpdate });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
+    expect(screen.queryByText('A new version is available.')).not.toBeInTheDocument();
+
+    swUpdate.goOnline();
+    returnToTab();
+
+    expect(await screen.findByText('A new version is available.')).toBeVisible();
+  });
+
   it('waits until the new version is downloaded', async () => {
     const swUpdate = new FakeSwUpdate({ slowDownload: true });
     swUpdate.deployNewVersion();
