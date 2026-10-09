@@ -1,10 +1,19 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { Timestamp, collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
+import {
+  Timestamp,
+  collection,
+  deleteDoc,
+  disableNetwork,
+  doc,
+  enableNetwork,
+  getDocs,
+  setDoc,
+} from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { RELOAD_PAGE } from '../browser/reload-page';
-import { provideFirebase } from '../firebase/provide-firebase';
+import { FIRESTORE, provideFirebase } from '../firebase/provide-firebase';
 import { tearDownFirebase } from '../firebase/testing/tear-down-firebase';
 import { testEnvironmentWithDeployedFirestoreRules } from '../firebase/testing/deployed-firestore-rules';
 import { signInAsNewUser } from '../firebase/testing/sign-in-as-new-user';
@@ -127,6 +136,69 @@ describe('NotesData against the emulators', slowEmulatorTestTimeout, () => {
 
     await vi.waitFor(() => expect(notesData.notes()).toEqual([]), slowEmulatorTimeout);
     await vi.waitFor(async () => expect(await storedTexts(uid)).toEqual([]), slowEmulatorTimeout);
+  });
+
+  it('creates a note offline, on top of the list while its creation time waits for the server, and syncs it once back online', async () => {
+    const uid = await signInAsNewUser();
+    await storeNote(uid, 'newer', 'Buy milk', new Date('2999-01-01'));
+    const notesData = TestBed.inject(NotesData);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
+    const firestore = await TestBed.inject(FIRESTORE)();
+    await disableNetwork(firestore);
+
+    await notesData.create('Call Grace');
+
+    await vi.waitFor(() => {
+      expect(notesData.notes()?.map(({ text }) => text)).toEqual(['Call Grace', 'Buy milk']);
+      expect(notesData.waitingToSync()).toBe(true);
+    }, slowEmulatorTimeout);
+
+    await enableNetwork(firestore);
+
+    await vi.waitFor(() => expect(notesData.waitingToSync()).toBe(false), slowEmulatorTimeout);
+    expect(await storedTexts(uid)).toEqual(['Buy milk', 'Call Grace']);
+  });
+
+  it("changes a note's text offline straight away and syncs it once back online", async () => {
+    const uid = await signInAsNewUser();
+    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
+    const notesData = TestBed.inject(NotesData);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
+    const firestore = await TestBed.inject(FIRESTORE)();
+    await disableNetwork(firestore);
+
+    await notesData.update('milk', 'Buy oat milk');
+
+    await vi.waitFor(() => {
+      expect(notesData.notes()).toEqual([{ id: 'milk', text: 'Buy oat milk' }]);
+      expect(notesData.waitingToSync()).toBe(true);
+    }, slowEmulatorTimeout);
+
+    await enableNetwork(firestore);
+
+    await vi.waitFor(() => expect(notesData.waitingToSync()).toBe(false), slowEmulatorTimeout);
+    expect(await storedTexts(uid)).toEqual(['Buy oat milk']);
+  });
+
+  it('deletes a note offline straight away and syncs it once back online', async () => {
+    const uid = await signInAsNewUser();
+    await storeNote(uid, 'milk', 'Buy milk', new Date('2026-01-01'));
+    const notesData = TestBed.inject(NotesData);
+    await vi.waitFor(() => expect(notesData.notes()).toHaveLength(1), slowEmulatorTimeout);
+    const firestore = await TestBed.inject(FIRESTORE)();
+    await disableNetwork(firestore);
+
+    await notesData.delete('milk');
+
+    await vi.waitFor(() => {
+      expect(notesData.notes()).toEqual([]);
+      expect(notesData.waitingToSync()).toBe(true);
+    }, slowEmulatorTimeout);
+
+    await enableNetwork(firestore);
+
+    await vi.waitFor(() => expect(notesData.waitingToSync()).toBe(false), slowEmulatorTimeout);
+    expect(await storedTexts(uid)).toEqual([]);
   });
 
   it('shows notes added, changed and deleted elsewhere, e.g. on another device', async () => {
