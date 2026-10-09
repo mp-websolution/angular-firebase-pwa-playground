@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { FirebaseApp, deleteApp, initializeApp } from 'firebase/app';
 import { Auth, connectAuthEmulator, getAuth, signOut } from 'firebase/auth';
-// Type-only: the Firestore SDK is most of Firebase's weight, so it loads on first use, never in main.
+// Type-only: a value import would pull the Firestore SDK into the initial bundle.
 import type { Firestore } from 'firebase/firestore';
 import { FirebaseStorage, connectStorageEmulator, getStorage } from 'firebase/storage';
 import type { FirebaseSettings } from './firebase-settings.model';
@@ -15,7 +15,11 @@ import type { FirebaseSettings } from './firebase-settings.model';
 const FIREBASE_SETTINGS = new InjectionToken<FirebaseSettings>('FIREBASE_SETTINGS');
 const FIREBASE_APP = new InjectionToken<FirebaseApp>('FIREBASE_APP');
 
-/** Loads the Firestore SDK and initialises Firestore on the first call; later calls share it. */
+/**
+ * Loads the Firestore SDK and initialises Firestore on the first call; later calls share it, and a
+ * failed load is tried again. The SDK is most of Firebase's weight, so it stays out of the initial
+ * bundle (ADR 0003).
+ */
 export type LoadFirestore = () => Promise<Firestore>;
 
 export const FIREBASE_AUTH = new InjectionToken<Auth>('FIREBASE_AUTH');
@@ -34,10 +38,9 @@ export function provideFirebase(settings: FirebaseSettings): EnvironmentProvider
 }
 
 /**
- * Deletes Firestore's on-disk cache, then signs out, so the next person on the device cannot read
- * the previous user's documents. Firestore is unusable afterwards: reload the page. Other tabs shut
- * their Firestore down when the cache is deleted. If clearing fails anyway, the user stays signed
- * in, so sign-out never succeeds with their documents left on disk.
+ * Deletes Firestore's on-disk cache, then signs out, so the next person on the device can't read
+ * the previous user's documents; if deleting fails, the user stays signed in. Other tabs shut
+ * their Firestore down too. Firestore is unusable afterwards: reload the page.
  */
 export async function signOutAndClearCache(
   auth: Auth,
@@ -58,9 +61,12 @@ function createApp(): FirebaseApp {
     );
   }
   const app = initializeApp(options);
-  // Free the default app name when the injector goes away, so a new injector can initialise it again.
-  inject(DestroyRef).onDestroy(() => void deleteApp(app));
+  letTheNextInjectorInitialiseTheAppAgain(app, inject(DestroyRef));
   return app;
+}
+
+function letTheNextInjectorInitialiseTheAppAgain(app: FirebaseApp, destroyRef: DestroyRef): void {
+  destroyRef.onDestroy(() => void deleteApp(app));
 }
 
 function createAuth(): Auth {
@@ -89,12 +95,11 @@ function createFirestoreLoader(): LoadFirestore {
     }
     return instance;
   };
-  return () =>
-    (pendingFirestore ??= load().catch((error: unknown) => {
-      // E.g. the chunk download failed offline: don't cache the failure, let the next call try again.
-      pendingFirestore = undefined;
-      throw error;
-    }));
+  const forgetTheFailureSoTheNextCallRetries = (error: unknown): never => {
+    pendingFirestore = undefined;
+    throw error;
+  };
+  return () => (pendingFirestore ??= load().catch(forgetTheFailureSoTheNextCallRetries));
 }
 
 function createStorage(): FirebaseStorage {
