@@ -3,5 +3,5 @@ export interface Note {
   text: string;
 }
 
-// Same limit as the Firestore rules, which see the trimmed text.
+// Keep in step with the Firestore rules, which check the trimmed text.
 export const maxNoteLength = 1000;
