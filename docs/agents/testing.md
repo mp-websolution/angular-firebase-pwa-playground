@@ -11,7 +11,7 @@ A component test renders the whole app through the router and drives it the way 
 - **Act** with `userEvent.setup()`: `type`, `click`.
 - **Query** through `screen` in Testing Library's priority order: `getByRole` (with `name`), `getByLabelText`, then `getByText`. Use `findBy*` for whatever appears after a render, navigation or action: it retries until the element is in the DOM, so the test needs no fixture or change-detection call.
 - **Assert** with jest-dom matchers: `toBeVisible`, `toHaveTextContent`, `toBeInvalid`.
-- **Name** each test after the behaviour a user sees ("says so when the password is wrong").
+- **Name** each test after the behaviour a user sees ("says so when the password is wrong"). Test names replace comments: see "Comments and naming" in `AGENTS.md`.
 
 ## Integration tests
 
