@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { signOut } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
+import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { environment } from '../../environments/environment';
 import { FIREBASE_AUTH, provideFirebase } from '../firebase/provide-firebase';
 import { RELOAD_PAGE } from '../browser/reload-page';
@@ -7,8 +8,34 @@ import { AuthSession } from './auth-session';
 import { enablePersistentCacheInJsdom } from '../firebase/testing/persistent-cache-in-jsdom';
 import { signOutForTheNextTest } from '../firebase/testing/tear-down-firebase';
 
+vi.mock('firebase/auth', async (importOriginal) => {
+  const sdk = await importOriginal<typeof import('firebase/auth')>();
+  return { ...sdk, signInWithPopup: vi.fn(sdk.signInWithPopup) };
+});
+
 function newEmail() {
   return `session-${crypto.randomUUID()}@example.com`;
+}
+
+function signOutAsAnotherTabWould() {
+  return signOut(TestBed.inject(FIREBASE_AUTH));
+}
+
+function closeTheGooglePopupBeforeFinishing() {
+  vi.mocked(signInWithPopup).mockRejectedValueOnce(
+    new FirebaseError('auth/popup-closed-by-user', 'Firebase: Error (auth/popup-closed-by-user).'),
+  );
+}
+
+function failToDeleteFirestoreCache() {
+  const deleteDatabase = indexedDB.deleteDatabase.bind(indexedDB);
+  const spy = vi.spyOn(indexedDB, 'deleteDatabase').mockImplementation((name) => {
+    if (name.startsWith('firestore/')) {
+      throw new DOMException('Disk is busy', 'UnknownError');
+    }
+    return deleteDatabase(name);
+  });
+  onTestFinished(() => spy.mockRestore());
 }
 
 describe('AuthSession against the Auth emulator', () => {
@@ -72,7 +99,7 @@ describe('AuthSession against the Auth emulator', () => {
     );
   });
 
-  it('rejects an email no account uses just like a wrong password', async () => {
+  it('rejects an email no account uses just like a wrong password, so it reveals no accounts', async () => {
     await expect(
       TestBed.inject(AuthSession).signInWithEmail({ email: newEmail(), password: 'correct-horse' }),
     ).rejects.toMatchObject({ reason: 'invalid-credential' });
@@ -111,10 +138,34 @@ describe('AuthSession against the Auth emulator', () => {
     const session = TestBed.inject(AuthSession);
     await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
 
-    // What this tab's Auth sees when another tab signs out.
-    await signOut(TestBed.inject(FIREBASE_AUTH));
+    await signOutAsAnotherTabWould();
 
     expect(reloadPage).toHaveBeenCalled();
+  });
+
+  it('keeps the user signed in when sign-out cannot delete the cache', async () => {
+    const session = TestBed.inject(AuthSession);
+    await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
+    failToDeleteFirestoreCache();
+
+    await expect(session.signOut()).rejects.toMatchObject({ reason: 'unknown' });
+
+    expect(session.user()).not.toBeNull();
+    expect(TestBed.inject(FIREBASE_AUTH).currentUser).not.toBeNull();
+    expect(reloadPage).not.toHaveBeenCalled();
+  });
+
+  it('signs in with Google in a popup', async () => {
+    closeTheGooglePopupBeforeFinishing();
+
+    await expect(TestBed.inject(AuthSession).signInWithGoogle()).rejects.toMatchObject({
+      reason: 'popup-closed',
+    });
+
+    expect(signInWithPopup).toHaveBeenCalledWith(
+      TestBed.inject(FIREBASE_AUTH),
+      expect.any(GoogleAuthProvider),
+    );
   });
 
   it('does not reload the page when a user signs in', async () => {
