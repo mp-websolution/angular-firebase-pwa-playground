@@ -64,6 +64,44 @@ Names and tests carry the documentation. A comment that explains code marks a mi
 
 Templates longer than 10 lines go in a separate `<name>.html` file next to the component, referenced with `templateUrl`. Shorter templates stay inline in `template`. This overrides the `angular-developer` skill's "inline for small templates" guidance.
 
+### Signal forms
+
+Every signal form has the same shape. This overrides the `angular-developer` skill's signal-forms guidance (`submit()` methods, `(submit)` handlers, public models).
+
+```ts
+readonly #credentialsModel = signal<Credentials>({ email: '', password: '' });
+protected readonly credentialsForm = form(
+  this.#credentialsModel,
+  (path) => {
+    required(path.email, { message: 'Enter your email.' });
+  },
+  {
+    submission: {
+      action: async (form): Promise<ValidationError | void> => {
+        this.unexpectedError.set('');
+        try {
+          await this.action()(form().value());
+        } catch (error) {
+          if (userFixable(error)) {
+            return { kind: 'auth', message: error.message };
+          }
+          this.unexpectedError.set(messageOf(error));
+        }
+      },
+    },
+  },
+);
+```
+
+```html
+<form [formRoot]="credentialsForm">…</form>
+```
+
+- **Split model and form.** Declare the model as its own signal; never create it inside `form()`. Name the model `#xModel` (type `XModel`, unless a domain type like `Credentials` exists) and the `FieldTree` `xForm`. Keep the model private: templates read through the form. Code that sets the value writes the model; use `xForm().reset(value)` when the interaction state must clear too.
+- **Declare submission in `form()`'s options**, as `submission: { action }`, and bind the template's `<form>` with `[formRoot]`. Write no submit methods, no `(submit)` handlers, no `novalidate` or `preventDefault()`.
+- **Return expected failures from `action`** as validation errors: ones the user fixes by editing, e.g. a taken email. Show root errors from `xForm().errors()`. Put unexpected failures (offline, timeouts) in a separate signal that `action` clears first: a returned error makes the form invalid until the value changes, which would block resending the same values.
+- **A model holds only what the user edits.** Context such as which record is being edited lives in component state (e.g. `editingId`) and is read inside `action`.
+
 ## Workflow
 
 ### Branches and pull requests

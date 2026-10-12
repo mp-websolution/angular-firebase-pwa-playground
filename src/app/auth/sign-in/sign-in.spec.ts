@@ -40,6 +40,18 @@ describe('SignIn', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password.');
   });
 
+  it('signs in when the same details are sent again after a failure', async () => {
+    const session = new FakeAuthSession({ accounts: [ada], offline: true });
+    await renderApp('/sign-in', { session });
+    await signIn(ada);
+    expect(await screen.findByRole('alert')).toHaveTextContent("Can't reach the server.");
+
+    session.reconnect();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
+  });
+
   it('says the same when no account uses the email, so it does not reveal who has one', async () => {
     await renderApp('/sign-in', { session: new FakeAuthSession({ accounts: [ada] }) });
 

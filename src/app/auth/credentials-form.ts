@@ -1,11 +1,18 @@
 import { Component, input, signal } from '@angular/core';
-import { FormField, email, form, required, submit } from '@angular/forms/signals';
-import { messageOf } from './auth-session-error';
+import {
+  FormField,
+  FormRoot,
+  ValidationError,
+  email,
+  form,
+  required,
+} from '@angular/forms/signals';
+import { userFixable, messageOf } from './auth-session-error';
 import { Credentials } from './credentials.model';
 
 @Component({
   selector: 'app-credentials-form',
-  imports: [FormField],
+  imports: [FormField, FormRoot],
   templateUrl: './credentials-form.html',
 })
 export class CredentialsForm {
@@ -13,24 +20,29 @@ export class CredentialsForm {
   readonly passwordAutocomplete = input.required<'current-password' | 'new-password'>();
   readonly action = input.required<(credentials: Credentials) => Promise<void>>();
 
-  protected readonly error = signal('');
-  protected readonly credentials = form(
-    signal<Credentials>({ email: '', password: '' }),
+  protected readonly unexpectedError = signal('');
+  readonly #credentialsModel = signal<Credentials>({ email: '', password: '' });
+  protected readonly credentialsForm = form(
+    this.#credentialsModel,
     (path) => {
       required(path.email, { message: 'Enter your email.' });
       email(path.email, { message: 'Enter a valid email address.' });
       required(path.password, { message: 'Enter your password.' });
     },
+    {
+      submission: {
+        action: async (form): Promise<ValidationError | void> => {
+          this.unexpectedError.set('');
+          try {
+            await this.action()(form().value());
+          } catch (error) {
+            if (userFixable(error)) {
+              return { kind: 'auth', message: error.message };
+            }
+            this.unexpectedError.set(messageOf(error));
+          }
+        },
+      },
+    },
   );
-
-  protected submitCredentials(): void {
-    submit(this.credentials, async () => {
-      this.error.set('');
-      try {
-        await this.action()(this.credentials().value());
-      } catch (error) {
-        this.error.set(messageOf(error));
-      }
-    });
-  }
 }

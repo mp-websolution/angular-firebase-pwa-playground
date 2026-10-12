@@ -49,7 +49,7 @@
         </p>
       </div>
     </div>
-    <form novalidate class="flex flex-col gap-4" (submit)="saveProfile(); $event.preventDefault()">
+    <form class="flex flex-col gap-4" [formRoot]="profileForm">
       @let displayNameField = profileForm.displayName();
       <label class="flex flex-col gap-1">
         Display name
