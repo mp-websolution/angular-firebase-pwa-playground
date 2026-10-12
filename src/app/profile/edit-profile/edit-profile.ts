@@ -1,33 +1,44 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormField, ValidationResult, form, submit, validate } from '@angular/forms/signals';
+import { FormField, FormRoot, ValidationResult, form, validate } from '@angular/forms/signals';
 import { ProfileData } from '../profile-data';
 
 // Same limits as the Storage rules. No SVG: it can carry scripts.
 const avatarTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 const maxAvatarBytes = 2 * 1024 * 1024;
 
-interface ProfileForm {
+interface ProfileModel {
   displayName: string;
 }
 
 @Component({
   selector: 'app-edit-profile',
-  imports: [FormField, RouterLink],
+  imports: [FormField, FormRoot, RouterLink],
   templateUrl: './edit-profile.html',
 })
 export class EditProfile {
   protected readonly profileData = inject(ProfileData);
 
+  readonly #profileModel = linkedSignal<string, ProfileModel>({
+    source: () => this.profileData.profile()?.displayName ?? '',
+    computation: followTheStoredNameButKeepUnsavedTyping,
+  });
   protected readonly profileForm = form(
-    linkedSignal<string, ProfileForm>({
-      source: () => this.profileData.profile()?.displayName ?? '',
-      computation: followTheStoredNameButKeepUnsavedTyping,
-    }),
+    this.#profileModel,
     (path) => {
       validate(path.displayName, ({ value }) =>
         whatTheFirestoreRulesWouldRejectInTheTrimmedName(value().trim()),
       );
+    },
+    {
+      submission: {
+        action: async (form) => {
+          const displayName = form.displayName().value().trim();
+          this.#showWhatGetsStoredAndFollowTheStoredNameAgain(displayName);
+          await this.profileData.updateDisplayName(displayName);
+          this.#savedDisplayName.set(displayName);
+        },
+      },
     },
   );
 
@@ -65,28 +76,19 @@ export class EditProfile {
     }
   }
 
-  protected saveProfile(): void {
-    submit(this.profileForm, async () => {
-      const displayName = this.profileForm.displayName().value().trim();
-      this.#showWhatGetsStoredAndFollowTheStoredNameAgain(displayName);
-      await this.profileData.updateDisplayName(displayName);
-      this.#savedDisplayName.set(displayName);
-    });
-  }
-
   #letTheSameFileBePickedAgain(input: HTMLInputElement): void {
     input.value = '';
   }
 
   #showWhatGetsStoredAndFollowTheStoredNameAgain(displayName: string): void {
-    this.profileForm.displayName().value.set(displayName);
+    this.#profileModel.set({ displayName });
   }
 }
 
 function followTheStoredNameButKeepUnsavedTyping(
   displayName: string,
-  previous?: { source: string; value: ProfileForm },
-): ProfileForm {
+  previous?: { source: string; value: ProfileModel },
+): ProfileModel {
   return previous && previous.value.displayName !== previous.source
     ? previous.value
     : { displayName };

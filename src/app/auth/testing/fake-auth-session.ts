@@ -17,6 +17,8 @@ export interface FakeAuthSessionOptions {
   restoring?: string;
   /** Sign-out fails as if other tabs kept the cache from being deleted. */
   otherTabsOpen?: boolean;
+  /** Email sign-in and sign-up fail as if the server were unreachable, until `reconnect()`. */
+  offline?: boolean;
 }
 
 export class FakeAuthSession implements PublicApi<AuthSession> {
@@ -32,6 +34,7 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
   readonly #googlePopup: { email: string } | 'closed';
   readonly #restoring?: string;
   readonly #otherTabsOpen: boolean;
+  #offline: boolean;
 
   constructor({
     accounts = [],
@@ -39,6 +42,7 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
     googlePopup = 'closed',
     restoring,
     otherTabsOpen = false,
+    offline = false,
   }: FakeAuthSessionOptions = {}) {
     for (const { email, password } of accounts) {
       this.#passwords.set(email, password);
@@ -53,6 +57,7 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
       this.#finishResolving();
     }
     this.#otherTabsOpen = otherTabsOpen;
+    this.#offline = offline;
   }
 
   finishRestoring(): void {
@@ -61,11 +66,18 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
     this.#finishResolving();
   }
 
+  reconnect(): void {
+    this.#offline = false;
+  }
+
   whenResolved(): Promise<void> {
     return this.#whenResolved;
   }
 
   async signUpWithEmail({ email, password }: Credentials): Promise<void> {
+    if (this.#offline) {
+      throw new AuthSessionError('offline');
+    }
     if (this.#passwords.has(email)) {
       throw new AuthSessionError('email-in-use');
     }
@@ -77,6 +89,9 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
   }
 
   async signInWithEmail({ email, password }: Credentials): Promise<void> {
+    if (this.#offline) {
+      throw new AuthSessionError('offline');
+    }
     if (this.#passwords.get(email) !== password) {
       throw new AuthSessionError('invalid-credential');
     }

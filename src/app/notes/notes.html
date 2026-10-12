@@ -5,7 +5,7 @@
       Your notes couldn't be loaded. Reload the page to try again.
     </p>
   } @else if (notesData.notes(); as notes) {
-    <form novalidate class="flex flex-col gap-2" (submit)="addNote(); $event.preventDefault()">
+    <form class="flex flex-col gap-2" [formRoot]="newNoteForm">
       @let newText = newNoteForm.text();
       <label class="flex flex-col gap-1">
         New note
@@ -47,11 +47,7 @@
             [attr.aria-labelledby]="'note-' + note.id"
           >
             @if (editingId() === note.id) {
-              <form
-                novalidate
-                class="flex flex-col gap-2"
-                (submit)="saveNote(note.id); $event.preventDefault()"
-              >
+              <form class="flex flex-col gap-2" [formRoot]="editNoteForm">
                 @let editText = editNoteForm.text();
                 <label class="flex flex-col gap-1">
                   Note

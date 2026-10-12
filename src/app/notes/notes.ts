@@ -8,15 +8,15 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormField, form, schema, submit, validate } from '@angular/forms/signals';
+import { FormField, FormRoot, form, schema, validate } from '@angular/forms/signals';
 import { NotesData } from './notes-data';
 import { Note, maxNoteLength } from './note.model';
 
-interface NoteForm {
+interface NoteModel {
   text: string;
 }
 
-const noteSchema = schema<NoteForm>((path) => {
+const noteSchema = schema<NoteModel>((path) => {
   validate(path.text, ({ value }) => {
     const text = value().trim();
     if (!text) {
@@ -30,37 +30,42 @@ const noteSchema = schema<NoteForm>((path) => {
 
 @Component({
   selector: 'app-notes',
-  imports: [FormField, RouterLink],
+  imports: [FormField, FormRoot, RouterLink],
   templateUrl: './notes.html',
 })
 export class Notes {
   protected readonly notesData = inject(NotesData);
   readonly #injector = inject(Injector);
 
-  protected readonly newNoteForm = form(signal<NoteForm>({ text: '' }), noteSchema);
+  readonly #newNoteModel = signal<NoteModel>({ text: '' });
+  protected readonly newNoteForm = form(this.#newNoteModel, noteSchema, {
+    submission: {
+      action: async (form) => {
+        await this.notesData.create(form.text().value().trim());
+        form().reset({ text: '' });
+      },
+    },
+  });
 
   protected readonly editingId = signal<string | undefined>(undefined);
-  protected readonly editNoteForm = form(signal<NoteForm>({ text: '' }), noteSchema);
+  readonly #editNoteModel = signal<NoteModel>({ text: '' });
+  protected readonly editNoteForm = form(this.#editNoteModel, noteSchema, {
+    submission: {
+      action: async (form) => {
+        const id = this.editingId();
+        if (id) {
+          await this.notesData.update(id, form.text().value().trim());
+        }
+        this.editingId.set(undefined);
+      },
+    },
+  });
   private readonly editTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('editTextarea');
-
-  protected addNote(): void {
-    submit(this.newNoteForm, async () => {
-      await this.notesData.create(this.newNoteForm.text().value().trim());
-      this.newNoteForm().reset({ text: '' });
-    });
-  }
 
   protected startEditing(note: Note): void {
     this.editNoteForm().reset({ text: note.text });
     this.editingId.set(note.id);
     this.#keepKeyboardUsersInTheNoteOnceItsEditButtonIsGone();
-  }
-
-  protected saveNote(id: string): void {
-    submit(this.editNoteForm, async () => {
-      await this.notesData.update(id, this.editNoteForm.text().value().trim());
-      this.editingId.set(undefined);
-    });
   }
 
   #keepKeyboardUsersInTheNoteOnceItsEditButtonIsGone(): void {
