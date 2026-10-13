@@ -26,7 +26,7 @@ const fieldToFix: Partial<Record<AuthFailure, keyof Credentials>> = {
 export class CredentialsForm {
   readonly submitLabel = input.required<string>();
   readonly passwordAutocomplete = input.required<'current-password' | 'new-password'>();
-  readonly authenticate = input.required<(credentials: Credentials) => Promise<void>>();
+  readonly credentialsSubmit = input.required<(credentials: Credentials) => Promise<void>>();
 
   readonly #injector = inject(Injector);
 
@@ -41,28 +41,30 @@ export class CredentialsForm {
     },
     {
       submission: {
-        action: async (form): Promise<TreeValidationResult> => {
-          this.unexpectedError.set('');
-          try {
-            await this.authenticate()(this.#credentialsModel());
-          } catch (error) {
-            if (userFixable(error)) {
-              const field = fieldToFix[error.reason];
-              if (field) {
-                this.#focusOnceItsErrorShows(form[field]);
-              }
-              return {
-                kind: 'auth',
-                message: error.message,
-                fieldTree: field ? form[field] : form,
-              };
-            }
-            this.unexpectedError.set(messageOf(error));
-          }
-        },
+        action: () => this.#authenticate(),
       },
     },
   );
+
+  async #authenticate(): Promise<TreeValidationResult> {
+    this.unexpectedError.set('');
+    try {
+      await this.credentialsSubmit()(this.#credentialsModel());
+    } catch (error) {
+      if (userFixable(error)) {
+        const field = fieldToFix[error.reason];
+        if (field) {
+          this.#focusOnceItsErrorShows(this.credentialsForm[field]);
+        }
+        return {
+          kind: 'auth',
+          message: error.message,
+          fieldTree: field ? this.credentialsForm[field] : this.credentialsForm,
+        };
+      }
+      this.unexpectedError.set(messageOf(error));
+    }
+  }
 
   #focusOnceItsErrorShows(field: FieldTree<string>) {
     afterNextRender(() => field().focusBoundControl(), { injector: this.#injector });

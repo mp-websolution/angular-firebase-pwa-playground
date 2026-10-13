@@ -47,10 +47,7 @@ export class Notes {
   readonly #newNoteModel = signal<NoteModel>({ text: '' });
   protected readonly newNoteForm = form(this.#newNoteModel, noteSchema, {
     submission: {
-      action: async (form): Promise<TreeValidationResult> => {
-        await this.notesData.create(this.#newNoteModel().text.trim());
-        form().reset({ text: '' });
-      },
+      action: () => this.#createNote(),
     },
   });
 
@@ -58,16 +55,23 @@ export class Notes {
   readonly #editNoteModel = signal<NoteModel>({ text: '' });
   protected readonly editNoteForm = form(this.#editNoteModel, noteSchema, {
     submission: {
-      action: async (): Promise<TreeValidationResult> => {
-        const id = this.editingId();
-        if (id) {
-          await this.notesData.update(id, this.#editNoteModel().text.trim());
-        }
-        this.editingId.set(undefined);
-      },
+      action: () => this.#updateNote(),
     },
   });
   private readonly editTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('editTextarea');
+
+  async #createNote(): Promise<TreeValidationResult> {
+    await this.notesData.create(this.#newNoteModel().text.trim());
+    this.newNoteForm().reset({ text: '' });
+  }
+
+  async #updateNote(): Promise<TreeValidationResult> {
+    const id = this.editingId();
+    if (id) {
+      await this.notesData.update(id, this.#editNoteModel().text.trim());
+    }
+    this.editingId.set(undefined);
+  }
 
   protected startEditing(note: Note): void {
     this.editNoteForm().reset({ text: note.text });
