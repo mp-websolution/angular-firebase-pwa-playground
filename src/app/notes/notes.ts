@@ -8,7 +8,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormField, FormRoot, form, schema, validate } from '@angular/forms/signals';
+import {
+  FormField,
+  FormRoot,
+  TreeValidationResult,
+  form,
+  schema,
+  validate,
+} from '@angular/forms/signals';
 import { NotesData } from './notes-data';
 import { Note, maxNoteLength } from './note.model';
 
@@ -40,8 +47,8 @@ export class Notes {
   readonly #newNoteModel = signal<NoteModel>({ text: '' });
   protected readonly newNoteForm = form(this.#newNoteModel, noteSchema, {
     submission: {
-      action: async (form) => {
-        await this.notesData.create(form.text().value().trim());
+      action: async (form): Promise<TreeValidationResult> => {
+        await this.notesData.create(this.#newNoteModel().text.trim());
         form().reset({ text: '' });
       },
     },
@@ -51,10 +58,10 @@ export class Notes {
   readonly #editNoteModel = signal<NoteModel>({ text: '' });
   protected readonly editNoteForm = form(this.#editNoteModel, noteSchema, {
     submission: {
-      action: async (form) => {
+      action: async (): Promise<TreeValidationResult> => {
         const id = this.editingId();
         if (id) {
-          await this.notesData.update(id, form.text().value().trim());
+          await this.notesData.update(id, this.#editNoteModel().text.trim());
         }
         this.editingId.set(undefined);
       },

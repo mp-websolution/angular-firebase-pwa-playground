@@ -1,6 +1,13 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormField, FormRoot, ValidationResult, form, validate } from '@angular/forms/signals';
+import {
+  FormField,
+  FormRoot,
+  TreeValidationResult,
+  ValidationResult,
+  form,
+  validate,
+} from '@angular/forms/signals';
 import { ProfileData } from '../profile-data';
 
 // Same limits as the Storage rules. No SVG: it can carry scripts.
@@ -32,8 +39,8 @@ export class EditProfile {
     },
     {
       submission: {
-        action: async (form) => {
-          const displayName = form.displayName().value().trim();
+        action: async (): Promise<TreeValidationResult> => {
+          const displayName = this.#profileModel().displayName.trim();
           this.#showWhatGetsStoredAndFollowTheStoredNameAgain(displayName);
           await this.profileData.updateDisplayName(displayName);
           this.#savedDisplayName.set(displayName);
@@ -44,7 +51,7 @@ export class EditProfile {
 
   readonly #savedDisplayName = signal<string | undefined>(undefined);
   protected readonly saved = computed(
-    () => this.#savedDisplayName() === this.profileForm.displayName().value(),
+    () => this.#savedDisplayName() === this.#profileModel().displayName,
   );
 
   protected readonly avatarAccept = avatarTypes.join(',');

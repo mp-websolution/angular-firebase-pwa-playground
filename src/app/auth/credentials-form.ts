@@ -1,14 +1,22 @@
-import { Component, input, signal } from '@angular/core';
+import { Component, Injector, afterNextRender, inject, input, signal } from '@angular/core';
 import {
   FormField,
+  FieldTree,
   FormRoot,
-  ValidationError,
+  TreeValidationResult,
   email,
   form,
   required,
 } from '@angular/forms/signals';
+import { AuthFailure } from './auth-failure.model';
 import { userFixable, messageOf } from './auth-session-error';
 import { Credentials } from './credentials.model';
+
+const fieldToFix: Partial<Record<AuthFailure, keyof Credentials>> = {
+  'invalid-email': 'email',
+  'email-in-use': 'email',
+  'weak-password': 'password',
+};
 
 @Component({
   selector: 'app-credentials-form',
@@ -18,7 +26,9 @@ import { Credentials } from './credentials.model';
 export class CredentialsForm {
   readonly submitLabel = input.required<string>();
   readonly passwordAutocomplete = input.required<'current-password' | 'new-password'>();
-  readonly action = input.required<(credentials: Credentials) => Promise<void>>();
+  readonly authenticate = input.required<(credentials: Credentials) => Promise<void>>();
+
+  readonly #injector = inject(Injector);
 
   protected readonly unexpectedError = signal('');
   readonly #credentialsModel = signal<Credentials>({ email: '', password: '' });
@@ -31,13 +41,21 @@ export class CredentialsForm {
     },
     {
       submission: {
-        action: async (form): Promise<ValidationError | void> => {
+        action: async (form): Promise<TreeValidationResult> => {
           this.unexpectedError.set('');
           try {
-            await this.action()(form().value());
+            await this.authenticate()(this.#credentialsModel());
           } catch (error) {
             if (userFixable(error)) {
-              return { kind: 'auth', message: error.message };
+              const field = fieldToFix[error.reason];
+              if (field) {
+                this.#focusOnceItsErrorShows(form[field]);
+              }
+              return {
+                kind: 'auth',
+                message: error.message,
+                fieldTree: field ? form[field] : form,
+              };
             }
             this.unexpectedError.set(messageOf(error));
           }
@@ -45,4 +63,8 @@ export class CredentialsForm {
       },
     },
   );
+
+  #focusOnceItsErrorShows(field: FieldTree<string>) {
+    afterNextRender(() => field().focusBoundControl(), { injector: this.#injector });
+  }
 }
