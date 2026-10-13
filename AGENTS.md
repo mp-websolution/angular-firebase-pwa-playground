@@ -69,37 +69,32 @@ Templates longer than 10 lines go in a separate `<name>.html` file next to the c
 Every signal form has the same shape. This overrides the `angular-developer` skill's signal-forms guidance (`submit()` methods, `(submit)` handlers, public models).
 
 ```ts
-readonly #credentialsModel = signal<Credentials>({ email: '', password: '' });
-protected readonly credentialsForm = form(
-  this.#credentialsModel,
+readonly #noteModel = signal<NoteModel>({ text: '' });
+protected readonly noteForm = form(
+  this.#noteModel,
   (path) => {
-    required(path.email, { message: 'Enter your email.' });
+    required(path.text, { message: 'Write a note.' });
   },
   {
     submission: {
-      action: async (form): Promise<TreeValidationResult> => {
-        this.unexpectedError.set('');
-        try {
-          await this.authenticate()(this.#credentialsModel());
-        } catch (error) {
-          if (userFixable(error)) {
-            return { kind: 'auth', message: error.message };
-          }
-          this.unexpectedError.set(messageOf(error));
-        }
-      },
+      action: () => this.#createNote(),
     },
   },
 );
+
+async #createNote(): Promise<TreeValidationResult> {
+  await this.notesData.create(this.#noteModel().text);
+  this.noteForm().reset({ text: '' });
+}
 ```
 
 ```html
-<form [formRoot]="credentialsForm">…</form>
+<form [formRoot]="noteForm">…</form>
 ```
 
 - **Split model and form.** Declare the model as its own signal; never create it inside `form()`. Name the model `#xModel` (type `XModel`, unless a domain type like `Credentials` exists) and the `FieldTree` `xForm`. Keep the model private: templates read through the form. Code in the class, `action` included, reads the model rather than `xForm().value()`, which is the same signal, and writes the model to set the value; use `xForm().reset(value)` when the interaction state must clear too.
-- **Declare submission in `form()`'s options**, as `submission: { action }`, and bind the template's `<form>` with `[formRoot]`. Write no submit methods, no `(submit)` handlers, no `novalidate` or `preventDefault()`.
-- **Return expected failures from `action`** as validation errors: ones the user fixes by editing, e.g. a taken email. Show root errors from `xForm().errors()`. Put unexpected failures (offline, timeouts) in a separate signal that `action` clears first: a returned error makes the form invalid until the value changes, which would block resending the same values.
+- **Declare submission in `form()`'s options**, as `submission: { action }`, and bind the template's `<form>` with `[formRoot]`. Put the action's body in a private method named after what it does (`#authenticate`, `#createNote`) and call it from `action: () => this.#x()`, so `form()` stays short. Write no template-called submit methods, no `(submit)` handlers, no `novalidate` or `preventDefault()`.
+- **Return expected failures from `action`** as validation errors: ones the user fixes by editing, e.g. a taken email. Show root errors from `xForm().errors()`. Put unexpected failures (offline, timeouts) in a separate signal that `action` clears first: a returned error makes the form invalid until the value changes, which would block resending the same values. `CredentialsForm` shows both.
 - **A model holds only what the user edits.** Context such as which record is being edited lives in component state (e.g. `editingId`) and is read inside `action`.
 
 ## Workflow

@@ -39,12 +39,7 @@ export class EditProfile {
     },
     {
       submission: {
-        action: async (): Promise<TreeValidationResult> => {
-          const displayName = this.#profileModel().displayName.trim();
-          this.#showWhatGetsStoredAndFollowTheStoredNameAgain(displayName);
-          await this.profileData.updateDisplayName(displayName);
-          this.#savedDisplayName.set(displayName);
-        },
+        action: () => this.#updateDisplayName(),
       },
     },
   );
@@ -81,6 +76,13 @@ export class EditProfile {
     } catch {
       this.avatarStatus.set('failed');
     }
+  }
+
+  async #updateDisplayName(): Promise<TreeValidationResult> {
+    const displayName = this.#profileModel().displayName.trim();
+    this.#showWhatGetsStoredAndFollowTheStoredNameAgain(displayName);
+    await this.profileData.updateDisplayName(displayName);
+    this.#savedDisplayName.set(displayName);
   }
 
   #letTheSameFileBePickedAgain(input: HTMLInputElement): void {
