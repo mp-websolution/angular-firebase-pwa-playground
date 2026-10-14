@@ -1,9 +1,9 @@
 import {
   Component,
   Injector,
+  OnInit,
   afterNextRender,
   booleanAttribute,
-  OnInit,
   inject,
   input,
   signal,
@@ -54,24 +54,24 @@ export class NoteForm implements OnInit {
   readonly #noteModel = signal<NoteModel>({ text: '' });
   protected readonly noteForm = form(this.#noteModel, noteSchema, {
     submission: {
-      action: () => this.#submitNote(),
+      action: () => this.#saveNote(),
     },
   });
 
   constructor() {
-    this.#keepKeyboardUsersInTheNoteOnceItsEditButtonIsGone();
+    this.#focusTheNoteOnceItRendersIfAsked();
   }
 
   ngOnInit(): void {
     this.#noteModel.set({ text: this.text() });
   }
 
-  async #submitNote(): Promise<TreeValidationResult> {
+  async #saveNote(): Promise<TreeValidationResult> {
     await this.noteSubmit()(this.#noteModel().text.trim());
     this.noteForm().reset({ text: '' });
   }
 
-  #keepKeyboardUsersInTheNoteOnceItsEditButtonIsGone(): void {
+  #focusTheNoteOnceItRendersIfAsked(): void {
     afterNextRender(
       () => {
         if (this.autofocus()) {
