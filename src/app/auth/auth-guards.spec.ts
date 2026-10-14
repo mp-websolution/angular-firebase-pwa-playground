@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { renderApp } from '../testing/render-app';
 import { signedInGuard } from './auth-guards';
 import { Credentials } from './credentials.model';
-import { FakeAuthSession } from './testing/fake-auth-session';
+import { FakeAuthSession } from '../testing/fake-auth-session';
 
 @Component({ template: '<h1>Deep page</h1>' })
 class DeepPage {}

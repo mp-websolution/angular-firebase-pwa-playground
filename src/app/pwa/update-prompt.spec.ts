@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { renderApp } from '../testing/render-app';
-import { FakeSwUpdate } from './testing/fake-sw-update';
+import { FakeSwUpdate } from '../testing/fake-sw-update';
 
 describe('Update prompt', () => {
   afterEach(letTheDocumentReportJsdomsVisibilityAgain);

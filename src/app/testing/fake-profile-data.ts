@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
-import type { ProfileData } from '../profile-data';
-import { Profile } from '../profile.model';
+import type { ProfileData } from '../profile/profile-data';
+import { Profile } from '../profile/profile.model';
 
 type PublicApi<T> = { [K in keyof T]: T[K] };
 

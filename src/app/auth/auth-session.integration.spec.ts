@@ -8,7 +8,7 @@ import { AuthSession } from './auth-session';
 import {
   enablePersistentCacheInJsdom,
   signOutForTheNextTest,
-} from '../firebase/testing/testing-utils';
+} from '../testing/emulator-setup';
 
 function newEmail() {
   return `session-${crypto.randomUUID()}@example.com`;

@@ -1,8 +1,8 @@
 import { signal } from '@angular/core';
-import type { AuthSession } from '../auth-session';
-import { AuthSessionError } from '../auth-session-error';
-import { Credentials } from '../credentials.model';
-import { SessionUser } from '../session-user.model';
+import type { AuthSession } from '../auth/auth-session';
+import { AuthSessionError } from '../auth/auth-session-error';
+import { Credentials } from '../auth/credentials.model';
+import { SessionUser } from '../auth/session-user.model';
 
 type PublicApi<T> = { [K in keyof T]: T[K] }; //todo: after feature extract this to a common palce, exists at least 4 times.
 

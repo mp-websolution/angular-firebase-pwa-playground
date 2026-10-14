@@ -3,9 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import { signOut } from 'firebase/auth';
 import { terminate } from 'firebase/firestore';
-import { environment } from '../../../environments/environment';
-import { AuthSession } from '../../auth/auth-session';
-import { FIREBASE_AUTH, FIRESTORE } from '../provide-firebase';
+import { environment } from '../../environments/environment';
+import { AuthSession } from '../auth/auth-session';
+import { FIREBASE_AUTH, FIRESTORE } from '../firebase/provide-firebase';
 
 /**
  * `vi.waitFor` options for waiting on an emulator's answer: on a cold CI runner it can take

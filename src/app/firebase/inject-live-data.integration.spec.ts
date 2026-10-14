@@ -28,7 +28,7 @@ import {
   signInAsNewUser,
   slowEmulatorTimeout,
   tearDownFirebase,
-} from './testing/testing-utils';
+} from '../testing/emulator-setup';
 
 const projectIsolatingTheseRules = 'demo-live-data';
 

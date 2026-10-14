@@ -10,7 +10,7 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
-import { testEnvironmentWithDeployedFirestoreRules } from '../firebase/testing/testing-utils';
+import { testEnvironmentWithDeployedFirestoreRules } from '../testing/emulator-setup';
 
 describe('Firestore rules for notes', () => {
   let testEnv: RulesTestEnvironment;
