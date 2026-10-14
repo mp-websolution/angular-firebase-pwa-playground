@@ -1,0 +1,30 @@
+<form class="flex flex-col gap-2" [formRoot]="noteForm">
+  @let textField = noteForm.text();
+  <label class="flex flex-col gap-1">
+    {{ label() }}
+    <textarea
+      rows="3"
+      class="rounded border border-slate-300 px-3 py-2"
+      [attr.aria-describedby]="errorsId"
+      [attr.aria-invalid]="textField.touched() && textField.invalid()"
+      [formField]="noteForm.text"
+    ></textarea>
+  </label>
+  <div [id]="errorsId">
+    @if (textField.touched()) {
+      @for (error of textField.errors(); track error.kind) {
+        <p class="text-sm text-red-700">{{ error.message }}</p>
+      }
+    }
+  </div>
+  <div class="flex gap-2">
+    <button
+      type="submit"
+      class="rounded bg-slate-900 px-4 py-2 font-medium text-white disabled:opacity-50"
+      [disabled]="noteForm().submitting()"
+    >
+      {{ submitLabel() }}
+    </button>
+    <ng-content />
+  </div>
+</form>

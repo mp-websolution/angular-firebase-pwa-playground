@@ -42,8 +42,12 @@ export class FakeNotesData implements PublicApi<NotesData> {
     this.#waitingToSync.set(this.#offline);
   }
 
-  async update(id: string, text: string): Promise<void> {
+  updateElsewhere(id: string, text: string): void {
     this.#notes.update((notes) => notes?.map((note) => (note.id === id ? { id, text } : note)));
+  }
+
+  async update(id: string, text: string): Promise<void> {
+    this.updateElsewhere(id, text);
     this.#waitingToSync.set(this.#offline);
   }
 
