@@ -127,6 +127,28 @@ describe('Notes', () => {
     expect(notes.notes()).toEqual([]);
   });
 
+  it("doesn't mark the new note invalid before it's touched", async () => {
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
+    });
+
+    expect(await screen.findByLabelText('New note')).toBeValid();
+  });
+
+  it('describes the new note by its error', async () => {
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
+    });
+
+    await addNote('   ');
+
+    expect(await screen.findByLabelText('New note')).toHaveAccessibleDescription(
+      'Write something first.',
+    );
+  });
+
   it('leaves spaces around a note out of the 1000 characters', async () => {
     const notes = new FakeNotesData();
     await renderApp('/notes', {
@@ -210,6 +232,24 @@ describe('Notes', () => {
     expect(notes.notes()?.map(({ text }) => text)).toEqual(['Buy milk']);
   });
 
+  it('keeps what is typed when the note being changed is changed elsewhere', async () => {
+    const notes = new FakeNotesData({ notes: ['Buy milk'] });
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
+    const user = userEvent.setup();
+    const note = await screen.findByRole('listitem', { name: 'Buy milk' });
+    await user.click(within(note).getByRole('button', { name: 'Edit' }));
+    await user.type(screen.getByLabelText('Note'), ' and eggs');
+
+    notes.updateElsewhere(notes.notes()![0].id, 'Buy bread');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByRole('listitem', { name: 'Buy milk and eggs' })).toBeVisible();
+    expect(notes.notes()?.map(({ text }) => text)).toEqual(['Buy milk and eggs']);
+  });
+
   it('asks for some text instead of saving a blank note', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
     await renderApp('/notes', {
@@ -226,6 +266,41 @@ describe('Notes', () => {
     expect(await screen.findByText('Write something first.')).toBeVisible();
     expect(screen.getByLabelText('Note')).toBeInvalid();
     expect(notes.notes()?.map(({ text }) => text)).toEqual(['Buy milk']);
+  });
+
+  it('describes the note being changed by its own error, not the new note', async () => {
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: new FakeNotesData({ notes: ['Buy milk'] }) }],
+    });
+    const user = userEvent.setup();
+    const note = await screen.findByRole('listitem', { name: 'Buy milk' });
+
+    await user.click(within(note).getByRole('button', { name: 'Edit' }));
+    await user.clear(screen.getByLabelText('Note'));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByText('Write something first.')).toBeVisible();
+    expect(screen.getByLabelText('Note')).toHaveAccessibleDescription('Write something first.');
+    expect(screen.getByLabelText('New note')).toHaveAccessibleDescription('');
+  });
+
+  it('asks for at most 1000 characters for a changed note', async () => {
+    const notes = new FakeNotesData({ notes: ['x'.repeat(1000)] });
+    await renderApp('/notes', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
+    const user = userEvent.setup();
+    const note = await screen.findByRole('listitem', { name: 'x'.repeat(1000) });
+
+    await user.click(within(note).getByRole('button', { name: 'Edit' }));
+    await user.type(screen.getByLabelText('Note'), 'x');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByText('Use at most 1000 characters.')).toBeVisible();
+    expect(screen.getByLabelText('Note')).toBeInvalid();
+    expect(notes.notes()?.map(({ text }) => text)).toEqual(['x'.repeat(1000)]);
   });
 
   it('deletes a note', async () => {
