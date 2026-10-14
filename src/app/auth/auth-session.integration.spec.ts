@@ -5,10 +5,7 @@ import { environment } from '../../environments/environment';
 import { FIREBASE_AUTH, provideFirebase } from '../firebase/provide-firebase';
 import { RELOAD_PAGE } from '../browser/reload-page';
 import { AuthSession } from './auth-session';
-import {
-  enablePersistentCacheInJsdom,
-  signOutForTheNextTest,
-} from '../testing/emulator-setup';
+import { enablePersistentCacheInJsdom, signOutForTheNextTest } from '../testing/emulator-setup';
 
 function newEmail() {
   return `session-${crypto.randomUUID()}@example.com`;
