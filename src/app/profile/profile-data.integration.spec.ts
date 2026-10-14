@@ -11,7 +11,7 @@ import {
   slowEmulatorTimeout,
   tearDownFirebase,
   testEnvironmentWithDeployedFirestoreRules,
-} from '../firebase/testing/testing-utils';
+} from '../testing/emulator-setup';
 import { ProfileData } from './profile-data';
 
 declare const process: { getBuiltinModule(id: 'node:buffer'): { Blob: typeof Blob } };

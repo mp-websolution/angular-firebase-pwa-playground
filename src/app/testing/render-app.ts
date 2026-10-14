@@ -5,11 +5,11 @@ import { SwUpdate } from '@angular/service-worker';
 import { App } from '../app';
 import { routes } from '../app.routes';
 import { AuthSession } from '../auth/auth-session';
-import { FakeAuthSession } from '../auth/testing/fake-auth-session';
+import { FakeAuthSession } from './fake-auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
 import { ProfileData } from '../profile/profile-data';
-import { FakeProfileData } from '../profile/testing/fake-profile-data';
-import { FakeSwUpdate } from '../pwa/testing/fake-sw-update';
+import { FakeProfileData } from './fake-profile-data';
+import { FakeSwUpdate } from './fake-sw-update';
 
 export interface RenderAppOptions {
   /** Replaces the auth session; defaults to a signed-out user. */

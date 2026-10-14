@@ -1,6 +1,6 @@
 import { RulesTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { testEnvironmentWithDeployedFirestoreRules } from '../firebase/testing/testing-utils';
+import { testEnvironmentWithDeployedFirestoreRules } from '../testing/emulator-setup';
 
 describe('Firestore rules for profiles', () => {
   let testEnv: RulesTestEnvironment;

@@ -11,7 +11,7 @@ import {
   provideFirebase,
   signOutAndClearCache,
 } from './provide-firebase';
-import { enablePersistentCacheInJsdom, signOutForTheNextTest } from './testing/testing-utils';
+import { enablePersistentCacheInJsdom, signOutForTheNextTest } from '../testing/emulator-setup';
 
 const { emulators } = environment.firebase;
 

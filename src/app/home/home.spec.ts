@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { FakeAuthSession } from '../auth/testing/fake-auth-session';
+import { FakeAuthSession } from '../testing/fake-auth-session';
 import { renderApp } from '../testing/render-app';
 
 describe('Home', () => {

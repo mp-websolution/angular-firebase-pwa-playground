@@ -20,7 +20,7 @@ import {
   slowEmulatorTimeout,
   tearDownFirebase,
   testEnvironmentWithDeployedFirestoreRules,
-} from '../firebase/testing/testing-utils';
+} from '../testing/emulator-setup';
 import { NotesData } from './notes-data';
 
 describe('NotesData against the emulators', () => {
