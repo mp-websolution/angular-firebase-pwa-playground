@@ -165,6 +165,8 @@ Dependabot (`.github/dependabot.yml`) checks weekly and opens grouped PRs:
 | `other` | Every other npm package. |
 | `github-actions` | The actions used in `.github/workflows/` (pinned by commit SHA). |
 
+A new version is only proposed once it is a few days old (npm: 3 days for patches, 7 for minors, 14 for majors; actions: 7), so a hijacked release is usually pulled before it reaches a PR. Security updates are not delayed.
+
 The PR checks run on each one. Nothing merges automatically: merge a group by hand once its checks pass. If one fails, fix it on the Dependabot branch or in a separate PR.
 
 Major upgrades of Angular, its tooling and TypeScript don't come from Dependabot (it ignores them), because they need Angular's migrations. Do them on a branch with `ng update`, following [the update guide](https://angular.dev/update-guide):
