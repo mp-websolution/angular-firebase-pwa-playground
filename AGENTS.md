@@ -38,7 +38,7 @@ Names and tests carry the documentation. A comment that explains code marks a mi
   input.value = '';
 
   // After
-  this.#letTheSameFileBePickedAgain(input);
+  this.#letSameFileBePickedAgain(input);
   ```
 
 - **Pin behaviour with tests.** A comment describing behaviour no test pins becomes that test: write it, see it pass against the current code, then delete the comment. Name tests as `docs/agents/testing.md` says, so a module's test list reads as its specification.
@@ -53,6 +53,8 @@ Names and tests carry the documentation. A comment that explains code marks a mi
 
   import('./notes/notes.routes').then((m) => m.notesRoutes)
   ```
+
+- **Drop filler words from names.** Leave out articles (`the`, `a`, `an`) and linking verbs (`is`, `are`, `be`) when the name reads the same without them: `previousUserNoLongerSignedIn`, not `thePreviousUserIsNoLongerSignedIn`. Keep the `is`/`has` prefix of a boolean (`isOffline`), because without it the name reads as a noun. Trim existing names only in code you touch anyway.
 
 - **Keep as comments** only:
   - a one-line warning of a consequence no name or test can carry, above the declaration or rule it guards (e.g. `// No SVG: it can carry scripts.`);

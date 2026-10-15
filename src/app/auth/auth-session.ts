@@ -34,7 +34,7 @@ export class AuthSession {
       const previousUid = this.#user()?.uid;
       this.#user.set(user && toSessionUser(user));
       this.#resolved.set(true);
-      if (theUserWentAway(previousUid, user)) {
+      if (previousUserNoLongerSignedIn(previousUid, user)) {
         this.#reloadSoNoPageKeepsShowingTheirDataAndFirestoreRestarts();
       }
     });
@@ -88,7 +88,7 @@ export class AuthSession {
   }
 }
 
-function theUserWentAway(previousUid: string | undefined, user: User | null): boolean {
+function previousUserNoLongerSignedIn(previousUid: string | undefined, user: User | null): boolean {
   return !!previousUid && previousUid !== user?.uid;
 }
 

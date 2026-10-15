@@ -57,7 +57,7 @@ export class EditProfile {
   protected async uploadAvatar(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const image = input.files?.[0];
-    this.#letTheSameFileBePickedAgain(input);
+    this.#letSameFileBePickedAgain(input);
     if (!image) {
       return;
     }
@@ -85,7 +85,7 @@ export class EditProfile {
     this.#savedDisplayName.set(displayName);
   }
 
-  #letTheSameFileBePickedAgain(input: HTMLInputElement): void {
+  #letSameFileBePickedAgain(input: HTMLInputElement): void {
     input.value = '';
   }
 
