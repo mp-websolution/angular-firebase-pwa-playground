@@ -122,10 +122,6 @@ describe('ProfileData against the emulators', () => {
       letStorageSendBlobsThroughNodeFetch();
     });
 
-    afterEach(() => {
-      vi.unstubAllGlobals();
-    });
-
     function cutTheConnectionToStorageAndStopRetryingSoon() {
       TestBed.inject(FIREBASE_STORAGE).maxUploadRetryTime = 100;
       vi.stubGlobal('fetch', () => Promise.reject(new TypeError('fetch failed')));

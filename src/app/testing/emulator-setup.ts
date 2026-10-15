@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import { IDBFactory } from 'fake-indexeddb';
 import { TestBed } from '@angular/core/testing';
 import { RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import { signOut } from 'firebase/auth';
@@ -29,11 +30,15 @@ export function testEnvironmentWithDeployedFirestoreRules(): Promise<RulesTestEn
 
 /**
  * `beforeEach` for integration tests that give Firestore its persistent cache, which needs
- * IndexedDB. Importing this file installs an in-memory IndexedDB, since jsdom has none; calling it
- * turns on the switch without which Firestore's Node build, the one tests load, ignores IndexedDB.
- * Undo it with `vi.unstubAllEnvs()`, as `tearDownFirebase` does.
+ * IndexedDB. jsdom has none, so importing this file installs fake-indexeddb's globals; calling it
+ * stubs in an empty IndexedDB and turns on the switch without which Firestore's Node build, the one
+ * tests load, ignores IndexedDB. The empty IndexedDB keeps the caches of earlier tests away, even
+ * those of other spec files: the Angular builder runs Vitest with `isolate: false`, so files in a
+ * worker share globals. Undo both with `vi.unstubAllGlobals()` and `vi.unstubAllEnvs()` once
+ * Firestore has shut down, as `tearDownFirebase` does.
  */
 export function enablePersistentCacheInJsdom(): void {
+  vi.stubGlobal('indexedDB', new IDBFactory());
   vi.stubEnv('USE_MOCK_PERSISTENCE', 'YES');
 }
 
@@ -66,5 +71,6 @@ export async function signOutForTheNextTest(): Promise<void> {
 export async function tearDownFirebase(): Promise<void> {
   await signOutForTheNextTest();
   await terminate(await TestBed.inject(FIRESTORE)());
+  vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 }

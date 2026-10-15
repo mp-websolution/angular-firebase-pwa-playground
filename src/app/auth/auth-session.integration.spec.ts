@@ -42,6 +42,7 @@ describe('AuthSession against the Auth emulator', () => {
 
   afterEach(async () => {
     await signOutForTheNextTest();
+    vi.unstubAllGlobals();
     vi.unstubAllEnvs();
   });
 

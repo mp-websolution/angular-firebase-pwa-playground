@@ -85,6 +85,7 @@ describe('provideFirebase against the emulators', () => {
     });
 
     afterEach(() => {
+      vi.unstubAllGlobals();
       vi.unstubAllEnvs();
     });
 
