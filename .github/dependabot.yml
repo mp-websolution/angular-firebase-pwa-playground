@@ -5,6 +5,13 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # A version must be this many days old before Dependabot proposes it, so hijacked releases
+    # are usually pulled before they reach a PR. Security updates are not delayed.
+    cooldown:
+      default-days: 7
+      semver-patch-days: 3
+      semver-minor-days: 7
+      semver-major-days: 14
     # Major Angular upgrades need `ng update`'s migrations, so Dependabot leaves them alone.
     # Keep this list in step with the `angular` group below.
     ignore:
@@ -45,6 +52,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
       github-actions:
         patterns:
