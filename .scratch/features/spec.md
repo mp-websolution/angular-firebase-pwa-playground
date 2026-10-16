@@ -91,3 +91,9 @@ The glossary change in `CONTEXT.md` was made during the grilling session and is 
 - The architecture review (candidate 2, "one path for every Prototype") proposed this layout under the old name; this spec supersedes its naming.
 - The decisions come from a grilling session: Q1 meaning change, Q2 reserved word, Q3 features-only nesting, Q4 renames, Q5 history untouched, Q6 verb, Q7 URLs, Q8 fakes, Q9 one PR then lint, Q10 folder rule in the guide, Q11 home as second importer.
 - Branch per `AGENTS.md`: `features/01-…` only once tickets exist; as a single spec-level change, a branch off an updated `main` such as `refactor/features` fits the agreed one-PR delivery.
+
+## Comments
+
+- **Implemented** on `refactor/features`. Lint, unit (91), integration (88), build (468.68 kB initial) and format pass. The removal dry run passes too: lint, unit 64, integration 70 and build 467 kB, with nothing committed.
+- **Link test moved.** "New test, Home" lives in `src/app/features/notes/notes.spec.ts` ("is listed in the Features navigation on home"), not in the Home spec. A Home test pinning Notes → `/notes` fails the removal dry run (story 30). `docs/features.md` tells each new Feature to keep its own copy.
+- **Old-term search** also matches `package-lock.json` (npm package `setprototypeof`), which can't change.
