@@ -18,7 +18,7 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { AuthSession } from '../auth/auth-session';
-import { FIRESTORE } from './provide-firebase';
+import { FIRESTORE } from '../firebase/provide-firebase';
 
 type Listenable = DocumentReference | Query;
 type SnapshotOf<Target> = Target extends DocumentReference ? DocumentSnapshot : QuerySnapshot;

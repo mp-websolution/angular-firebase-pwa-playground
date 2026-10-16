@@ -1,8 +1,8 @@
 import { Service, inject } from '@angular/core';
 import { doc, setDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { injectLiveData } from '../firebase/inject-live-data';
 import { FIREBASE_STORAGE } from '../firebase/provide-firebase';
+import { injectLiveData } from '../live-data/inject-live-data';
 import { Profile } from './profile.model';
 
 @Service()

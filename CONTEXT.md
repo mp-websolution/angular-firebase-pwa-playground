@@ -13,7 +13,7 @@ This repository in its role as the starting point for a new project. A new proje
 _Avoid_: Fork, clone, seed
 
 **Baseline**:
-The permanent, minimal shell every future project inherits: authentication, the user profile, Firebase wiring, PWA behaviour, and the build and deploy pipeline. It stays small and never depends on any Prototype.
+The permanent, minimal shell every future project inherits: authentication, the user profile, Firebase wiring, Live data, PWA behaviour, and the build and deploy pipeline. It stays small and never depends on any Prototype.
 _Avoid_: Core, skeleton, scaffold
 
 **Prototype**:
