@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { FakeAuthSession } from '../testing/fake-auth-session';
-import { renderApp } from '../testing/render-app';
+import { FakeAuthSession } from '../../testing/fake-auth-session';
+import { renderApp } from '../../testing/render-app';
 import { NotesData } from './notes-data';
 import { FakeNotesData } from './testing/fake-notes-data';
 

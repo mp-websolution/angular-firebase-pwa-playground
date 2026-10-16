@@ -3,7 +3,7 @@ import { signedInGuard, signedOutGuard } from './auth/auth-guards';
 import { SignIn } from './auth/sign-in/sign-in';
 import { SignUp } from './auth/sign-up/sign-up';
 import { Home } from './home/home';
-import { prototypeRoutes } from './prototypes.routes';
+import { featureRoutes } from './features/features.routes';
 
 export const routes: Routes = [
   {
@@ -21,6 +21,6 @@ export const routes: Routes = [
   },
   { path: 'sign-in', component: SignIn, canActivate: [signedOutGuard], title: 'Sign in' },
   { path: 'sign-up', component: SignUp, canActivate: [signedOutGuard], title: 'Create account' },
-  ...prototypeRoutes,
+  ...featureRoutes,
   { path: '**', redirectTo: '' },
 ];

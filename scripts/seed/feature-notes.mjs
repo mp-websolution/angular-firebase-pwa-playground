@@ -1,7 +1,7 @@
 import { demoUser } from './01-demo-user.mjs';
 
 const notes = [
-  { id: 'welcome', text: 'Welcome to the notes Prototype. Edit or delete me.', minutesAgo: 1 },
+  { id: 'welcome', text: 'Welcome to the notes Feature. Edit or delete me.', minutesAgo: 1 },
   { id: 'groceries', text: 'Buy milk, eggs and coffee', minutesAgo: 60 },
   { id: 'idea', text: 'Try the next Angular release here first', minutesAgo: 24 * 60 },
 ];

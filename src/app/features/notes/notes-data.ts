@@ -9,7 +9,7 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
-import { injectLiveData } from '../live-data/inject-live-data';
+import { injectLiveData } from '../../live-data/inject-live-data';
 import { Note } from './note.model';
 
 @Service()

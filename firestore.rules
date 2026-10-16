@@ -36,8 +36,8 @@ service cloud.firestore {
       }
     }
 
-    // ---- Prototype: notes (src/app/notes) --------------------------------------------------
-    // Delete this section together with the Prototype.
+    // ---- Feature: notes (src/app/features/notes) -------------------------------------------
+    // Delete this section together with the Feature.
 
     match /users/{uid}/notes/{noteId} {
       allow read, delete: if isSignedInAsOwner(uid);
@@ -65,6 +65,6 @@ service cloud.firestore {
       }
     }
 
-    // ---- End of Prototype: notes -----------------------------------------------------------
+    // ---- End of Feature: notes -------------------------------------------------------------
   }
 }

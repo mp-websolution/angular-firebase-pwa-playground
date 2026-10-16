@@ -14,10 +14,10 @@
       Sign out
     </button>
   </div>
-  @if (prototypeRoutes.length > 0) {
+  @if (featureRoutes.length > 0) {
     <nav aria-label="Features" class="flex gap-4">
-      @for (prototype of prototypeRoutes; track prototype.path) {
-        <a class="underline" [routerLink]="'/' + prototype.path">{{ prototype.title }}</a>
+      @for (feature of featureRoutes; track feature.path) {
+        <a class="underline" [routerLink]="'/' + feature.path">{{ feature.title }}</a>
       }
     </nav>
   }
