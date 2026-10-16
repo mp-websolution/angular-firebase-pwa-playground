@@ -11,16 +11,16 @@ import {
   getDocs,
   setDoc,
 } from 'firebase/firestore';
-import { environment } from '../../environments/environment';
-import { RELOAD_PAGE } from '../browser/reload-page';
-import { FIRESTORE, provideFirebase } from '../firebase/provide-firebase';
+import { environment } from '../../../environments/environment';
+import { RELOAD_PAGE } from '../../browser/reload-page';
+import { FIRESTORE, provideFirebase } from '../../firebase/provide-firebase';
 import {
   enablePersistentCacheInJsdom,
   signInAsNewUser,
   slowEmulatorTimeout,
   tearDownFirebase,
   testEnvironmentWithDeployedFirestoreRules,
-} from '../testing/emulator-setup';
+} from '../../testing/emulator-setup';
 import { NotesData } from './notes-data';
 
 describe('NotesData against the emulators', () => {

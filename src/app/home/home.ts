@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthSession } from '../auth/auth-session';
 import { messageOf } from '../auth/auth-session-error';
-import { prototypeRoutes } from '../prototypes.routes';
+import { featureRoutes } from '../features/features.routes';
 
 @Component({
   selector: 'app-home',
@@ -11,7 +11,7 @@ import { prototypeRoutes } from '../prototypes.routes';
 })
 export class Home {
   protected readonly session = inject(AuthSession);
-  protected readonly prototypeRoutes = prototypeRoutes;
+  protected readonly featureRoutes = featureRoutes;
   readonly #router = inject(Router);
 
   protected readonly signingOut = signal(false);
