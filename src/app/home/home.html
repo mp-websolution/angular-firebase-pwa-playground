@@ -15,7 +15,7 @@
     </button>
   </div>
   @if (prototypeRoutes.length > 0) {
-    <nav aria-label="Prototypes" class="flex gap-4">
+    <nav aria-label="Features" class="flex gap-4">
       @for (prototype of prototypeRoutes; track prototype.path) {
         <a class="underline" [routerLink]="'/' + prototype.path">{{ prototype.title }}</a>
       }
