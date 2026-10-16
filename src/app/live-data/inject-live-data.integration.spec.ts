@@ -21,8 +21,8 @@ import {
 import { environment } from '../../environments/environment';
 import { AuthSession } from '../auth/auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
+import { FIRESTORE, provideFirebase } from '../firebase/provide-firebase';
 import { injectLiveData } from './inject-live-data';
-import { FIRESTORE, provideFirebase } from './provide-firebase';
 import {
   enablePersistentCacheInJsdom,
   signInAsNewUser,
