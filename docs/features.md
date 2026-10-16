@@ -4,7 +4,7 @@ A **Feature** (see `CONTEXT.md`) is a self-contained piece of the app beside the
 
 ## The features folder
 
-Every Feature lives in its own folder under `src/app/features/`, next to the Feature route list, `src/app/features/features.routes.ts`. Everything else in `src/app/` is Baseline. Nothing outside `src/app/features/` imports from it, except `src/app/app.routes.ts` and home, which import the Feature route list.
+Every Feature lives in its own folder under `src/app/features/`, next to the Feature route list, `src/app/features/features.routes.ts`. Everything else in `src/app/` is Baseline. Nothing outside `src/app/features/` imports from it, except `src/app/app.routes.ts` and home, which import the Feature route list. `npm run lint` enforces these rules (ADR 0005, `sheriff.config.ts`).
 
 ## What a Feature owns
 
@@ -19,7 +19,7 @@ Removing those four leaves the Baseline building and its tests green, except hom
 
 ## Adding a Feature
 
-1. Copy `src/app/features/notes/` to `src/app/features/<name>/` and rename inside it. Keep the shape:
+1. Copy `src/app/features/notes/` to `src/app/features/<name>/` and rename inside it. Use lowercase letters and hyphens only in `<name>`: lint checks no other folder as a Feature. Keep the shape:
    - `<name>.routes.ts` exports the Feature's routes, relative to its path, with `canActivate: [signedInGuard]` on those that need a signed-in user.
    - A data-access service per collection, like `NotesData`: `@Service()`, read state as signals, commands as promise-returning methods, no SDK types in its public API.
    - The service gets its data through `injectLiveData()` from `src/app/live-data/inject-live-data.ts`, in a field initializer: `ref` says where the signed-in user's data lives, `listenTo` optionally narrows it to a query, and `map` turns each snapshot into the service's model. It loads Firestore, listens until destroyed, and exposes `value`, `waitingToSync` and `loadFailed` for the service to pass on. Each command writes to `await live.ref()` and hands the unawaited write to `live.track()`, so it works offline, counts towards `waitingToSync`, and reports a rejection.
@@ -39,6 +39,7 @@ The Firestore SDK is most of Firebase's weight, so it loads on first use, never 
 - Only files reached through its `loadChildren` import values from `firebase/firestore` or `injectLiveData()`. Its data-access service gets Firestore through `injectLiveData()`, or with `await inject(FIRESTORE)()` for anything else.
 - On top of the import rule in "The features folder": inside `src/app/features/`, only the Feature route list reaches into a Feature's folder, and only through the `import()` in its `loadChildren`.
 - `npm run build` warns when the initial bundle passes 500 kB: that usually means a value import from `firebase/firestore` slipped into `main`.
+- Lint checks neither the lazy `import()` nor where values from `firebase/firestore` are imported: it treats static and dynamic imports alike and ignores third-party imports. Only review and the bundle budget catch a break.
 
 ## Removing a Feature
 
