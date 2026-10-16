@@ -24,10 +24,9 @@ describe('Notes', () => {
     expect(await screen.findByRole('listitem', { name: 'Buy milk' })).toBeVisible();
   });
 
-  it('is linked by its title from the Features navigation on home, at /notes', async () => {
+  it('is listed in the Features navigation on home', async () => {
     await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
     });
 
     const features = await screen.findByRole('navigation', { name: 'Features' });

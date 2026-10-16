@@ -28,6 +28,7 @@ Removing those four leaves the Baseline building and its tests green. Only docs 
 3. Store per-user data under `users/{uid}/<collection>`, and add a delimited section to `firestore.rules` (and `storage.rules` if needed) that opens it to its owner only.
 4. Add `scripts/seed/feature-<name>.mjs` for demo data.
 5. Write the tests (see `docs/agents/testing.md`):
+   - Keep your own copy of the notes Feature's home-link test (`is listed in the Features navigation on home`): it pins that home links to the new Feature, by its title, in the "Features" navigation.
    - Component tests render through `renderApp` and pass the fake with `providers: [{ provide: NotesData, useValue: new FakeNotesData(...) }]`. `renderApp` has no default for a Feature's service, so the Baseline's tests never depend on one.
    - Integration tests for the service covering its mapping, commands and ordering, and rules tests covering the owner allowed and other users and signed-out visitors denied. Sync, offline and sign-out behaviour belong to `injectLiveData()` and are tested there, not per Feature.
 
@@ -36,7 +37,7 @@ Removing those four leaves the Baseline building and its tests green. Only docs 
 The Firestore SDK is most of Firebase's weight, so it loads on first use, never with the initial bundle (ADR 0003). For a Feature that means:
 
 - Only files reached through its `loadChildren` import values from `firebase/firestore` or `injectLiveData()`. Its data-access service gets Firestore through `injectLiveData()`, or with `await inject(FIRESTORE)()` for anything else.
-- Nothing outside the Feature's folder imports from it, except the `loadChildren` in its route entry.
+- On top of the import rule in "The features folder": inside `src/app/features/`, only the Feature route list reaches into a Feature's folder, and only through the `import()` in its `loadChildren`.
 - `npm run build` warns when the initial bundle passes 500 kB: that usually means a value import from `firebase/firestore` slipped into `main`.
 
 ## Removing a Feature
