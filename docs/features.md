@@ -19,7 +19,7 @@ Removing those four leaves the Baseline building and its tests green, except hom
 
 ## Adding a Feature
 
-1. Copy `src/app/features/notes/` to `src/app/features/<name>/` and rename inside it. Use lowercase letters and hyphens only in `<name>`: lint checks no other folder as a Feature. Keep the shape:
+1. Copy `src/app/features/notes/` to `src/app/features/<name>/` and rename inside it. Use lowercase letters and hyphens only in `<name>`: lint doesn't check a folder whose name has digits or other symbols as a Feature. Keep the shape:
    - `<name>.routes.ts` exports the Feature's routes, relative to its path, with `canActivate: [signedInGuard]` on those that need a signed-in user.
    - A data-access service per collection, like `NotesData`: `@Service()`, read state as signals, commands as promise-returning methods, no SDK types in its public API.
    - The service gets its data through `injectLiveData()` from `src/app/live-data/inject-live-data.ts`, in a field initializer: `ref` says where the signed-in user's data lives, `listenTo` optionally narrows it to a query, and `map` turns each snapshot into the service's model. It loads Firestore, listens until destroyed, and exposes `value`, `waitingToSync` and `loadFailed` for the service to pass on. Each command writes to `await live.ref()` and hands the unawaited write to `live.track()`, so it works offline, counts towards `waitingToSync`, and reports a rejection.
