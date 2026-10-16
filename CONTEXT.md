@@ -1,6 +1,6 @@
 # Angular Firebase PWA Playground
 
-A template repository for Angular PWAs backed by Firebase, used for trying out Angular and Firebase updates and for trying out ideas for future PWA projects.
+A template repository for Angular PWAs backed by Firebase, used for trying out Angular and Firebase updates and ideas for future PWA projects.
 
 ## Language
 
