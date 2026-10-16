@@ -13,12 +13,16 @@ This repository in its role as the starting point for a new project. A new proje
 _Avoid_: Fork, clone, seed
 
 **Baseline**:
-The permanent, minimal shell every future project inherits: authentication, the user profile, Firebase wiring, Live data, PWA behaviour, and the build and deploy pipeline. It stays small and never depends on any Feature.
+The permanent, minimal shell every future project inherits: authentication, the user profile, Firebase wiring, Live data, PWA behaviour, and the build and deploy pipeline. It stays small and never depends on any Feature; it reaches Features only through the Feature route list.
 _Avoid_: Core, skeleton, scaffold
 
 **Feature**:
 A self-contained piece of the app that sits beside the Baseline. It may depend on the Baseline but never on another Feature, and deleting it leaves the Baseline intact. In the Playground a Feature is usually thrown away once tried; in a project created from the Template it is the product. Authentication and the user profile are Baseline, never Features.
 _Avoid_: Prototype, experiment, demo, module
+
+**Feature route list**:
+The one list of every Feature's entry point, where the Baseline meets the Features. It belongs to neither: the Baseline may read it, and only it reaches into a Feature. Adding or removing a Feature means adding or removing its entry.
+_Avoid_: Feature registry, feature index
 
 **Live data**:
 The signed-in user's Firestore data, kept up to date on this device, with whether changes are waiting to sync and whether loading failed.
