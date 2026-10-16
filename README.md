@@ -1,13 +1,13 @@
 # Angular Firebase PWA Playground
 
-A template repo for trying out Angular and Firebase updates and prototyping future PWA projects. The stack is Angular, the native Firebase SDK, Firebase emulators, Testing Library, GitHub Actions and FTP deploy.
+A template repo for trying out Angular and Firebase updates and ideas for future PWA projects. The stack is Angular, the native Firebase SDK, Firebase emulators, Testing Library, GitHub Actions and FTP deploy.
 
 ## What this is
 
-The repo is a **Playground** (terms from `CONTEXT.md`): the **Baseline** plus any **Prototypes**.
+The repo is a **Playground** (terms from `CONTEXT.md`): the **Baseline** plus any **Features**.
 
-- The **Baseline** is the minimal shell every future project inherits: sign-in (email/password and Google), the user profile with avatar, Firebase wiring, PWA behaviour (offline shell, update prompt), tests, CI and the deploy pipeline. It never depends on a Prototype.
-- A **Prototype** is a self-contained, disposable feature beside the Baseline. The notes page (`/notes`) is the example. Deleting a Prototype leaves the Baseline intact.
+- The **Baseline** is the minimal shell every future project inherits: sign-in (email/password and Google), the user profile with avatar, Firebase wiring, PWA behaviour (offline shell, update prompt), tests, CI and the deploy pipeline. It never depends on a Feature.
+- A **Feature** is a self-contained piece of the app beside the Baseline, in `src/app/features/`. The notes page (`/notes`) is the example. Deleting a Feature leaves the Baseline intact. In the Playground a Feature is usually thrown away once tried; in a project created from the Template the Features are the product.
 - As the **Template**, the repo is the starting point of a new project: "Use this template" on GitHub, then follow [Setup](#setup-from-zero-to-live). Changes don't flow back.
 
 The non-obvious choices are recorded as ADRs:
@@ -49,16 +49,16 @@ Production builds are a PWA: Angular's service worker (configured in `ngsw-confi
 
 Production builds need the production project's web config in `src/environments/environment.ts`. While it still holds the `REPLACE_ME` placeholder, the app throws at startup instead of failing later on its first Firebase call.
 
-## Prototypes
+## Features
 
-`docs/prototypes.md` has the full steps and explains why a Prototype's Firestore code stays behind its lazy route. In short, a Prototype owns four things, all modelled on the notes Prototype:
+`docs/features.md` has the full steps and explains why a Feature's Firestore code stays behind its lazy route. In short, every Feature lives in `src/app/features/`, and everything else in `src/app/` is Baseline. A Feature owns four things, all modelled on the notes Feature:
 
-1. Its route entry in `src/app/prototypes.routes.ts` (home links to it by its title).
-2. Its folder, e.g. `src/app/notes/`.
+1. Its route entry in `src/app/features/features.routes.ts` (home links to it by its title).
+2. Its folder, e.g. `src/app/features/notes/`.
 3. Its delimited section in `firestore.rules` (and `storage.rules` if needed).
-4. Its seeder, e.g. `scripts/seed/prototype-notes.mjs`.
+4. Its seeder, e.g. `scripts/seed/feature-notes.mjs`.
 
-**Add** one by copying those four from the notes Prototype and renaming. **Remove** one by deleting them, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
+**Add** one by copying those four from the notes Feature and renaming. **Remove** one by deleting them, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
 
 ## App icons
 
@@ -195,15 +195,15 @@ The tickets were then implemented in order with `/implement`, test-first with [`
 | File | Meaning |
 |---|---|
 | `README.md` | This file: what the Playground is, development, setup, deploy and updates. |
-| `CONTEXT.md` | Domain glossary (**Playground**, **Template**, **Baseline**, **Prototype**). Terms only, no implementation details. |
+| `CONTEXT.md` | Domain glossary (**Playground**, **Template**, **Baseline**, **Feature**). Terms only, no implementation details. |
 | `docs/adr/0001-native-firebase-sdk-instead-of-angularfire.md` | Why the native Firebase SDK is used instead of AngularFire: Angular updates shouldn't wait on a wrapper library. |
 | `docs/adr/0002-ftp-deploy-instead-of-firebase-hosting.md` | Why the app is deployed by FTP to existing webspace, and what that means (static build, `.htaccess`, Google sign-in by popup only). |
 | `docs/adr/0003-lazy-firestore-loader-token.md` | Why the `FIRESTORE` token gives a loader instead of an instance: the Firestore SDK stays out of the initial bundle. |
 | `docs/adr/0004-testing-library-for-component-tests.md` | Why component tests use Testing Library and render the whole app through the router. |
 | `docs/agents/testing.md` | How component, integration and security-rules tests are written. |
-| `docs/prototypes.md` | How to add or remove a Prototype, and why its Firestore code stays behind its lazy route. |
+| `docs/features.md` | How to add or remove a Feature, where Features live, and why a Feature's Firestore code stays behind its lazy route. |
 | `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. |
-| `docs/agents/issue-tracker.md` | Issues are local markdown files under `.scratch/<feature>/`. |
+| `docs/agents/issue-tracker.md` | Issues are local markdown files under `.scratch/<spec-slug>/`. |
 | `docs/agents/triage-labels.md` | The triage labels, stored on each issue's `Status:` line. |
 | `docs/agents/domain.md` | Where agents find the glossary and ADRs, and how to use them. |
 | `.scratch/baseline/spec.md` | The Baseline spec: problem, user stories, implementation and testing decisions, out of scope. |
