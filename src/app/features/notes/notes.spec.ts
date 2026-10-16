@@ -24,16 +24,6 @@ describe('Notes', () => {
     expect(await screen.findByRole('listitem', { name: 'Buy milk' })).toBeVisible();
   });
 
-  it('is listed in the Features navigation on home', async () => {
-    await renderApp('/', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-    });
-
-    const features = await screen.findByRole('navigation', { name: 'Features' });
-
-    expect(within(features).getByRole('link', { name: 'Notes' })).toHaveAttribute('href', '/notes');
-  });
-
   it('sends signed-out visitors to sign-in', async () => {
     await renderApp('/notes', {
       providers: [{ provide: NotesData, useValue: new FakeNotesData() }],

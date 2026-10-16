@@ -47,7 +47,7 @@ The glossary change in `CONTEXT.md` was made during the grilling session and is 
 27. As a developer, I want the wayfinder skill's `prototype` ticket type left in the issue-tracker guide, so that the skill keeps working; it's the skill's vocabulary, not our term.
 28. As a developer adding a Feature, I want the "Adding a Feature" steps to point into the features folder, so that a new Feature can't land among the Baseline folders.
 29. As a developer removing a Feature, I want the "Removing a Feature" steps to name the features folder, its route list entry, its rules section and its seed script, so that removal stays a four-part deletion.
-30. As a developer, I want deleting the notes Feature to leave lint, unit tests, integration tests and build green, so that the Baseline provably doesn't depend on any Feature.
+30. As a developer, I want deleting the notes Feature to leave lint, unit tests, integration tests and build green, apart from home's Features navigation test, which names each Feature, so that the Baseline provably doesn't depend on any Feature.
 31. As a developer, I want the initial bundle to stay under the 500 kB budget after the move, so that Firestore still loads only behind lazy routes (ADR 0003).
 32. As an agent, I want no live doc, code or config file outside the exceptions above to mention "prototype", so that a search for the old term turns up nothing to act on.
 
@@ -73,7 +73,7 @@ The glossary change in `CONTEXT.md` was made during the grilling session and is 
 - A good test drives the app as a user does, through `renderApp`, querying by role, label and text (ADR 0004). It asserts what the user sees, not which file a route lives in. This change has no behaviour of its own beyond the renamed navigation, so existing tests carry most of the proof.
 - **New test, Home:** a signed-in user sees a navigation named "Features" with a link per Feature, by its title, pointing at its unchanged path (Notes → `/notes`). Nothing pins these links today. Prior art: the existing Home tests and the notes page tests, which render through `renderApp` with a `FakeAuthSession`.
 - **Moved tests, unchanged:** the notes component tests, the notes data-access integration tests and the notes rules tests move with the folder. Only their import paths change; they prove the move broke nothing.
-- **Removal dry run (verification, not committed):** delete the notes Feature folder, its route list entry, its rules section and its seed script, then run lint, unit tests, integration tests and build; all must pass. Restore afterwards. This is the same dry run the notes example ticket recorded and proves the Baseline doesn't depend on any Feature.
+- **Removal dry run (verification, not committed):** delete the notes Feature folder, its route list entry, its rules section and its seed script, then run lint, unit tests, integration tests and build; all must pass except the new Home test, which lists Notes. Restore afterwards. This is the same dry run the notes example ticket recorded and proves the Baseline doesn't depend on any Feature.
 - **Bundle budget:** `npm run build` stays under the 500 kB initial-bundle warning, the existing check that Firestore stays behind lazy routes.
 - **Old-term search (verification):** a case-insensitive search for "prototyp" over tracked files finds matches only in `.scratch/`, `.agents/`, the wayfinder ticket type in the issue-tracker guide, and `CONTEXT.md`'s _Avoid_ line.
 
@@ -95,5 +95,5 @@ The glossary change in `CONTEXT.md` was made during the grilling session and is 
 ## Comments
 
 - **Implemented** on `refactor/features`. Lint, unit (91), integration (88), build (468.68 kB initial) and format pass. The removal dry run passes too: lint, unit 64, integration 70 and build 467 kB, with nothing committed.
-- **Link test moved.** "New test, Home" lives in `src/app/features/notes/notes.spec.ts` ("is listed in the Features navigation on home"), not in the Home spec. A Home test pinning Notes → `/notes` fails the removal dry run (story 30). `docs/features.md` tells each new Feature to keep its own copy.
+- **Link test in Home.** "New test, Home" lives in `src/app/home/home.spec.ts` ("links to every Feature by its title in the Features navigation"). It names Notes, so it's the one test the removal dry run (story 30) is allowed to fail. `docs/features.md` says to add and drop a Feature's link there.
 - **Old-term search** also matches `package-lock.json` (npm package `setprototypeof`), which can't change.
