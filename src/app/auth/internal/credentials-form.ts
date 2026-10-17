@@ -9,8 +9,8 @@ import {
   required,
 } from '@angular/forms/signals';
 import { AuthFailure } from './auth-failure.model';
-import { userFixable, messageOf } from './auth-session-error';
-import { Credentials } from './credentials.model';
+import { userFixable, messageOf } from '../auth-session-error';
+import { Credentials } from '../credentials.model';
 
 const fieldToFix: Partial<Record<AuthFailure, keyof Credentials>> = {
   'invalid-email': 'email',

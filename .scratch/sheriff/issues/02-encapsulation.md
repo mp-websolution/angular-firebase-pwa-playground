@@ -6,4 +6,8 @@
 
 **Blocked by:** 01
 
-**Status:** needs-triage
+**Status:** wontfix
+
+## Comments
+
+- 2026-10-17: Specified in `.scratch/encapsulation/spec.md` (ready-for-agent), which uses `internal/` folders and records the rejected underscore-regex alternative. Implement from there, not from this ticket.

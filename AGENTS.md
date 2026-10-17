@@ -62,6 +62,10 @@ Names and tests carry the documentation. A comment that explains code marks a mi
   - tool directives such as `// @vitest-environment node` or lint suppressions.
 - **In config, workflow and server-config files**, keep only comments that give a reason or a warning, and state intent in step `name:` fields where the format allows. In rules files, express each check as a named rule function. In HTML templates, replace a comment with a test wherever a test can pin it.
 
+### Module-private files
+
+Put a new file in its Sheriff module's `internal/` folder unless another module imports it; lint then keeps other modules out. Another module's specs and the test helpers count as importers too. Moving a file out of `internal/` widens the module's interface: make it a deliberate change. See ADR 0006.
+
 ### Component templates
 
 Templates longer than 10 lines go in a separate `<name>.html` file next to the component, referenced with `templateUrl`. Shorter templates stay inline in `template`. This overrides the `angular-developer` skill's "inline for small templates" guidance.

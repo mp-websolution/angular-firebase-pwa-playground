@@ -1,4 +1,4 @@
-import { AuthFailure } from './auth-failure.model';
+import { AuthFailure } from './internal/auth-failure.model';
 
 const failures: Record<AuthFailure, { message: string; userFixable: boolean }> = {
   'invalid-credential': { message: 'Wrong email or password.', userFixable: true },
