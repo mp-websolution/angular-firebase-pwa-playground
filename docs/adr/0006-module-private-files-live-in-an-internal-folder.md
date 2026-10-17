@@ -1,6 +1,8 @@
 # Module-private files live in an `internal/` folder
 
-A file that no other module imports goes into an `internal/` folder at the top of its module, e.g. `src/app/auth/internal/` or `src/app/features/notes/internal/`. Sheriff's encapsulation for barrel-less modules lets only files of the same module import a file under that folder, at any depth, so `npm run lint` fails when another module, its specs or the test helpers import it. A file stays outside `internal/`, public to the modules ADR 0005 allows, when another module imports it, specs and test helpers included. A Feature's only public file is its `<name>.routes.ts`.
+We want each Sheriff module's interface to be a deliberate, reviewed choice, not whatever other modules happen to import. So a file that no other module imports goes into an `internal/` folder at the top of its module, e.g. `src/app/auth/internal/` or `src/app/features/notes/internal/`. Sheriff's encapsulation for barrel-less modules lets only files of the same module import a file under that folder, at any depth. `npm run lint` fails when a file of another module imports it, be it production code, a spec or a test helper.
+
+A file stays outside `internal/` when another module imports it, even if only a spec or a test helper does. ADR 0005's rules then decide which modules may import it. A Feature's only public file is its `<name>.routes.ts`.
 
 This relies on Sheriff's default `encapsulationPattern`, `internal`, so `sheriff.config.ts` doesn't set it. `internal/` is a folder inside a module, not a module of its own.
 
@@ -12,4 +14,4 @@ We rejected Sheriff's regex alternative, `encapsulationPattern: /(^|\/)_/`, whic
 - Encapsulation is per file path, not per type: a public file may expose a private type, e.g. `AuthSessionError.reason` is an `AuthFailure` from auth's `internal/`.
 - Import paths get one folder deeper.
 - Specs in another module get no exemption: ADR 0005's spec rule loosens the dependency rules only.
-- Like the dependency rules, encapsulation treats static and dynamic imports the same, so lint still can't tell whether a Feature's routes are reached only through `loadChildren`.
+- Encapsulation has the same blind spot for dynamic imports as the dependency rules (ADR 0005).
