@@ -64,7 +64,7 @@ Names and tests carry the documentation. A comment that explains code marks a mi
 
 ### Module-private files
 
-Put a new file in its module's `internal/` folder unless another module imports it; lint then keeps other modules out. Moving a file out of `internal/` widens the module's interface: make it a deliberate change. See ADR 0006.
+Put a new file in its Sheriff module's `internal/` folder unless another module imports it; lint then keeps other modules out. Another module's specs and the test helpers count as importers too. Moving a file out of `internal/` widens the module's interface: make it a deliberate change. See ADR 0006.
 
 ### Component templates
 
