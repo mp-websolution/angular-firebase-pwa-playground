@@ -38,7 +38,7 @@ Removing those four leaves the Baseline building and its tests green, except hom
 The Firestore SDK is most of Firebase's weight, so it loads on first use, never with the initial bundle (ADR 0003). For a Feature that means:
 
 - Only files reached through its `loadChildren` import values from `firebase/firestore` or `injectLiveData()`. Its data-access service gets Firestore through `injectLiveData()`, or with `await inject(FIRESTORE)()` for anything else.
-- On top of the import rule in "The features folder": inside `src/app/features/`, only the Feature route list reaches into a Feature's folder, and only through the `import()` in its `loadChildren`. Lint fails when it imports any file of the Feature but its routes file.
+- On top of the import rule in "The features folder": inside `src/app/features/`, only the Feature route list reaches into a Feature's folder, and only through the `import()` in its `loadChildren`. Lint fails when the Feature route list imports any Feature file other than its routes file.
 - `npm run build` warns when the initial bundle passes 500 kB: that usually means a value import from `firebase/firestore` slipped into `main`.
 - Lint checks neither the lazy `import()` nor where values from `firebase/firestore` are imported: it treats static and dynamic imports alike and ignores third-party imports. Only review and the bundle budget catch a break.
 
