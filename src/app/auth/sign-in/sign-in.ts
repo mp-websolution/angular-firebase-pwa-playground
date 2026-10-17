@@ -2,9 +2,9 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthSession } from '../auth-session';
 import { messageOf } from '../auth-session-error';
-import { CredentialsForm } from '../credentials-form';
+import { CredentialsForm } from '../internal/credentials-form';
 import { Credentials } from '../credentials.model';
-import { injectReturnUrl } from '../return-url';
+import { injectReturnUrl } from '../internal/return-url';
 
 @Component({
   selector: 'app-sign-in',

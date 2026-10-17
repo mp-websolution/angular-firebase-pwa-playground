@@ -12,7 +12,7 @@ import { FirebaseError } from 'firebase/app';
 import { filter, firstValueFrom } from 'rxjs';
 import { RELOAD_PAGE } from '../browser/reload-page';
 import { FIREBASE_AUTH, FIRESTORE, signOutAndClearCache } from '../firebase/provide-firebase';
-import { AuthFailure } from './auth-failure.model';
+import { AuthFailure } from './internal/auth-failure.model';
 import { AuthSessionError } from './auth-session-error';
 import { Credentials } from './credentials.model';
 import { SessionUser } from './session-user.model';
