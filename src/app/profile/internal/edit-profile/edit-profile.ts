@@ -8,7 +8,7 @@ import {
   form,
   validate,
 } from '@angular/forms/signals';
-import { ProfileData } from '../profile-data';
+import { ProfileData } from '../../profile-data';
 
 // Same limits as the Storage rules. No SVG: it can carry scripts.
 const avatarTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
