@@ -12,10 +12,3 @@ export const signedInGuard: CanActivateFn = async (_route, { url }) => {
   }
   return router.createUrlTree(['/sign-in'], { queryParams: returnUrlQueryParams(url) });
 };
-
-export const signedOutGuard: CanActivateFn = async () => {
-  const router = inject(Router);
-  const session = inject(AuthSession);
-  await session.whenResolved();
-  return session.user() ? router.createUrlTree(['/']) : true;
-};
