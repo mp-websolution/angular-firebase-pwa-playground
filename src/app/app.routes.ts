@@ -2,16 +2,11 @@ import { Routes } from '@angular/router';
 import { signedInGuard, signedOutGuard } from './auth/auth-guards';
 import { SignIn } from './auth/sign-in/sign-in';
 import { SignUp } from './auth/sign-up/sign-up';
-import { Home } from './home/home';
+import { homeRoutes } from './home/home.routes';
 import { featureRoutes } from './features/features.routes';
 
 export const routes: Routes = [
-  {
-    path: '',
-    component: Home,
-    canActivate: [signedInGuard],
-    title: 'Angular Firebase PWA Playground',
-  },
+  ...homeRoutes,
   {
     path: 'profile',
     // Lazy, or the Firestore SDK joins the initial bundle.

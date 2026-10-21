@@ -1,8 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { AuthSession } from '../auth/auth-session';
-import { messageOf } from '../auth/auth-session-error';
-import { featureRoutes } from '../features/features.routes';
+import { AuthSession } from '../../auth/auth-session';
+import { messageOf } from '../../auth/auth-session-error';
+import { featureRoutes } from '../../features/features.routes';
 
 @Component({
   selector: 'app-home',
