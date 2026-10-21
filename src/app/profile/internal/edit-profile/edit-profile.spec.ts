@@ -1,9 +1,9 @@
 import { ComponentFixture } from '@angular/core/testing';
 import { screen, waitForElementToBeRemoved } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { FakeAuthSession } from '../../testing/fake-auth-session';
-import { renderApp } from '../../testing/render-app';
-import { FakeProfileData } from '../../testing/fake-profile-data';
+import { FakeAuthSession } from '../../../testing/fake-auth-session';
+import { renderApp } from '../../../testing/render-app';
+import { FakeProfileData } from '../../../testing/fake-profile-data';
 
 async function changeDisplayName(displayName: string) {
   const user = userEvent.setup();
