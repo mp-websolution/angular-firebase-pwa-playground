@@ -1,8 +1,8 @@
 import { screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { renderApp } from '../../testing/render-app';
-import { Credentials } from '../credentials.model';
-import { FakeAuthSession } from '../../testing/fake-auth-session';
+import { renderApp } from '../../../testing/render-app';
+import { Credentials } from '../../credentials.model';
+import { FakeAuthSession } from '../../../testing/fake-auth-session';
 
 const ada: Credentials = { email: 'ada@example.com', password: 'correct-horse' };
 

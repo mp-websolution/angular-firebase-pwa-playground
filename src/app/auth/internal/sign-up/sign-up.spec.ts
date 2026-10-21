@@ -1,8 +1,8 @@
 import { screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { renderApp } from '../../testing/render-app';
-import { Credentials } from '../credentials.model';
-import { FakeAuthSession } from '../../testing/fake-auth-session';
+import { renderApp } from '../../../testing/render-app';
+import { Credentials } from '../../credentials.model';
+import { FakeAuthSession } from '../../../testing/fake-auth-session';
 
 async function signUp({ email, password }: Credentials) {
   const user = userEvent.setup();
