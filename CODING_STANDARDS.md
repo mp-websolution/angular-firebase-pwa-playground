@@ -46,10 +46,6 @@ Names and tests carry the documentation. A comment that explains code marks a mi
 
 Put a new file in its Sheriff module's `internal/` folder unless another module imports it; lint then keeps other modules out. Another module's specs and the test helpers count as importers too. Moving a file out of `internal/` widens the module's interface: make it a deliberate change. See ADR 0006. A module with pages exposes them only through its `<module>.routes.ts`, and `app.routes.ts` imports only routes files (ADR 0007).
 
-## Component templates
-
-Templates longer than 10 lines go in a separate `<name>.html` file next to the component, referenced with `templateUrl`. Shorter templates stay inline in `template`. This overrides the `angular-developer` skill's "inline for small templates" guidance.
-
 ## Signal forms
 
 Every signal form has the same shape. This overrides the `angular-developer` skill's signal-forms guidance (`submit()` methods, `(submit)` handlers, public models).

@@ -4,7 +4,10 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-type RuleId = '@softarc/sheriff/dependency-rule' | '@softarc/sheriff/encapsulation';
+type RuleId =
+  | '@softarc/sheriff/dependency-rule'
+  | '@softarc/sheriff/encapsulation'
+  | '@angular-eslint/component-max-inline-declarations';
 
 interface LintCase {
   name: string;
@@ -19,6 +22,21 @@ const appFolder = join(repoRoot, 'src/app');
 // Letters only: Sheriff takes a Feature folder only if its name is lowercase letters and hyphens.
 const runId = Array.from({ length: 8 }, () => String.fromCharCode(97 + randomInt(26))).join('');
 const throwawayFeature = `features/lint-fixture-${runId}`;
+
+function componentWithInlineTemplate(lineCount: number): string {
+  const lines = Array.from({ length: lineCount }, (_, index) => `    <p>Line ${index + 1}</p>`);
+  return [
+    `import { Component } from '@angular/core';`,
+    `@Component({`,
+    `  selector: 'app-lint-fixture',`,
+    `  template: \``,
+    ...lines,
+    `  \`,`,
+    `})`,
+    `export class LintFixture {}`,
+    ``,
+  ].join('\n');
+}
 
 const cases: LintCase[] = [
   {
@@ -68,6 +86,18 @@ const cases: LintCase[] = [
     name: 'ADR 0005: a Feature importing a Baseline module passes',
     folder: throwawayFeature,
     source: `import { ProfileData } from '../../profile/profile-data';\nexport const fixture = ProfileData;\n`,
+    lintErrors: [],
+  },
+  {
+    name: 'Component templates standard: an 11-line inline template fails the inline-declarations limit',
+    folder: 'profile',
+    source: componentWithInlineTemplate(11),
+    lintErrors: ['@angular-eslint/component-max-inline-declarations'],
+  },
+  {
+    name: 'Component templates standard: a 10-line inline template passes',
+    folder: 'profile',
+    source: componentWithInlineTemplate(10),
     lintErrors: [],
   },
 ];
