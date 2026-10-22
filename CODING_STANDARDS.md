@@ -36,7 +36,7 @@ Names and tests carry the documentation. A comment that explains code marks a mi
 
 ## Module-private files
 
-Put a new file in its Sheriff module's `internal/` folder unless another module imports it; lint then keeps other modules out. Another module's specs and the test helpers count as importers too. Moving a file out of `internal/` widens the module's interface: make it a deliberate change. See ADR 0006. A module with pages exposes them only through its `<module>.routes.ts`, and `app.routes.ts` imports only routes files (ADR 0007).
+Put a new file in its Sheriff module's `internal/` folder unless another module imports it; lint then keeps other modules out (`@softarc/sheriff/encapsulation`), and `@softarc/sheriff/dependency-rule` limits which modules may import its public files. Another module's specs and the test helpers count as importers too. Moving a file out of `internal/` widens the module's interface: make it a deliberate change. See ADR 0006. A module with pages exposes them only through its `<module>.routes.ts`, and `app.routes.ts` imports only routes files (ADR 0007).
 
 ## Component templates
 
