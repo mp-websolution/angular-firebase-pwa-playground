@@ -10,5 +10,5 @@
 
 - [ ] `npm run lint` passes on the codebase with the rule on
 - [ ] Lint tests: an 11-line inline template fails with `@angular-eslint/component-max-inline-declarations`, a 10-line one passes
-- [ ] "Component templates" section removed from `CODING_STANDARDS.md`; the `AGENTS.md` pointer still names templates as an override of the `angular-developer` skill only if it still applies
+- [ ] "Component templates" section removed from `CODING_STANDARDS.md`
 - [ ] `npm run check` green
