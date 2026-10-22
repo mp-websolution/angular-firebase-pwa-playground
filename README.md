@@ -37,7 +37,7 @@ No Firebase project or credentials are needed: development runs against the `dem
 | `npm run seed` | Runs every seeder in `scripts/seed/`. Only works inside the emulators; `npm start` calls it. |
 | `npm test` | Component tests. No emulators needed. |
 | `npm run test:integration` | Integration tests (`*.integration.spec.ts`), including the security-rules tests, inside the emulators. |
-| `npm run lint` / `npm run format` | ESLint / Prettier. CI also runs `npm run format:check`. |
+| `npm run lint` / `npm run format` | ESLint / Prettier. `npm run format:check` checks formatting without writing. |
 | `npm run test:lint` | Lint tests (`lint-rules/*.test.mjs`): each custom lint rule and Sheriff boundary rejects a violation and accepts the allowed case. |
 | `npm run build` | Production build into `dist/browser/`. |
 | `npm run check` | Lint, format check, component tests, lint tests and build, stopping at the first failure. CI's lint-test-build job runs it. |
