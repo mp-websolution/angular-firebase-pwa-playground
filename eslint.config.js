@@ -39,6 +39,19 @@ module.exports = defineConfig([
     extends: [sheriff.configs.all],
   },
   {
+    files: ['src/**/*.ts'],
+    plugins: {
+      local: {
+        rules: {
+          'no-comments-in-function-bodies': require('./lint-rules/no-comments-in-function-bodies'),
+        },
+      },
+    },
+    rules: {
+      'local/no-comments-in-function-bodies': 'error',
+    },
+  },
+  {
     files: ['**/*.html'],
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
   },

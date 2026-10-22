@@ -61,8 +61,8 @@ function createApp(): FirebaseApp {
     );
   }
   const app = initializeApp(options);
-  // Free the default app name when the injector goes away, so a new injector can initialise it again.
-  inject(DestroyRef).onDestroy(() => void deleteApp(app));
+  const freeDefaultAppNameForNextInjector = () => void deleteApp(app);
+  inject(DestroyRef).onDestroy(freeDefaultAppNameForNextInjector);
   return app;
 }
 
