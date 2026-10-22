@@ -26,10 +26,7 @@ jobs:
           cache: npm
       - name: Install dependencies without their install scripts, which lint, tests and build don't need
         run: npm ci --ignore-scripts
-      - run: npm run lint
-      - run: npm run format:check
-      - run: npm test -- --watch=false
-      - run: npm run build
+      - run: npm run check
 
   integration:
     runs-on: ubuntu-latest
