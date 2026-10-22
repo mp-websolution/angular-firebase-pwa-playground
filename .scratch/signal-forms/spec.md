@@ -1,6 +1,6 @@
 # Spec: Signal forms conventions
 
-Status: ready-for-agent
+**Status:** ready-for-agent
 
 ## Problem Statement
 

@@ -1,6 +1,6 @@
 # Spec: Baseline page modules expose a routes file, not pages
 
-Status: ready-for-agent
+**Status:** ready-for-agent
 
 ## Problem Statement
 

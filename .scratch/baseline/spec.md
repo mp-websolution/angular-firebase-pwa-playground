@@ -1,6 +1,6 @@
 # Spec 0001: Playground Baseline
 
-Status: ready-for-agent
+**Status:** ready-for-agent
 
 ## Problem Statement
 

@@ -1,6 +1,6 @@
 # Spec: Features beside the Baseline
 
-Status: ready-for-agent
+**Status:** ready-for-agent
 
 ## Problem Statement
 
