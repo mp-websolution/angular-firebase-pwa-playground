@@ -18,6 +18,14 @@ Create a new file under `.scratch/<spec-slug>/` (creating the directory if neede
 
 Read the file at the referenced path. The user will normally pass the path or the issue number directly.
 
+## When a skill says to close work
+
+Used by `/implement` and `/implement-spec`.
+
+- Set each implemented ticket's `Status:` line to `agent-done` (see `triage-labels.md`).
+- Once every ticket of the spec is `agent-done`, set the spec's `Status:` line to `agent-done` too.
+- Commit the status changes on the implementation branch, open the pull request, and stop. Never merge: the human decides how to proceed and when to merge.
+
 ## Wayfinding operations
 
 Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
