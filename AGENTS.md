@@ -12,7 +12,7 @@ Issues and specs are local markdown files under `.scratch/<spec-slug>/`. See `do
 
 ### Triage labels
 
-The five default triage roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), recorded on each issue's `Status:` line. See `docs/agents/triage-labels.md`.
+The five default triage roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), plus the repo-local `agent-done` status, recorded on each issue's `Status:` line. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
@@ -20,7 +20,7 @@ Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/age
 
 ## Code style
 
-Code style lives in `CODING_STANDARDS.md`, which overrides the `angular-developer` skill where they disagree (signal forms, templates).
+Code style lives in `CODING_STANDARDS.md`, which overrides the `angular-developer` skill where they disagree (signal forms). Lint also caps inline templates at 10 lines; a longer one goes in a `templateUrl` file.
 
 ## Workflow
 
