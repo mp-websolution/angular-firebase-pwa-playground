@@ -55,5 +55,20 @@ module.exports = defineConfig([
   {
     files: ['**/*.html'],
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'BoundEvent[name="submit"]',
+          message:
+            'No (submit) handlers: declare submission in form() and bind <form> with [formRoot] (CODING_STANDARDS.md "Signal forms").',
+        },
+        {
+          selector: 'TextAttribute[name="novalidate"]',
+          message:
+            'No novalidate: [formRoot] already stops the browser validating the form (CODING_STANDARDS.md "Signal forms").',
+        },
+      ],
+    },
   },
 ]);
