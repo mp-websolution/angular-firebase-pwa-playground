@@ -2,6 +2,7 @@
 /coverage
 /.angular
 /node_modules
+/.claude/
 /.scratch
 package-lock.json
 
