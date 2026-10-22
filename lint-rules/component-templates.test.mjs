@@ -42,3 +42,21 @@ test('accepts a form bound with [formRoot]', async () => {
 test('accepts an inline template of 10 lines', async () => {
   await accepts(componentWithInlineTemplate(10), componentPath, maxInlineRule);
 });
+
+test('accepts a 4-line inline styles block', async () => {
+  const code = `import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-update-prompt',
+  template: \`<p>Update ready</p>\`,
+  styles: \`
+    :host {
+      display: block;
+      padding: 1rem;
+    }
+  \`,
+})
+export class UpdatePrompt {}
+`;
+  await accepts(code, componentPath, maxInlineRule);
+});
