@@ -30,4 +30,4 @@ Implement each ticket on its own branch off `main`, named `<spec-slug>/<NN>-<sho
 
 ### Checks
 
-Run `npm run check` before calling a change ready: CI runs the same command. To map module imports, run `npm run deps:graph`: it prints Sheriff's dependency graph as JSON.
+Run `npm run check` before calling a change ready: CI runs the same command. To map module imports, run `npm run -s deps:graph` (without `-s`, npm's banner corrupts the JSON).

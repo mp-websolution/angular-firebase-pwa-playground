@@ -41,7 +41,7 @@ No Firebase project or credentials are needed: development runs against the `dem
 | `npm run test:lint` | Lint tests (`lint-rules/*.test.mjs`): each custom lint rule and Sheriff boundary rejects a violation and accepts the allowed case. |
 | `npm run build` | Production build into `dist/browser/`. |
 | `npm run check` | Lint, format check, component tests, lint tests and build, stopping at the first failure. CI's lint-test-build job runs it. |
-| `npm run deps:graph` | Prints the Sheriff module dependency graph (`sheriff export src/main.ts`) as JSON. |
+| `npm run -s deps:graph` | Prints the Sheriff module dependency graph (`sheriff export src/main.ts`) as JSON. |
 | `npm run icons` | Renders the app icons from `scripts/icons/` (see [App icons](#app-icons)). |
 
 After `npm start`, sign in as the seeded demo user `demo@example.com` with password `demo-password` (see `scripts/seed/01-demo-user.mjs`; its profile comes from `02-demo-profile.mjs`), create an account, or use "Sign in with Google": the Auth emulator opens a popup where you pick or add a fake Google account.
