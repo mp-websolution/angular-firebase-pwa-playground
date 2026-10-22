@@ -19,6 +19,12 @@ A component test renders the whole app through the router and drives it the way 
 
 What every service built on `injectLiveData()` shares (live updates, `waitingToSync` online and offline, counted deletes, rejected writes, `loadFailed`, and no failure when sign-out shuts Firestore down) is tested once, in `src/app/live-data/inject-live-data.integration.spec.ts`. It runs in its own demo project (`demo-live-data`), with its own rules, open except for a marked write and a forbidden path, loaded through `initializeTestEnvironment({ firestore: { rules } })`, so it doesn't depend on any collection's rules. A data-access service's own integration spec covers only its mapping, commands and ordering, e.g. `src/app/features/notes/internal/notes-data.integration.spec.ts`.
 
+## Lint tests
+
+`lint-rules/*.test.mjs` (`npm run test:lint`, part of `npm run check`) prove that lint rejects what it should. Each case lints a snippet with the repo's `eslint.config.js` through `ruleIdsFor(code, filePath)` from `lint-rules/lint-snippet.mjs`, at a real path under `src/`, and asserts on the rule ID, not the message.
+
+A new lint rule or Sheriff boundary gets a rejected and an accepted case there. Specs don't ask for throwaway violations (inserting an import, running lint, reverting): the case in this suite is the proof.
+
 ## Security-rules tests
 
 Each collection's rules get a `*-rules.integration.spec.ts` beside its data-access service, e.g. `src/app/profile/profile-rules.integration.spec.ts`. They use `@firebase/rules-unit-testing`:
