@@ -6,9 +6,9 @@
 
 **Blocked by:** 03 (Code style moves to CODING_STANDARDS.md), 04 (Lint tests for the module boundaries)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
-- [ ] `npm run lint` passes on the codebase with the rule on
-- [ ] Lint tests: an 11-line inline template fails with `@angular-eslint/component-max-inline-declarations`, a 10-line one passes
-- [ ] "Component templates" section removed from `CODING_STANDARDS.md`
-- [ ] `npm run check` green
+- [x] `npm run lint` passes on the codebase with the rule on
+- [x] Lint tests: an 11-line inline template fails with `@angular-eslint/component-max-inline-declarations`, a 10-line one passes
+- [x] "Component templates" section removed from `CODING_STANDARDS.md`
+- [x] `npm run check` green

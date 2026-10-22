@@ -6,9 +6,9 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
-- [ ] `CODING_STANDARDS.md` holds the moved section; a diff against the old `AGENTS.md` text shows only the TODO removal
-- [ ] `AGENTS.md` keeps Agent skills and Workflow plus the one-line pointer, and no code-style rules
-- [ ] No doc still points at `AGENTS.md` for a code-style rule
-- [ ] README docs table lists `CODING_STANDARDS.md`
+- [x] `CODING_STANDARDS.md` holds the moved section; a diff against the old `AGENTS.md` text shows only the TODO removal
+- [x] `AGENTS.md` keeps Agent skills and Workflow plus the one-line pointer, and no code-style rules
+- [x] No doc still points at `AGENTS.md` for a code-style rule
+- [x] README docs table lists `CODING_STANDARDS.md`

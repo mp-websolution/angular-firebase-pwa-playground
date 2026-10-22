@@ -1,6 +1,6 @@
 # Spec: Streamline the agent environment
 
-Status: ready-for-agent
+Status: agent-done
 
 ## Problem Statement
 

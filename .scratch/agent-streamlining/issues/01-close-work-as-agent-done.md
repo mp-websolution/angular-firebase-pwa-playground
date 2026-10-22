@@ -6,8 +6,8 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
-- [ ] The issue tracker doc has the close-work section, naming `agent-done`, the spec rule, and "never merge"
-- [ ] The triage labels table lists `agent-done` as repo-local; the `ready-for-human` row is unchanged
-- [ ] Tickets 02–05 of this spec are closed the new way
+- [x] The issue tracker doc has the close-work section, naming `agent-done`, the spec rule, and "never merge"
+- [x] The triage labels table lists `agent-done` as repo-local; the `ready-for-human` row is unchanged
+- [x] Tickets 02–05 of this spec are closed the new way
