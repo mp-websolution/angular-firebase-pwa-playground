@@ -6,7 +6,7 @@
 
 **Blocked by:** 04 (Profile display name)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] A notes route area, lazily loaded and protected by the auth guard, and linked from home
 - [x] A notes service exposing the current user's notes as a realtime signal, plus create, update and delete commands. It gets Firestore with `await inject(FIRESTORE)()` and, like the rest of the notes area, is only reachable from the lazy route

@@ -6,7 +6,7 @@
 
 **Blocked by:** 01 (Walking skeleton with PR checks)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] `@angular/pwa` is added: a web manifest, icons and Angular's service worker, registered in production only
 - [x] The service-worker config caches the app shell and hashed assets, and prefetches lazy chunks (including the Firestore SDK chunk) at install, so Firestore-backed pages and sign-out work offline on a later visit

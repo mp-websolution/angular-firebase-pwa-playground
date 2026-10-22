@@ -14,7 +14,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] No comments in function bodies, specs or the profile template
 - [x] Every contract fact from the removed TSDoc and template comment is pinned by a named test

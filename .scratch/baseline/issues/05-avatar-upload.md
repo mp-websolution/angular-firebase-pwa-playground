@@ -6,7 +6,7 @@
 
 **Blocked by:** 04 (Profile display name)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] The profile service gains an upload-avatar command. The profile signal exposes the avatar URL
 - [x] Avatars are stored at a per-user Storage path, and the profile records the avatar URL

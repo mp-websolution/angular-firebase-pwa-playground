@@ -1,6 +1,6 @@
 # Spec: Names and tests over comments
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Problem Statement
 

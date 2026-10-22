@@ -14,7 +14,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] No comments in function bodies; TSDoc only on the fake's options and any genuinely shared helper
 - [ ] Every contract fact from the removed TSDoc is pinned by a named test

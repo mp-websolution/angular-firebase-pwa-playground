@@ -1,6 +1,6 @@
 # Spec: One note form for adding and changing notes
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Problem Statement
 

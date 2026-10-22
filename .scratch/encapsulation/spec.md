@@ -1,6 +1,6 @@
 # Spec: Module-private files live in `internal/`
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Problem Statement
 

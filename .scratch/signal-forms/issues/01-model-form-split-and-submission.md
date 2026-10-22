@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Every form's model is a separate `#…Model` signal of type `…Model`; every `FieldTree` is named `…Form`
 - [x] Every form declares `submission` in `form()` options; templates use `[formRoot]`; no submit methods or `(submit)` handlers left

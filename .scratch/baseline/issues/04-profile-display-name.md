@@ -6,7 +6,7 @@
 
 **Blocked by:** 03 (Sign-in with email/password and Google)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Prerequisite, moved from ticket 03 since this ticket adds the first Firestore page: `signOutAndClearCache` shuts Firestore down before it clears the cache. If clearing ever fails, the user stays signed in, but this tab's Firestore stays shut down until the next reload, and the `FIRESTORE` loader keeps returning that instance, so the profile page would break. This can't happen with today's SDK (ticket 03, "Finding: other tabs don't block sign-out"). Check that this still holds for the SDK version in use; if it doesn't, have the loader drop its cached instance after a terminate
 - [x] A profile service exposes the current user's profile as a signal, plus a command to update the display name

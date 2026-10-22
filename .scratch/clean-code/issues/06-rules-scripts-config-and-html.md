@@ -13,7 +13,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Rules files read through named functions; Prototype markers and SVG warning kept
 - [x] Existing rules specs pass unchanged; test names reviewed as documentation
