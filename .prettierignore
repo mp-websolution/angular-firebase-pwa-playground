@@ -3,6 +3,7 @@
 /.angular
 /node_modules
 /.scratch
+/.claude
 package-lock.json
 
 # Planning docs, kept as written
