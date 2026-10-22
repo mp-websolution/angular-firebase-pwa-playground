@@ -26,7 +26,7 @@ jobs:
           cache: npm
       - name: Install dependencies without their install scripts, which lint, tests and build don't need
         run: npm ci --ignore-scripts
-      - name: Lint, check formatting, run unit tests and build
+      - name: Lint, test the lint rules, check formatting, run unit tests and build
         run: npm run check
 
   integration:

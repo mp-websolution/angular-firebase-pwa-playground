@@ -4,6 +4,7 @@ const { defineConfig } = require('eslint/config');
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
 const sheriff = require('@softarc/eslint-plugin-sheriff');
+const noCommentsInFunctionBodies = require('./lint-rules/no-comments-in-function-bodies');
 
 module.exports = defineConfig([
   {
@@ -15,7 +16,12 @@ module.exports = defineConfig([
       angular.configs.tsRecommended,
     ],
     processor: angular.processInlineTemplates,
+    plugins: {
+      local: { rules: { 'no-comments-in-function-bodies': noCommentsInFunctionBodies } },
+    },
     rules: {
+      'local/no-comments-in-function-bodies': 'error',
+      '@angular-eslint/component-max-inline-declarations': ['error', { template: 10 }],
       '@angular-eslint/directive-selector': [
         'error',
         {
@@ -41,5 +47,20 @@ module.exports = defineConfig([
   {
     files: ['**/*.html'],
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'BoundEvent[name="submit"]',
+          message:
+            'Declare submission in form() options and bind the form with [formRoot] (CODING_STANDARDS.md, Signal forms).',
+        },
+        {
+          selector: 'TextAttribute[name="novalidate"]',
+          message:
+            '[formRoot] already turns off native validation (CODING_STANDARDS.md, Signal forms).',
+        },
+      ],
+    },
   },
 ]);

@@ -39,7 +39,8 @@ No Firebase project or credentials are needed: development runs against the `dem
 | `npm run test:integration` | Integration tests (`*.integration.spec.ts`), including the security-rules tests, inside the emulators. |
 | `npm run lint` / `npm run format` | ESLint / Prettier. CI also runs `npm run format:check`. |
 | `npm run build` | Production build into `dist/browser/`. |
-| `npm run check` | Lint, format check, component tests and build, as CI runs them. |
+| `npm run check` | Lint, lint-rule tests, format check, component tests and build, as CI runs them. |
+| `npm run test:lint` | Tests in `lint-rules/` that prove lint rejects what the import rules and `CODING_STANDARDS.md` forbid. |
 | `npm run deps:graph` | Lists which Sheriff module imports which, from production code and specs. |
 | `npm run icons` | Renders the app icons from `scripts/icons/` (see [App icons](#app-icons)). |
 
@@ -205,6 +206,7 @@ The tickets were then implemented in order with `/implement`, test-first with [`
 | `docs/agents/testing.md` | How component, integration and security-rules tests are written. |
 | `docs/features.md` | How to add or remove a Feature, where Features live, and why a Feature's Firestore code stays behind its lazy route. |
 | `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. |
+| `CODING_STANDARDS.md` | The code style the reviewer checks; `npm run lint` enforces its mechanical rules. |
 | `docs/agents/issue-tracker.md` | Issues are local markdown files under `.scratch/<spec-slug>/`. |
 | `docs/agents/triage-labels.md` | The triage labels, stored on each issue's `Status:` line. |
 | `docs/agents/domain.md` | Where agents find the glossary and ADRs, and how to use them. |
