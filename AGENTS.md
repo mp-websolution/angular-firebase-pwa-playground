@@ -16,7 +16,7 @@ Issues and specs are local markdown files under `.scratch/<spec-slug>/`. See `do
 
 ### Triage labels
 
-The five default triage roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), recorded on each issue's `Status:` line. See `docs/agents/triage-labels.md`.
+The five default triage roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), recorded on each issue's `**Status:**` line, which holds a triage role or `resolved`. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 

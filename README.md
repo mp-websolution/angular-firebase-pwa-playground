@@ -208,7 +208,7 @@ The tickets were then implemented in order with `/implement`, test-first with [`
 | `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. |
 | `CODING_STANDARDS.md` | The code-style rules a reviewer checks, each mechanical one naming the lint rule that enforces it. |
 | `docs/agents/issue-tracker.md` | Issues are local markdown files under `.scratch/<spec-slug>/`. |
-| `docs/agents/triage-labels.md` | The triage labels, stored on each issue's `Status:` line. |
+| `docs/agents/triage-labels.md` | The triage labels. Each issue's `**Status:**` line holds a triage role or `resolved`. |
 | `docs/agents/domain.md` | Where agents find the glossary and ADRs, and how to use them. |
 | `.scratch/baseline/spec.md` | The Baseline spec: problem, user stories, implementation and testing decisions, out of scope. |
 | `.scratch/baseline/issues/01-…09-*.md` | Nine tickets in dependency order, each with acceptance criteria and its "Blocked by" tickets. |
