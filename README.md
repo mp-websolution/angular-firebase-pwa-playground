@@ -39,6 +39,8 @@ No Firebase project or credentials are needed: development runs against the `dem
 | `npm run test:integration` | Integration tests (`*.integration.spec.ts`), including the security-rules tests, inside the emulators. |
 | `npm run lint` / `npm run format` | ESLint / Prettier. CI also runs `npm run format:check`. |
 | `npm run build` | Production build into `dist/browser/`. |
+| `npm run check` | Lint, format check, component tests and build, as CI runs them. |
+| `npm run deps:graph` | Lists which Sheriff module imports which, from production code and specs. |
 | `npm run icons` | Renders the app icons from `scripts/icons/` (see [App icons](#app-icons)). |
 
 After `npm start`, sign in as the seeded demo user `demo@example.com` with password `demo-password` (see `scripts/seed/01-demo-user.mjs`; its profile comes from `02-demo-profile.mjs`), create an account, or use "Sign in with Google": the Auth emulator opens a popup where you pick or add a fake Google account.
@@ -58,7 +60,7 @@ Production builds need the production project's web config in `src/environments/
 3. Its delimited section in `firestore.rules` (and `storage.rules` if needed).
 4. Its seeder, e.g. `scripts/seed/feature-notes.mjs`.
 
-**Add** one by copying those four from the notes Feature and renaming. **Remove** one by deleting them, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
+**Add** one by copying those four from the notes Feature and renaming. **Remove** one by deleting them, then run `npm run check` and `npm run test:integration`.
 
 ## App icons
 
@@ -175,7 +177,7 @@ Major upgrades of Angular, its tooling and TypeScript don't come from Dependabot
 npx ng update @angular/core @angular/cli angular-eslint
 ```
 
-Then run the checks locally (`npm run lint`, `npm test`, `npm run test:integration`, `npm run build`) and open a PR.
+Then run the checks locally (`npm run check`, `npm run test:integration`) and open a PR.
 
 ## How this repo was planned
 

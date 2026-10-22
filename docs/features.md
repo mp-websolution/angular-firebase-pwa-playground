@@ -49,7 +49,7 @@ The Firestore SDK is most of Firebase's weight, so it loads on first use, never 
 3. Delete its section in `firestore.rules` (and `storage.rules`).
 4. Delete its `scripts/seed/feature-<name>.mjs`.
 5. Drop its link from home's Features navigation test in `src/app/home/internal/home.spec.ts`.
-6. Run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
+6. Run `npm run check` and `npm run test:integration`.
 7. Removing the notes Feature? Point the examples in `README.md` and `docs/agents/testing.md` at another Feature, or drop them.
 
 Data already stored in a deployed project stays there; with the rules section gone, nobody can read or write it.
