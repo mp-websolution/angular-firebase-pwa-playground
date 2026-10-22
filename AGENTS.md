@@ -27,3 +27,7 @@ Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/age
 ### Branches and pull requests
 
 Implement each ticket on its own branch off `main`, named `<spec-slug>/<NN>-<short-slug>` after the ticket file (e.g. `baseline/03-sign-in` for `.scratch/baseline/issues/03-sign-in-email-and-google.md`). The work reaches `main` only through a pull request, even when a skill says to commit to the current branch. PR #2 is the model for the description.
+
+### Checks
+
+Run `npm run check` before calling a change ready: CI runs the same command. To map module imports, run `npm run deps:graph`: it prints Sheriff's dependency graph as JSON.
