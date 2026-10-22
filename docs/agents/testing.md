@@ -21,7 +21,7 @@ What every service built on `injectLiveData()` shares (live updates, `waitingToS
 
 ## Lint tests
 
-`lint-rules/*.test.mjs` (`npm run test:lint`, part of `npm run check`) prove that lint rejects what it should. Each case lints a snippet with the repo's `eslint.config.js` through `ruleIdsFor(code, filePath)` from `lint-rules/lint-snippet.mjs`, at a real path under `src/`, and asserts on the rule ID, not the message.
+`lint-rules/*.test.mjs` (`npm run test:lint`, part of `npm run check`) prove that lint rejects what it should. Each case lints a snippet with the repo's `eslint.config.js` through `rejects(code, filePath, rule)` or `accepts(code, filePath, rule)` from `lint-rules/lint-snippet.mjs`, at a real path under `src/`, and asserts on the rule ID, not the message.
 
 A new lint rule or Sheriff boundary gets a rejected and an accepted case there. Specs don't ask for throwaway violations (inserting an import, running lint, reverting): the case in this suite is the proof.
 

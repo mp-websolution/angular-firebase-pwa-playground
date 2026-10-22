@@ -1,6 +1,5 @@
-import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ruleIdsFor } from './lint-snippet.mjs';
+import { accepts, rejects } from './lint-snippet.mjs';
 
 const rule = 'local/no-comments-in-function-bodies';
 const filePath = 'src/app/browser/reload-page.ts';
@@ -11,7 +10,7 @@ test('rejects a comment inside a function body', async () => {
   location.reload();
 }
 `;
-  assert.ok((await ruleIdsFor(code, filePath)).includes(rule));
+  await rejects(code, filePath, rule);
 });
 
 test('accepts comments outside function bodies', async () => {
@@ -33,7 +32,7 @@ export class Reloader {
   }
 }
 `;
-  assert.ok(!(await ruleIdsFor(code, filePath)).includes(rule));
+  await accepts(code, filePath, rule);
 });
 
 for (const directive of [
@@ -49,6 +48,6 @@ for (const directive of [
   location.reload();
 }
 `;
-    assert.ok(!(await ruleIdsFor(code, filePath)).includes(rule));
+    await accepts(code, filePath, rule);
   });
 }
