@@ -14,7 +14,7 @@ interface LintCase {
   folder: string;
   isSpec?: boolean;
   source: string;
-  lintErrors: RuleId[];
+  expectedRuleIds: RuleId[];
 }
 
 const repoRoot = resolve(import.meta.dirname, '..');
@@ -22,6 +22,10 @@ const appFolder = join(repoRoot, 'src/app');
 // Letters only: Sheriff takes a Feature folder only if its name is lowercase letters and hyphens.
 const runId = Array.from({ length: 8 }, () => String.fromCharCode(97 + randomInt(26))).join('');
 const throwawayFeature = `features/lint-fixture-${runId}`;
+
+function importing(name: string, path: string): string {
+  return `import { ${name} } from '${path}';\nexport const fixture = ${name};\n`;
+}
 
 function componentWithInlineTemplate(lineCount: number): string {
   const lines = Array.from({ length: lineCount }, (_, index) => `    <p>Line ${index + 1}</p>`);
@@ -42,63 +46,63 @@ const cases: LintCase[] = [
   {
     name: 'ADR 0005: a Baseline module importing a Feature fails the dependency rule',
     folder: 'profile',
-    source: `import { notesRoutes } from '../features/notes/notes.routes';\nexport const fixture = notesRoutes;\n`,
-    lintErrors: ['@softarc/sheriff/dependency-rule'],
+    source: importing('notesRoutes', '../features/notes/notes.routes'),
+    expectedRuleIds: ['@softarc/sheriff/dependency-rule'],
   },
   {
     name: 'ADR 0005: a Feature importing another Feature fails the dependency rule',
     folder: throwawayFeature,
-    source: `import { notesRoutes } from '../notes/notes.routes';\nexport const fixture = notesRoutes;\n`,
-    lintErrors: ['@softarc/sheriff/dependency-rule'],
+    source: importing('notesRoutes', '../notes/notes.routes'),
+    expectedRuleIds: ['@softarc/sheriff/dependency-rule'],
   },
   {
     name: 'ADR 0005: production code importing the test helpers fails the dependency rule',
     folder: 'profile',
-    source: `import { FakeAuthSession } from '../testing/fake-auth-session';\nexport const fixture = FakeAuthSession;\n`,
-    lintErrors: ['@softarc/sheriff/dependency-rule'],
+    source: importing('FakeAuthSession', '../testing/fake-auth-session'),
+    expectedRuleIds: ['@softarc/sheriff/dependency-rule'],
   },
   {
     name: 'ADR 0005: a spec importing the test helpers passes',
     folder: 'profile',
     isSpec: true,
-    source: `import { FakeAuthSession } from '../testing/fake-auth-session';\nexport const fixture = FakeAuthSession;\n`,
-    lintErrors: [],
+    source: importing('FakeAuthSession', '../testing/fake-auth-session'),
+    expectedRuleIds: [],
   },
   {
     name: "ADR 0006: a module importing another module's internal file fails encapsulation",
     folder: 'profile',
-    source: `import { returnUrlQueryParams } from '../auth/internal/return-url';\nexport const fixture = returnUrlQueryParams;\n`,
-    lintErrors: ['@softarc/sheriff/encapsulation'],
+    source: importing('returnUrlQueryParams', '../auth/internal/return-url'),
+    expectedRuleIds: ['@softarc/sheriff/encapsulation'],
   },
   {
     name: "ADR 0007: the app routes' module importing a Baseline page fails encapsulation",
     folder: '.',
-    source: `import { SignIn } from './auth/internal/sign-in/sign-in';\nexport const fixture = SignIn;\n`,
-    lintErrors: ['@softarc/sheriff/encapsulation'],
+    source: importing('SignIn', './auth/internal/sign-in/sign-in'),
+    expectedRuleIds: ['@softarc/sheriff/encapsulation'],
   },
   {
     name: "ADR 0005: a Baseline module importing auth's public guard passes",
     folder: 'profile',
-    source: `import { signedInGuard } from '../auth/auth-guards';\nexport const fixture = signedInGuard;\n`,
-    lintErrors: [],
+    source: importing('signedInGuard', '../auth/auth-guards'),
+    expectedRuleIds: [],
   },
   {
     name: 'ADR 0005: a Feature importing a Baseline module passes',
     folder: throwawayFeature,
-    source: `import { ProfileData } from '../../profile/profile-data';\nexport const fixture = ProfileData;\n`,
-    lintErrors: [],
+    source: importing('ProfileData', '../../profile/profile-data'),
+    expectedRuleIds: [],
   },
   {
-    name: 'Component templates standard: an 11-line inline template fails the inline-declarations limit',
+    name: 'component-max-inline-declarations: an 11-line inline template fails',
     folder: 'profile',
     source: componentWithInlineTemplate(11),
-    lintErrors: ['@angular-eslint/component-max-inline-declarations'],
+    expectedRuleIds: ['@angular-eslint/component-max-inline-declarations'],
   },
   {
-    name: 'Component templates standard: a 10-line inline template passes',
+    name: 'component-max-inline-declarations: a 10-line inline template passes',
     folder: 'profile',
     source: componentWithInlineTemplate(10),
-    lintErrors: [],
+    expectedRuleIds: [],
   },
 ];
 
@@ -121,7 +125,7 @@ async function removeFixtures(): Promise<void> {
 }
 
 describe('lint rules', () => {
-  const ruleIdsByPath = new Map<string, (string | null)[]>();
+  const ruleIdsByPath = new Map<string, (RuleId | null)[]>();
 
   beforeAll(async () => {
     await writeFixtures();
@@ -129,7 +133,7 @@ describe('lint rules', () => {
     for (const { filePath, messages } of results) {
       ruleIdsByPath.set(
         filePath,
-        messages.map(({ ruleId }) => ruleId),
+        messages.map(({ ruleId }) => ruleId as RuleId | null),
       );
     }
   });
@@ -138,9 +142,9 @@ describe('lint rules', () => {
     await removeFixtures();
   });
 
-  for (const { name, path, lintErrors } of fixtures) {
+  for (const { name, path, expectedRuleIds } of fixtures) {
     it(name, () => {
-      expect(ruleIdsByPath.get(path)).toEqual(lintErrors);
+      expect(ruleIdsByPath.get(path)).toEqual(expectedRuleIds);
     });
   }
 });
