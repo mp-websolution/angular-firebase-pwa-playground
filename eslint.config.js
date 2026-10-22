@@ -32,6 +32,7 @@ module.exports = defineConfig([
           style: 'kebab-case',
         },
       ],
+      '@angular-eslint/component-max-inline-declarations': ['error', { template: 10 }],
     },
   },
   {
