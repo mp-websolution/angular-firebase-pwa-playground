@@ -6,4 +6,4 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** resolved

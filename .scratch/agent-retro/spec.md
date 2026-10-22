@@ -1,6 +1,6 @@
 # Spec: Agent environment fixes from the October retro
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Problem Statement
 
