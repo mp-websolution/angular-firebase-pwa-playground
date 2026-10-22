@@ -36,10 +36,11 @@ No Firebase project or credentials are needed: development runs against the `dem
 | `npm start` | Starts the Auth, Firestore and Storage emulators with the Emulator UI (http://localhost:4000), seeds them, then serves the app (http://localhost:4200). |
 | `npm run seed` | Runs every seeder in `scripts/seed/`. Only works inside the emulators; `npm start` calls it. |
 | `npm test` | Component tests. No emulators needed. |
+| `npm run test:lint` | Lint tests (`lint-tests/`): lint fixture files with the real ESLint config and check which rule fires, e.g. Sheriff's module boundaries (ADRs 0005–0007). No emulators needed. |
 | `npm run test:integration` | Integration tests (`*.integration.spec.ts`), including the security-rules tests, inside the emulators. |
 | `npm run lint` / `npm run format` | ESLint / Prettier. CI runs `npm run check` and `npm run test:integration`. |
 | `npm run build` | Production build into `dist/browser/`. |
-| `npm run check` | Every check that needs no emulator, in CI's order: lint, format check, component tests once, production build. Stops at the first failure. |
+| `npm run check` | Every check that needs no emulator, in CI's order: lint, lint tests, format check, component tests once, production build. Stops at the first failure. |
 | `npm run deps:graph` | Prints Sheriff's JSON export of the project: each file's module, tags and imports. |
 | `npm run icons` | Renders the app icons from `scripts/icons/` (see [App icons](#app-icons)). |
 
