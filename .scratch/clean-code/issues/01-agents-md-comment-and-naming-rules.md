@@ -14,7 +14,7 @@ Leave the existing `TODO human-review` note alone.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Section added to AGENTS.md, short and imperative, with one example each of the naming rule and of extracting a comment into a name
 - [x] `docs/agents/testing.md` points to it where it says how to name tests

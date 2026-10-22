@@ -1,6 +1,6 @@
 # Spec: Sheriff enforces the Baseline/Feature import rules
 
-Status: ready-for-agent
+**Status:** resolved
 
 ## Problem Statement
 

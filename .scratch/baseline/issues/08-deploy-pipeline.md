@@ -6,7 +6,7 @@
 
 **Blocked by:** 03 (Sign-in with email/password and Google), 06 (PWA shell and update prompt)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] The deploy workflow is triggered by a push to `main` and by `workflow_dispatch` with a required tag input that is validated against `vX.Y.Z` and checked out
 - [x] Deploy jobs run in the GitHub `production` environment and read all secrets from it (FTP server, username and password; Firebase service-account key; production project ID if not committed)

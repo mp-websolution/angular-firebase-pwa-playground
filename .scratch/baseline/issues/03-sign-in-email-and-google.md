@@ -6,7 +6,7 @@
 
 **Blocked by:** 02 (Firebase wiring, emulators and emulator CI job)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] An auth session service exposes the current user and an "auth resolved" state as signals, plus commands for email sign-up, email sign-in, Google popup sign-in and sign-out. No SDK types leak to components
 - [x] Sign-out goes through `signOutAndClearCache(auth, loadFirestore)` (then reloads the page), so the next person on the device cannot read the previous user's cached documents. The auth session service injects the `FIRESTORE` loader but never calls it at startup, so Firestore stays out of the initial load; sign-out loads it if needed

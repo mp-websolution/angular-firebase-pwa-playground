@@ -10,7 +10,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] No comments in function bodies in the Firebase wiring, the Live data module or their specs
 - [x] Public interfaces of `injectLiveData`, `LiveData`, providers and tokens unchanged

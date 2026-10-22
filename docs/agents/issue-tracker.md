@@ -7,7 +7,7 @@ Issues and specs for this repo live as markdown files in `.scratch/`.
 - One spec per directory: `.scratch/<spec-slug>/`
 - The spec is `.scratch/<spec-slug>/spec.md`
 - Implementation issues are one file per ticket at `.scratch/<spec-slug>/issues/<NN>-<slug>.md`, numbered from `01`, never a single combined tickets file
-- Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
+- State is recorded as a `**Status:** <value>` line on its own near the top of every spec and ticket. The value is one of the five triage roles in `triage-labels.md`, or `resolved`
 - Comments and conversation history append to the bottom of the file under a `## Comments` heading
 
 ## When a skill says "publish to the issue tracker"
@@ -17,6 +17,14 @@ Create a new file under `.scratch/<spec-slug>/` (creating the directory if neede
 ## When a skill says "fetch the relevant ticket"
 
 Read the file at the referenced path. The user will normally pass the path or the issue number directly.
+
+## Resolve a spec ticket
+
+The pull request that implements a ticket also closes it, so the ticket reads `resolved` on `main` exactly when its work is there.
+
+- **Ticket:** on the integration branch (the branch the PR merges from), change the ticket's line to `**Status:** resolved` in a commit made before the PR is marked ready.
+- **Spec:** when every ticket of the spec is `resolved` or `wontfix`, change the spec's line to `**Status:** resolved` in the same commit.
+- **Pull request:** the PR carries the spec and ticket commits, as #43, #44 and #48 did. Record verification results (the commands run and their outcome) in the PR body; don't commit them.
 
 ## Wayfinding operations
 

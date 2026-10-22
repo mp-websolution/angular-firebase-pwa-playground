@@ -6,7 +6,7 @@
 
 **Blocked by:** 08 (Deploy pipeline)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Dependabot config: npm updates grouped as all `@angular/*` (plus Angular tooling) together, `firebase` and `firebase-tools` together, and the rest grouped. GitHub Actions updates are enabled. No auto-merge
 - [x] The README explains what the Playground is (Baseline and Prototypes, using `CONTEXT.md` terms) and links the ADRs

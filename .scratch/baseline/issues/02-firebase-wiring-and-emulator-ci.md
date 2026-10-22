@@ -6,7 +6,7 @@
 
 **Blocked by:** 01 (Walking skeleton with PR checks)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] The `firebase` package is the only Firebase dependency. There is no `@angular/fire`
 - [x] `firebase-tools` is a devDependency pinned to an exact version (no `^` or `~`). Every npm script and the CI job call this local copy (e.g. via `npx firebase`), never a global install

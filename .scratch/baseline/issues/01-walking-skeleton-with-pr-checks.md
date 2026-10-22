@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] A new Angular 22 app (standalone, zoneless, no SSR, npm) exists at the repo root, alongside the existing `CONTEXT.md`, `AGENTS.md` and `docs/`, which are kept unchanged
 - [x] Tailwind v4 is wired in with plain CSS. No SCSS anywhere, including component styles
