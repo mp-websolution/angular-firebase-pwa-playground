@@ -6,11 +6,11 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
-- [ ] `npm run format:check` passes on a checkout with worktrees under `.claude/`
-- [ ] `npm run check` runs lint, format check, unit tests (no watch) and build, and stops at the first failure
-- [ ] CI's lint-test-build job runs `npm run check` as one step; install and the integration job are unchanged
-- [ ] `npm run deps:graph` prints Sheriff's JSON export for the entry file in the Sheriff config
-- [ ] README scripts table, format-check line and Updates section updated
-- [ ] Verification (`npm run check` output, `deps:graph` sample, CI green) recorded in the PR, not committed
+- [x] `npm run format:check` passes on a checkout with worktrees under `.claude/`
+- [x] `npm run check` runs lint, format check, unit tests (no watch) and build, and stops at the first failure
+- [x] CI's lint-test-build job runs `npm run check` as one step; install and the integration job are unchanged
+- [x] `npm run deps:graph` prints Sheriff's JSON export for the entry file in the Sheriff config
+- [x] README scripts table, format-check line and Updates section updated
+- [x] Verification (`npm run check` output, `deps:graph` sample, CI green) recorded in the PR, not committed

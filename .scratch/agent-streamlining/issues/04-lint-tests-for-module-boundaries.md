@@ -6,10 +6,10 @@
 
 **Blocked by:** 02 (One check command and a module graph command)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
-- [ ] Each case asserts on the rule id (`@softarc/sheriff/dependency-rule`, `@softarc/sheriff/encapsulation`), not message text
-- [ ] Tests named after the rule they pin and its ADR (per `docs/agents/testing.md`)
-- [ ] No fixture file or folder remains after a run, including a run with a failing test
-- [ ] The suite finishes in a few seconds
-- [ ] `npm run check` runs `test:lint` right after lint; unit-test builder and `ng lint` don't pick the suite up
+- [x] Each case asserts on the rule id (`@softarc/sheriff/dependency-rule`, `@softarc/sheriff/encapsulation`), not message text
+- [x] Tests named after the rule they pin and its ADR (per `docs/agents/testing.md`)
+- [x] No fixture file or folder remains after a run, including a run with a failing test
+- [x] The suite finishes in a few seconds
+- [x] `npm run check` runs `test:lint` right after lint; unit-test builder and `ng lint` don't pick the suite up
