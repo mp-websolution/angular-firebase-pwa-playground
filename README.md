@@ -37,8 +37,10 @@ No Firebase project or credentials are needed: development runs against the `dem
 | `npm run seed` | Runs every seeder in `scripts/seed/`. Only works inside the emulators; `npm start` calls it. |
 | `npm test` | Component tests. No emulators needed. |
 | `npm run test:integration` | Integration tests (`*.integration.spec.ts`), including the security-rules tests, inside the emulators. |
-| `npm run lint` / `npm run format` | ESLint / Prettier. CI also runs `npm run format:check`. |
+| `npm run lint` / `npm run format` | ESLint / Prettier. CI runs `npm run check` and `npm run test:integration`. |
 | `npm run build` | Production build into `dist/browser/`. |
+| `npm run check` | Every check that needs no emulator, in CI's order: lint, format check, component tests once, production build. Stops at the first failure. |
+| `npm run deps:graph` | Prints Sheriff's JSON export of the project: each file's module, tags and imports. |
 | `npm run icons` | Renders the app icons from `scripts/icons/` (see [App icons](#app-icons)). |
 
 After `npm start`, sign in as the seeded demo user `demo@example.com` with password `demo-password` (see `scripts/seed/01-demo-user.mjs`; its profile comes from `02-demo-profile.mjs`), create an account, or use "Sign in with Google": the Auth emulator opens a popup where you pick or add a fake Google account.
@@ -175,7 +177,7 @@ Major upgrades of Angular, its tooling and TypeScript don't come from Dependabot
 npx ng update @angular/core @angular/cli angular-eslint
 ```
 
-Then run the checks locally (`npm run lint`, `npm test`, `npm run test:integration`, `npm run build`) and open a PR.
+Then run the checks locally (`npm run check` and `npm run test:integration`) and open a PR.
 
 ## How this repo was planned
 
