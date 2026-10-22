@@ -15,7 +15,7 @@ A retro of the last 10 agent sessions (16–21 Oct) found the agents paying for 
 
 ## Solution
 
-- Implement skills close work by setting the implemented ticket, and the spec once all its tickets are done, to **`ready-for-human`**. They stop there: the human decides how to proceed and when to merge.
+- Implement skills close work by setting the implemented ticket, and the spec once all its tickets are done, to a new status, **`agent-done`**. They stop there: the human decides how to proceed and when to merge.
 - Code style moves from `AGENTS.md` to a new root `CODING_STANDARDS.md`, which the reviewer reads. `AGENTS.md` keeps navigation pointers and the Workflow section. The 10-line template limit becomes a lint rule; the other rules stay written. The stale TODO goes.
 - Prettier ignores `.claude/`, so `npm run format:check` passes locally exactly as in CI.
 - **`npm run check`** runs every check that needs no emulator, in CI's order, and CI's lint-test-build job calls it.
@@ -24,12 +24,12 @@ A retro of the last 10 agent sessions (16–21 Oct) found the agents paying for 
 
 ## User Stories
 
-1. As the human maintainer, I want an implement skill to set each ticket it finished to `ready-for-human`, so that I can see what waits for my review.
-2. As the human maintainer, I want the spec set to `ready-for-human` once all its tickets are, so that a spec's status tells me whether its whole implementation waits for me.
+1. As the human maintainer, I want an implement skill to set each ticket it finished to `agent-done`, so that I can see what waits for my review.
+2. As the human maintainer, I want the spec set to `agent-done` once all its tickets are, so that a spec's status tells me whether its whole implementation waits for me.
 3. As the human maintainer, I want implement skills to stop at an open PR and never merge, so that I decide how to proceed and when to merge.
 4. As an agent running `/implement-spec`, I want the issue tracker doc to say how to close work, so that I don't grep old tickets and PRs to guess.
 5. As an agent scanning `.scratch/` for a frontier, I want finished tickets to carry a status other than `ready-for-agent`, so that I don't pick up done work.
-6. As an agent reading the triage labels, I want `ready-for-human`'s meaning to cover both "a human must implement this" and "an agent implemented this; a human decides next", so that the label isn't misread.
+6. As an agent reading the triage labels, I want `agent-done` listed beside the five triage roles with its meaning, so that I don't confuse it with `ready-for-human`, which keeps meaning "a human must implement this".
 7. As an implementing agent, I want `AGENTS.md` to hold only pointers and workflow, so that my context isn't spent on rules the reviewer enforces.
 8. As a reviewing agent, I want the code-style rules in `CODING_STANDARDS.md`, so that the code-review skill finds the standards where it looks.
 9. As an implementing agent, I want a pointer in `AGENTS.md` saying `CODING_STANDARDS.md` overrides the `angular-developer` skill where they disagree, so that I don't write a signal form the reviewer will reject.
@@ -57,11 +57,12 @@ A retro of the last 10 agent sessions (16–21 Oct) found the agents paying for 
 31. As a developer, I want the lint tests to leave no fixture behind, even when a test fails, so that a crashed run doesn't break the build or the next lint.
 32. As a spec writer, I want throwaway-violation checks gone from future specs' verification lists, so that a PR records the lint test run instead.
 33. As a developer, I want `npm run check` to run the lint tests, so that CI runs them on every PR.
+34. As a developer, I want the lint tests to finish in a few seconds, so that `npm run check` stays quick enough to run before every commit.
 
 ## Implementation Decisions
 
-- **Closing work (`docs/agents/issue-tracker.md`).** A new section, "When a skill says to close work": `/implement` and `/implement-spec` set each implemented ticket's status line to `ready-for-human`, and the spec's too once every ticket is; they commit that on the implementation branch, open the PR, and stop. The human decides what happens next and when to merge. What happens to statuses after a merge is the human's call; this spec defines nothing past `ready-for-human`.
-- **`ready-for-human` meaning (`docs/agents/triage-labels.md`).** The row's meaning widens to: needs a human next, either to implement it or to review an agent's implementation and decide when to merge. The label string stays the canonical one, so the skills' vocabulary is unchanged.
+- **Closing work (`docs/agents/issue-tracker.md`).** A new section, "When a skill says to close work": `/implement` and `/implement-spec` set each implemented ticket's status line to `agent-done`, and the spec's too once every ticket is; they commit that on the implementation branch, open the PR, and stop. The human decides what happens next and when to merge. What happens to statuses after a merge is the human's call; this spec defines nothing past `agent-done`.
+- **`agent-done` status (`docs/agents/triage-labels.md`).** A new row below the five triage roles: `agent-done`, meaning an agent implemented it; a human reviews, decides how to proceed and when to merge. It is a repo-local status, not one of the skills' canonical roles, so the table marks it as such. `ready-for-human` keeps its meaning unchanged.
 - **`CODING_STANDARDS.md`** at the repo root gets the current "Code style" section of `AGENTS.md` as a move, not a rewrite: Readability over DRY, Comments and naming, Module-private files, Signal forms. Two changes only: the `//TODO human-review this rule & exceptions` note is deleted, and the "Component templates" section is replaced by the lint rule below.
 - **`AGENTS.md`** keeps "Agent skills" and "Workflow". In place of "Code style" it gets a one-line pointer: code style lives in `CODING_STANDARDS.md`, which overrides the `angular-developer` skill where they disagree (signal forms, templates).
 - **Template rule.** angular-eslint's `component-max-inline-declarations`, with a 10-line template limit, is enabled in the TypeScript block of the ESLint config. That block already registers the angular-eslint plugin. Any existing violation moves to a `templateUrl` file. The comments-in-function-bodies and signal-forms rules stay written rules, with no lint check.
@@ -72,7 +73,8 @@ A retro of the last 10 agent sessions (16–21 Oct) found the agents paying for 
   - Vitest in Node (`vitest` is already a direct dev dependency), run by a `test:lint` script with its own small Vitest config.
   - The test files live outside `src/`, so neither the Angular unit-test builder nor `ng lint` picks them up.
   - They drive ESLint's Node API with the repo's real ESLint config, the same rules `npm run lint` applies.
-  - **Fixtures are real files.** Sheriff can't judge in-memory source: `lintText` with a virtual path fails with Sheriff's "internal error: FsPath" (probed). Each test writes a uniquely named fixture into the module folder it needs, lints that one file, and removes it in a `finally`/`afterEach`. A probe confirmed this works in about 2 s for three files. The Feature-to-Feature case also creates, and then removes, a throwaway Feature folder.
+  - **Fixtures are real files.** Sheriff can't judge in-memory source: `lintText` with a virtual path fails with Sheriff's "internal error: FsPath" (probed). Each test writes a uniquely named fixture into the module folder it needs, and the suite removes every fixture in `afterAll`, which runs even when a test fails. A probe confirmed this works in about 2 s for three files. The Feature-to-Feature case also creates, and then removes, a throwaway Feature folder.
+  - **Fast.** One ESLint instance for the whole suite. Every fixture is written up front, all of them are linted in a single `lintFiles` call, and each test asserts on its own file's result, so Sheriff builds its project graph once. Target: the suite finishes in a few seconds, well under the unit tests. It never shells out to `ng lint`.
   - Assertions check the rule id (`@softarc/sheriff/dependency-rule`, `@softarc/sheriff/encapsulation`, `@angular-eslint/component-max-inline-declarations`), not message wording.
 - **README.** The scripts table gains `npm run check` and `npm run deps:graph`. "CI also runs `npm run format:check`" and the Updates section's list of checks become `npm run check` plus `npm run test:integration`. The docs file table gains `CODING_STANDARDS.md`.
 
@@ -90,7 +92,7 @@ A retro of the last 10 agent sessions (16–21 Oct) found the agents paying for 
 - Lint checks for comments in function bodies or for the signal-forms shape (`(submit)`, `novalidate`).
 - Documenting the PR conventions agents rediscovered (spec commits ride the implementation PR, verification goes in the PR body), and normalizing the mixed `Status:` / `**Status:**` formats.
 - Back-filling statuses of tickets implemented before this spec.
-- A status after `ready-for-human`, or any post-merge step.
+- A status after `agent-done`, or any post-merge step.
 - Pruning the stale worktrees under `.claude/worktrees/`. It's a local clean-up, not a repo change.
 - A wrapper for the per-command git SSH setup, and the architecture skill's Mermaid render check (retro items 7 and 8).
 - A module-level summary of `deps:graph` output.
@@ -99,4 +101,4 @@ A retro of the last 10 agent sessions (16–21 Oct) found the agents paying for 
 
 - Source: the retro of 10 agent sessions in this checkout (16–21 Oct 2026), items 1–6.
 - Branch: `retro/agent-streamlining1`, off `main`, chosen by the human. One spec-level change, one PR.
-- Risk: other skills (e.g. triage) may read `ready-for-human` as "a human must implement this". The widened meaning in the triage-labels table is the mitigation; a separate label was not chosen.
+- `agent-done` instead of widening `ready-for-human`: other skills (e.g. triage) read `ready-for-human` as "a human must implement this", so that meaning stays.
