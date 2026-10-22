@@ -61,9 +61,12 @@ function createApp(): FirebaseApp {
     );
   }
   const app = initializeApp(options);
-  // Free the default app name when the injector goes away, so a new injector can initialise it again.
-  inject(DestroyRef).onDestroy(() => void deleteApp(app));
+  letNextInjectorInitialiseDefaultAppAgain(app);
   return app;
+}
+
+function letNextInjectorInitialiseDefaultAppAgain(app: FirebaseApp): void {
+  inject(DestroyRef).onDestroy(() => void deleteApp(app));
 }
 
 function createAuth(): Auth {
