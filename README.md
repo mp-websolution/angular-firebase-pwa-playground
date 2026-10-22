@@ -206,6 +206,7 @@ The tickets were then implemented in order with `/implement`, test-first with [`
 | `docs/agents/testing.md` | How component, integration and security-rules tests are written. |
 | `docs/features.md` | How to add or remove a Feature, where Features live, and why a Feature's Firestore code stays behind its lazy route. |
 | `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. |
+| `CODING_STANDARDS.md` | The code-style rules a reviewer checks, each mechanical one naming the lint rule that enforces it. |
 | `docs/agents/issue-tracker.md` | Issues are local markdown files under `.scratch/<spec-slug>/`. |
 | `docs/agents/triage-labels.md` | The triage labels, stored on each issue's `Status:` line. |
 | `docs/agents/domain.md` | Where agents find the glossary and ADRs, and how to use them. |
