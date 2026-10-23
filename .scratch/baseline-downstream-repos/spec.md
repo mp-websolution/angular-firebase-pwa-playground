@@ -1,6 +1,6 @@
 # Spec: Projects that keep merging Baseline releases
 
-Status: ready-for-agent
+Status: agent-done
 
 ## Problem Statement
 

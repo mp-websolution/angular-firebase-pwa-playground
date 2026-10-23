@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
 - [ ] Home's test names no Feature; it renders through `renderApp` and reads the Feature route list
 - [ ] It checks each link's title, href and order, and that no Features navigation shows when the list is empty

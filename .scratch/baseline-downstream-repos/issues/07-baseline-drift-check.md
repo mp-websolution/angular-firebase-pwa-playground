@@ -6,7 +6,7 @@
 
 **Blocked by:** 06 (Update script; its git fixtures)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
 - [ ] Script tests: passes when only Feature, Project-owned or shared files changed
 - [ ] Fails and names a changed, added or deleted Baseline file

@@ -6,7 +6,7 @@
 
 **Blocked by:** 03 (App identity in one place)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
 - [ ] `CONTEXT.md` defines the four new terms and the new Template meaning; "Fork" stays avoided
 - [ ] A new ADR covers the decision and the rejected alternatives (npm library, submodules, runtime federation, one-time copy)

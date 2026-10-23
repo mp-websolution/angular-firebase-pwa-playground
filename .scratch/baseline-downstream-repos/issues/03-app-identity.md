@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
 - [ ] Home's title and heading come from the app identity; no other Baseline file names the app
 - [ ] Home's component test checks the heading shows the app identity's name
