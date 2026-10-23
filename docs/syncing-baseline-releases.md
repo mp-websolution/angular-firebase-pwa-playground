@@ -33,7 +33,7 @@ How a Project merges a Baseline release from the Template (ADR 0008). The Projec
    git push origin baseline-vX.Y.Z
    ```
 
-   The tag tells CI which release the Project merged last, for the [Baseline drift check](#the-baseline-drift-check). Only repo admins can push it (the tag ruleset covers `baseline-v*`).
+   The tag tells CI which release the Project merged last, for the [Baseline drift check](#the-baseline-drift-check). **Only a repo admin can push it:** the Project's tag ruleset ([Baseline manual, Rulesets](baseline-manual.md#8-rulesets)) covers `baseline-v*`. If you aren't an admin, push the branch, open the PR and ask an admin to push the tag. The PR's drift check fails until the tag is on `origin`, so the admin pushes it before the PR can merge and re-runs the PR's checks if they ran without it.
 
 6. **Merge the PR with a merge commit**, never squash or rebase. Either would drop the release from `main`'s history, so the next merge would conflict on every file the release changed.
 
@@ -55,7 +55,7 @@ A Project changes only Feature, Project-owned and shared files (see the [upgrade
 npm run baseline:check-drift
 ```
 
-It finds the newest Baseline release reachable from `HEAD`, lists every file added, changed or deleted since that release, drops those matching the Feature, Project-owned and shared patterns in `scripts/file-groups.json`, and fails naming the rest. It fails too when no Baseline release is reachable, e.g. in a Project created without the Template's history, or before the tag of the merged release is pushed to `origin` (step 5 above).
+It finds the newest Baseline release reachable from `HEAD`, lists every file added, changed or deleted since that release, drops those matching the Feature, Project-owned and shared patterns in `scripts/file-groups.json`, and fails naming the rest. It fails too when no Baseline release is reachable, e.g. in a Project created without the Template's history. Before the tag of the merged release is on `origin` (step 5 above), it compares against the release merged before and fails naming every Baseline file the new release changed.
 
 The checks workflow (`.github/workflows/checks.yml`) runs it on every PR and deploy of a Project, with full history and tags, and skips it in the Template, whose repository name `scripts/file-groups.json` holds as `templateRepository`. It isn't part of `npm run check`, because the Template, which changes Baseline files all the time, would always fail it.
 

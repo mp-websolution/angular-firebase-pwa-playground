@@ -11,22 +11,24 @@ const upgradeNotesFile = 'docs/upgrade-notes.md';
 const release = process.argv[2];
 const branch = `merge-${release}`;
 
-const pushAndOpenPr =
+const pushAndOpenPrSteps =
   'push the branch and the tag and open a PR:\n' +
   `  git push -u origin ${branch}\n` +
-  `  git push origin ${release}`;
+  `  git push origin ${release}\n` +
+  "Only a repo admin can push the tag. If you aren't one, ask one to push it, then re-run the PR's checks: " +
+  'its Baseline drift check fails until the tag is on origin.';
 
 refuseUnlessReleaseTag(release);
 refuseWithoutUpstream();
 refuseWithUncommittedChanges();
 refuseWhenBranchExists(branch);
 const mergedRelease = newestReleaseReachableFromHead();
-fetchOnlyTheReleaseTag(release);
+fetchOnlyReleaseTag(release);
 printUpgradeNotes(mergedRelease, release);
 git('switch', '--quiet', '-c', branch);
 mergeOrStopOnConflicts(release);
 console.log(
-  `Merged ${release} into the new branch ${branch}. Do what the upgrade notes above say, then ${pushAndOpenPr}`,
+  `Merged ${release} into the new branch ${branch}. Do what the upgrade notes above say, then ${pushAndOpenPrSteps}`,
 );
 
 function refuseUnlessReleaseTag(tag) {
@@ -78,7 +80,7 @@ function mergeOrStopOnConflicts(tag) {
   }
   refuse(
     `The merge of ${tag} stopped on conflicts in:\n${indented(conflicts)}\n` +
-      `Resolve them, git add them and git commit. Then ${pushAndOpenPr}`,
+      `Resolve them, git add them and git commit. Then ${pushAndOpenPrSteps}`,
   );
 }
 
@@ -89,7 +91,7 @@ function indented(lines) {
     .join('\n');
 }
 
-function fetchOnlyTheReleaseTag(tag) {
+function fetchOnlyReleaseTag(tag) {
   if (git('fetch', '--quiet', '--no-tags', 'upstream', 'tag', tag).status !== 0) {
     refuse(`upstream has no Baseline release ${tag}.`);
   }
