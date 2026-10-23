@@ -4,7 +4,6 @@ import { appIdentity } from '../../../app-identity/app-identity';
 import { featureRoutes } from '../../features/features.routes';
 import { FakeAuthSession } from '../../testing/fake-auth-session';
 import { renderApp } from '../../testing/render-app';
-import { FEATURE_LINKS } from './feature-links';
 
 describe('Home', () => {
   it('shows who is signed in', async () => {
@@ -13,29 +12,17 @@ describe('Home', () => {
     expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
   });
 
-  it.skipIf(featureRoutes.length === 0)(
-    'links to every Feature by its title in the Features navigation, in route list order',
-    async () => {
-      await renderApp('/', { session: new FakeAuthSession({ signedInAs: 'ada@example.com' }) });
+  it('links to every Feature by its title in the Features navigation, in route list order', async () => {
+    await renderApp('/', { session: new FakeAuthSession({ signedInAs: 'ada@example.com' }) });
 
-      const features = await screen.findByRole('navigation', { name: 'Features' });
+    const features = await screen.findByRole('navigation', { name: 'Features' });
+    const links = within(features).getAllByRole('link');
 
-      expect(
-        within(features)
-          .getAllByRole('link')
-          .map((link) => ({ title: link.textContent?.trim(), href: link.getAttribute('href') })),
-      ).toEqual(featureRoutes.map(({ title, path }) => ({ title, href: `/${path}` })));
-    },
-  );
-
-  it('shows no Features navigation when there are no Features', async () => {
-    await renderApp('/', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      providers: [{ provide: FEATURE_LINKS, useValue: [] }],
+    expect(links).toHaveLength(featureRoutes.length);
+    featureRoutes.forEach(({ title, path }, i) => {
+      expect(links[i]).toHaveAccessibleName(title);
+      expect(links[i]).toHaveAttribute('href', `/${path}`);
     });
-
-    expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
-    expect(screen.queryByRole('navigation', { name: 'Features' })).not.toBeInTheDocument();
   });
 
   it('signs out and returns to sign-in', async () => {

@@ -1,5 +1,5 @@
 {
-  "about": "Which group each file belongs to (ADR 0008, docs/upgrade-notes.md). A file matching no pattern is a Baseline file; the drift check skips the ignored ones. Patterns are repo-relative globs for Node's path.posix.matchesGlob: '*' matches within one path segment, a final '/**' matches everything below a folder.",
+  "about": "Which group each file belongs to (ADR 0008, docs/upgrade-notes.md), and the Template's repository name. A file matching no pattern is a Baseline file; the drift check skips the ignored ones. Patterns are repo-relative globs for Node's path.posix.matchesGlob: '*' matches within one path segment, a final '/**' matches everything below a folder.",
   "templateRepository": "mp-websolution/angular-firebase-pwa-playground",
   "feature": [
     { "pattern": "src/app/features/features.routes.ts", "what": "The Feature route list" },

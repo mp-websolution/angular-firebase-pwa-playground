@@ -14,7 +14,7 @@ Every Feature lives in its own folder under `src/app/features/`, next to the Fea
 | Folder | `src/app/features/notes/`: its routes in `notes.routes.ts`, the only public TypeScript file, and its Firestore rules fragment `notes.firestore.rules`. Everything else is in `internal/`: pages, data-access service, model, tests and fake (`internal/testing/`) | Deleting the folder |
 | Seed data | `scripts/seed/feature-notes.mjs` | Deleting the file |
 
-Removing those 3 leaves the Baseline building and its tests green: home's test of the Features navigation in `src/app/home/internal/home.spec.ts` reads the Feature route list, so it needs no edit. Only docs mention a Feature elsewhere: `docs/baseline-manual.md` and `docs/agents/testing.md` use the notes Feature as their example.
+Removing those 3 leaves the Baseline building and its tests green while at least one Feature is left: home's test of the Features navigation in `src/app/home/internal/home.spec.ts` reads the Feature route list, so it needs no edit, but it fails when the list is empty. Only docs mention a Feature elsewhere: `docs/baseline-manual.md` and `docs/agents/testing.md` use the notes Feature as their example.
 
 ## Adding a Feature
 
@@ -49,6 +49,8 @@ The Firestore SDK is most of Firebase's weight, so it loads on first use, never 
 - Lint checks neither the lazy `import()` nor where values from `firebase/firestore` are imported: it treats static and dynamic imports alike and ignores third-party imports. Only review and the bundle budget catch a break.
 
 ## Removing a Feature
+
+Keep at least one Feature: home's test fails without one. A Project adds its first Feature before deleting the notes Feature, or in the same PR.
 
 1. Delete its entry in `src/app/features/features.routes.ts`.
 2. Delete its folder under `src/app/features/`, which deletes its rules fragments too.

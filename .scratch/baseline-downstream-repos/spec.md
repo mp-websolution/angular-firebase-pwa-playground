@@ -60,7 +60,7 @@ Two scripts support the routine:
 20. As the Template maintainer, I want the drift check skipped in the Template itself, so that the Template's own Baseline work never fails it.
 21. As a Project developer, I want to add a Feature without editing any Baseline file, so that adding Features never conflicts with Baseline releases.
 22. As a Project developer, I want home's Features test to follow the Feature route list, so that adding or removing a Feature needs no test edit in the Baseline.
-23. As a Project developer, I want home's test to check that the Features navigation is absent when there are no Features, so that a Project with no Features is covered too.
+23. As a Project developer, I want home's test to assume at least one Feature, so that home needs no seam just to be tested with an empty Feature route list.
 24. As a Feature author, I want my Firestore rules in a fragment file in my Feature's folder, so that deleting the folder also deletes the rules.
 25. As a Feature author, I want an optional Storage rules fragment in the same folder, so that a Feature that stores files follows the same pattern.
 26. As a Feature author, I want my fragment to use the Baseline's rules helpers, such as the owner check and the trimmed-text check, so that I don't copy them.
@@ -81,7 +81,7 @@ Two scripts support the routine:
 41. As an agent working in a Project, I want a Project-owned agents file linked from the Baseline's agent instructions, so that Project-specific instructions don't edit a Baseline file.
 42. As a Project developer, I want package changes from Features, Dependabot and Baseline releases all allowed, so that dependency work doesn't fail the drift check.
 43. As a Project developer, I want upgrade notes on resolving npm manifest and lockfile conflicts, so that I keep my Feature dependencies and still take the Baseline's versions.
-44. As a Project developer, I want to delete the notes reference Feature from my Project, so that it doesn't ship in my product.
+44. As a Project developer, I want to delete the notes reference Feature from my Project once my first Feature is in, so that it doesn't ship in my product.
 45. As a Project developer, I want upgrade notes on resolving a release that changes the notes Feature I deleted, so that I keep it deleted.
 46. As a Project developer, I want Baseline releases to contain only the Baseline and the notes reference Feature, so that Playground experiments never land in my Project.
 47. As the Template maintainer, I want to cut a Baseline release by tagging `main` as `baseline-vX.Y.Z`, so that releasing stays one step.
@@ -136,7 +136,7 @@ Two scripts support the routine:
 **Home's Features test**
 
 - The expected links and their hrefs come from the Feature route list, in its order.
-- When the list is empty, the test expects no Features navigation.
+- The test assumes at least one Feature and fails when the list is empty. The setup steps tell a Project to add its first Feature before deleting the notes Feature, or in the same PR.
 
 **Docs split**
 
@@ -199,5 +199,5 @@ Two scripts support the routine:
 
 - This contradicts the current Template definition in `CONTEXT.md` and the README line "Changes don't flow back". The new ADR supersedes both.
 - Cut the first Baseline release, `baseline-v0.1.0`, only after this spec is implemented, so that every Project starts from a release where Features need no Baseline edits.
-- Keeping Playground experiments off the Template's `main`, and so out of every Project's `main`, was confirmed. The notes Feature stays in the Template as the example; a Project deletes it once.
+- Keeping Playground experiments off the Template's `main`, and so out of every Project's `main`, was confirmed. The notes Feature stays in the Template as the example; a Project deletes it once, after or with its first Feature.
 - Firestore rules have no include mechanism, which is why the rules are assembled by a script rather than split natively.

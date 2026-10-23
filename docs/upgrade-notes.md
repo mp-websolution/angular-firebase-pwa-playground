@@ -4,7 +4,7 @@ What a Project must do when it merges a Baseline release (ADR 0008). This file i
 
 ## File groups
 
-Every file belongs to one of four groups. `scripts/file-groups.json` lists the patterns of the first three; every file that matches none of them is a Baseline file. The Baseline drift check reads the same list.
+Every file belongs to one of four groups. `scripts/baseline-config.json` lists the patterns of the first three; every file that matches none of them is a Baseline file. The Baseline drift check reads the same list.
 
 | Group | Files | Who changes them |
 |---|---|---|

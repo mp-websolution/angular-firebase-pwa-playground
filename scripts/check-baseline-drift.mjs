@@ -1,11 +1,11 @@
 import { matchesGlob } from 'node:path/posix';
-import { fileGroups, git, newestReleaseReachableFromHead } from './baseline-releases.mjs';
+import { baselineConfig, git, newestReleaseReachableFromHead } from './baseline-releases.mjs';
 
 const notBaselinePatterns = [
-  ...fileGroups.feature,
-  ...fileGroups.projectOwned,
-  ...fileGroups.shared,
-  ...fileGroups.ignored,
+  ...baselineConfig.feature,
+  ...baselineConfig.projectOwned,
+  ...baselineConfig.shared,
+  ...baselineConfig.ignored,
 ].map(({ pattern }) => pattern);
 const changeNames = { A: 'added', M: 'changed', T: 'changed', D: 'deleted' };
 

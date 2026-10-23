@@ -6,7 +6,7 @@ A Project is created by cloning the Template with its history, not with GitHub's
 
 Baseline releases use the `baseline-` prefix because `vX.Y.Z` tags are the deploy tags in every repo, the Template's and each Project's. Fetching the Template's `v*` tags into a Project would mix the Template's deploys with the Project's own, so a Project fetches only the one Baseline release it merges. The prefix also lets a Project push the release it merged to its own origin, where its CI finds the newest one reachable.
 
-To keep merges clean, every file belongs to one of four groups, listed in `scripts/file-groups.json`: Feature files and Project-owned files belong to the Project, the npm manifest and lockfile are shared, and everything else is Baseline. A Project that changes a Baseline file has Baseline drift, which its CI reports before the next merge turns it into a conflict.
+To keep merges clean, every file belongs to one of four groups, listed in `scripts/baseline-config.json`: Feature files and Project-owned files belong to the Project, the npm manifest and lockfile are shared, and everything else is Baseline. The same file lists the specs and tickets under `.scratch/`, which are in no group: they are scratch work, cleared now and then, so the drift check skips them. A Project that changes a Baseline file has Baseline drift, which its CI reports before the next merge turns it into a conflict.
 
 ## Considered options
 

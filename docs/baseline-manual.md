@@ -68,7 +68,7 @@ Production builds need the production project's web config in `src/environments/
 2. Its folder, e.g. `src/app/features/notes/`, including its rules fragments, e.g. `notes.firestore.rules` (and `<name>.storage.rules` if needed). `npm run rules:assemble` inserts them into the Baseline's `firestore.rules` and `storage.rules`.
 3. Its seeder, e.g. `scripts/seed/feature-notes.mjs`.
 
-**Add** one by copying those 3 from the notes Feature and renaming. **Remove** one by deleting them, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
+**Add** one by copying those 3 from the notes Feature and renaming. **Remove** one by deleting them, keeping at least one Feature, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
 
 ## App icons
 
@@ -108,7 +108,7 @@ A Project is created by cloning the Template with its history and keeping the Te
 
    The Project's CI finds the Baseline release it last merged among the Project's own tags, so every merged release is pushed to `origin` too.
 4. Run `npm ci` and `npm start` to check that it works locally.
-5. Make it the Project's own, in Project-owned files only (the file groups are in the [upgrade notes](upgrade-notes.md#file-groups)): replace `README.md` with the Project's front page, set the app's name in `src/app-identity/app-identity.ts`, its colours in `public/manifest.webmanifest` and `src/index.html`, and its icons (see [App icons](#app-icons)). Delete the notes Feature (see [Removing a Feature](features.md#removing-a-feature)). The Project's own terms, decisions and agent instructions go in `docs/project/` (see [Docs](#docs)).
+5. Make it the Project's own, in Project-owned files only (the file groups are in the [upgrade notes](upgrade-notes.md#file-groups)): replace `README.md` with the Project's front page, set the app's name in `src/app-identity/app-identity.ts`, its colours in `public/manifest.webmanifest` and `src/index.html`, and its icons (see [App icons](#app-icons)). Add the Project's first Feature (see [Adding a Feature](features.md#adding-a-feature)) before deleting the notes Feature (see [Removing a Feature](features.md#removing-a-feature)), or in the same PR: home's test fails without a Feature. The Project's own terms, decisions and agent instructions go in `docs/project/` (see [Docs](#docs)).
 
 From then on, the Project merges each new Baseline release as described in [Syncing Baseline releases](syncing-baseline-releases.md).
 
@@ -244,7 +244,7 @@ Paths are from the repo root. Files under `docs/project/` and the README are Pro
 | `docs/adr/0004-testing-library-for-component-tests.md` | Why component tests use Testing Library and render the whole app through the router. |
 | `docs/adr/0008-projects-keep-merging-baseline-releases.md` | Why Projects are cloned with history and keep merging `baseline-vX.Y.Z` releases, and why an npm library, submodules, runtime federation and a one-time copy were rejected. |
 | `docs/upgrade-notes.md` | The four file groups, how Baseline releases are numbered and cut, and one entry per release saying what a Project must do. |
-| `scripts/file-groups.json` | The Feature, Project-owned and shared file patterns (everything else is Baseline), the `.scratch/` pattern the drift check ignores, and the Template's repository name. |
+| `scripts/baseline-config.json` | The Feature, Project-owned and shared file patterns (everything else is Baseline), the `.scratch/` pattern the drift check ignores, and the Template's repository name. |
 | `docs/agents/testing.md` | How component, integration and security-rules tests are written. |
 | `docs/features.md` | How to add or remove a Feature, where Features live, and why a Feature's Firestore code stays behind its lazy route. |
 | `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. Links to `docs/project/AGENTS.md`. |

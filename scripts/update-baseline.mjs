@@ -1,9 +1,9 @@
 import {
-  byVersion,
-  fileGroups,
+  baselineConfig,
   git,
   isReleaseTag,
   newestReleaseReachableFromHead,
+  sortReleaseTagsByVersionAsc,
 } from './baseline-releases.mjs';
 
 const upgradeNotesFile = 'docs/upgrade-notes.md';
@@ -43,7 +43,7 @@ function refuseWithoutUpstream() {
   if (git('remote', 'get-url', 'upstream').status !== 0) {
     refuse(
       'This repo has no "upstream" remote. Add the Template as one:\n' +
-        `  git remote add upstream https://github.com/${fileGroups.templateRepository}.git`,
+        `  git remote add upstream https://github.com/${baselineConfig.templateRepository}.git`,
     );
   }
 }
@@ -100,7 +100,9 @@ function fetchOnlyReleaseTag(tag) {
 function printUpgradeNotes(from, to) {
   const notes = git('show', `${to}:${upgradeNotesFile}`).stdout;
   const entries = releaseEntries(notes).filter(
-    ({ tag }) => byVersion(tag, to) <= 0 && (!from || byVersion(tag, from) > 0),
+    ({ tag }) =>
+      sortReleaseTagsByVersionAsc(tag, to) <= 0 &&
+      (!from || sortReleaseTagsByVersionAsc(tag, from) > 0),
   );
   console.log(
     from
