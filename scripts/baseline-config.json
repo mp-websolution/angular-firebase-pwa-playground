@@ -20,7 +20,8 @@
     { "pattern": "README.md", "what": "The README" },
     { "pattern": "docs/project/CONTEXT.md", "what": "The Project glossary" },
     { "pattern": "docs/project/adr/**", "what": "The Project ADR folder" },
-    { "pattern": "docs/project/AGENTS.md", "what": "The Project agents file" }
+    { "pattern": "docs/project/AGENTS.md", "what": "The Project agents file" },
+    { "pattern": ".github/dependabot.yml", "what": "The Dependabot config" }
   ],
   "shared": [
     { "pattern": "package.json", "what": "The npm manifest" },

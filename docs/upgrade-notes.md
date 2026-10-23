@@ -9,7 +9,7 @@ Every file belongs to one of four groups. `scripts/baseline-config.json` lists t
 | Group | Files | Who changes them |
 |---|---|---|
 | Feature files | Every Feature's folder (including its rules fragments), the Feature seeders, the Feature route list. | The Project. A Baseline release changes them only in the notes reference Feature. |
-| Project-owned files | The app identity, the production environment config, the web app manifest, the page head, the icon sources and rendered icons, the README, the Project glossary, the Project ADR folder and the Project agents file. | The Project. The Template ships a starting version and changes it only with an entry here. |
+| Project-owned files | The app identity, the production environment config, the web app manifest, the page head, the icon sources and rendered icons, the README, the Project glossary, the Project ADR folder, the Project agents file and the Dependabot config. | The Project. The Template ships a starting version and changes it only with an entry here. |
 | Shared files | The npm manifest and lockfile. | Both. An entry here says how to resolve conflicts. |
 | Baseline files | Everything else. | Only the Template. A Project that changes one has Baseline drift. |
 
@@ -61,6 +61,12 @@ Both sides change `package.json` and `package-lock.json`: the Baseline bumps its
 1. **Resolve `package.json` by hand.** Keep every dependency and script of both sides. Where both sides changed the same dependency, take the Baseline's version, unless the Project's is newer (a Dependabot update, or a version a Feature needs): then keep the newer one. Take the Baseline's version of the `engines` and `packageManager` fields.
 2. **Let npm resolve `package-lock.json`.** Don't edit its conflict markers. Once `package.json` has no markers left, run `npm install`: npm resolves the conflicts in the lockfile itself. If it can't, start from the release's lockfile with `git checkout --theirs package-lock.json` and run `npm install` again, which adds the Project's own dependencies back.
 3. `git add package.json package-lock.json`, then run `npm ci` and `npm run check` before committing the merge.
+
+### GitHub Actions updates
+
+Action bumps arrive with Baseline releases. The workflows in `.github/workflows/` are Baseline files, so only the Template's Dependabot bumps their actions; a Project's `.github/dependabot.yml` updates npm only (its `github-actions` entry is deleted in the [setup steps](baseline-manual.md#1-repository)). A Project gets the bumps when it merges the next release, and never edits the workflows to bump an action itself, which would be Baseline drift.
+
+If a release changes `.github/dependabot.yml`, keep the Project's version, without the `github-actions` entry, and carry over what the release changed in the `npm` entry.
 
 ### A release that changes the notes Feature you deleted
 

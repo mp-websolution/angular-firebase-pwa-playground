@@ -108,7 +108,7 @@ A Project is created by cloning the Template with its history and keeping the Te
 
    The Project's CI finds the Baseline release it last merged among the Project's own tags, so every merged release is pushed to `origin` too.
 4. Run `npm ci` and `npm start` to check that it works locally.
-5. Make it the Project's own, in Project-owned files only (the file groups are in the [upgrade notes](upgrade-notes.md#file-groups)): replace `README.md` with the Project's front page, set the app's name in `src/app-identity/app-identity.ts`, its colours in `public/manifest.webmanifest` and `src/index.html`, and its icons (see [App icons](#app-icons)). Add the Project's first Feature (see [Adding a Feature](features.md#adding-a-feature)) before deleting the notes Feature (see [Removing a Feature](features.md#removing-a-feature)), or in the same PR: home's test fails without a Feature. The Project's own terms, decisions and agent instructions go in `docs/project/` (see [Docs](#docs)).
+5. Make it the Project's own, in Project-owned files only (the file groups are in the [upgrade notes](upgrade-notes.md#file-groups)): replace `README.md` with the Project's front page, set the app's name in `src/app-identity/app-identity.ts`, its colours in `public/manifest.webmanifest` and `src/index.html`, and its icons (see [App icons](#app-icons)). Delete the `github-actions` entry from `.github/dependabot.yml`: the Template's copy adds it so the Template bumps the actions in its workflows, and a Project gets those bumps with Baseline releases (see [Updates](#updates)). Add the Project's first Feature (see [Adding a Feature](features.md#adding-a-feature)) before deleting the notes Feature (see [Removing a Feature](features.md#removing-a-feature)), or in the same PR: home's test fails without a Feature. The Project's own terms, decisions and agent instructions go in `docs/project/` (see [Docs](#docs)).
 
 From then on, the Project merges each new Baseline release as described in [Syncing Baseline releases](syncing-baseline-releases.md).
 
@@ -197,7 +197,9 @@ Dependabot (`.github/dependabot.yml`) checks weekly and opens grouped PRs:
 | `angular` | `@angular/*`, `@angular-devkit/*`, `@schematics/angular`, `angular-eslint`, `@angular-eslint/*`, `typescript` and `typescript-eslint`. |
 | `firebase` | `firebase`, `firebase-tools` and `@firebase/*`. |
 | `other` | Every other npm package. |
-| `github-actions` | The actions used in `.github/workflows/` (pinned by commit SHA). |
+| `github-actions` | The actions used in `.github/workflows/` (pinned by commit SHA). Template only. |
+
+A Project's Dependabot updates npm only. The workflows are Baseline files, so the Template's Dependabot bumps their actions and a Project gets the bumps when it merges the next Baseline release (see the [upgrade notes](upgrade-notes.md#github-actions-updates)).
 
 A new version is only proposed once it is a few days old (npm: 3 days for patches, 7 for minors, 14 for majors; actions: 7), so a hijacked release is usually pulled before it reaches a PR. Security updates are not delayed.
 
