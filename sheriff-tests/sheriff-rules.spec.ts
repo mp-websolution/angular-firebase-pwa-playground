@@ -71,6 +71,24 @@ const cases: LintCase[] = [
     source: importing('ProfileData', '../../profile/profile-data'),
     expectedRuleIds: [],
   },
+  {
+    name: 'App identity: home reading the app identity passes',
+    folder: 'home',
+    source: importing('appIdentity', '../../app-identity/app-identity'),
+    expectedRuleIds: [],
+  },
+  {
+    name: 'App identity: a Feature reading the app identity passes',
+    folder: throwawayFeature,
+    source: importing('appIdentity', '../../../app-identity/app-identity'),
+    expectedRuleIds: [],
+  },
+  {
+    name: 'App identity: the app identity importing a Baseline module fails the dependency rule',
+    folder: '../app-identity',
+    source: importing('signedInGuard', '../app/auth/auth-guards'),
+    expectedRuleIds: ['@softarc/sheriff/dependency-rule'],
+  },
 ];
 
 const fixtures = cases.map((lintCase, index) => {

@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthSession } from '../../auth/auth-session';
 import { messageOf } from '../../auth/auth-session-error';
+import { appIdentity } from '../../../app-identity/app-identity';
 import { featureRoutes } from '../../features/features.routes';
 
 @Component({
@@ -11,6 +12,7 @@ import { featureRoutes } from '../../features/features.routes';
 })
 export class Home {
   protected readonly session = inject(AuthSession);
+  protected readonly appIdentity = appIdentity;
   protected readonly featureRoutes = featureRoutes;
   readonly #router = inject(Router);
 

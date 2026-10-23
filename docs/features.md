@@ -14,7 +14,7 @@ Every Feature lives in its own folder under `src/app/features/`, next to the Fea
 | Folder | `src/app/features/notes/`: its routes in `notes.routes.ts`, the only public TypeScript file, and its Firestore rules fragment `notes.firestore.rules`. Everything else is in `internal/`: pages, data-access service, model, tests and fake (`internal/testing/`) | Deleting the folder |
 | Seed data | `scripts/seed/feature-notes.mjs` | Deleting the file |
 
-Removing those 3 leaves the Baseline building and its tests green, except home's test of the Features navigation in `src/app/home/internal/home.spec.ts`, which lists every Feature's link. Only docs mention a Feature elsewhere: `README.md` and `docs/agents/testing.md` use the notes Feature as their example.
+Removing those 3 leaves the Baseline building and its tests green: home's test of the Features navigation in `src/app/home/internal/home.spec.ts` reads the Feature route list, so it needs no edit. Only docs mention a Feature elsewhere: `README.md` and `docs/agents/testing.md` use the notes Feature as their example.
 
 ## Adding a Feature
 
@@ -28,7 +28,6 @@ Removing those 3 leaves the Baseline building and its tests green, except home's
 3. Store per-user data under `users/{uid}/<collection>`, and open it to its owner only in `<name>.firestore.rules` at the top of the Feature's folder (and `<name>.storage.rules` for files). See "Rules fragments" below.
 4. Add `scripts/seed/feature-<name>.mjs` for demo data.
 5. Write the tests (see `docs/agents/testing.md`):
-   - Add the new Feature's link to home's Features navigation test in `src/app/home/internal/home.spec.ts`.
    - Component tests render through `renderApp` and pass the fake with `providers: [{ provide: NotesData, useValue: new FakeNotesData(...) }]`. `renderApp` has no default for a Feature's service, so the Baseline's tests never depend on one.
    - Integration tests for the service covering its mapping, commands and ordering, and rules tests covering the owner allowed and other users and signed-out visitors denied. Sync, offline and sign-out behaviour belong to `injectLiveData()` and are tested there, not per Feature.
 
@@ -54,8 +53,7 @@ The Firestore SDK is most of Firebase's weight, so it loads on first use, never 
 1. Delete its entry in `src/app/features/features.routes.ts`.
 2. Delete its folder under `src/app/features/`, which deletes its rules fragments too.
 3. Delete its `scripts/seed/feature-<name>.mjs`.
-4. Drop its link from home's Features navigation test in `src/app/home/internal/home.spec.ts`.
-5. Run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
-6. Removing the notes Feature? Point the examples in `README.md` and `docs/agents/testing.md` at another Feature, or drop them.
+4. Run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
+5. Removing the notes Feature? Point the examples in `README.md` and `docs/agents/testing.md` at another Feature, or drop them.
 
 Data already stored in a deployed project stays there; with its rules fragment gone, nobody can read or write it.
