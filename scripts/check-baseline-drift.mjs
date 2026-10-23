@@ -5,6 +5,7 @@ const notBaselinePatterns = [
   ...fileGroups.feature,
   ...fileGroups.projectOwned,
   ...fileGroups.shared,
+  ...fileGroups.ignored,
 ].map(({ pattern }) => pattern);
 const changeNames = { A: 'added', M: 'changed', T: 'changed', D: 'deleted' };
 

@@ -244,7 +244,7 @@ Paths are from the repo root. Files under `docs/project/` and the README are Pro
 | `docs/adr/0004-testing-library-for-component-tests.md` | Why component tests use Testing Library and render the whole app through the router. |
 | `docs/adr/0008-projects-keep-merging-baseline-releases.md` | Why Projects are cloned with history and keep merging `baseline-vX.Y.Z` releases, and why an npm library, submodules, runtime federation and a one-time copy were rejected. |
 | `docs/upgrade-notes.md` | The four file groups, how Baseline releases are numbered and cut, and one entry per release saying what a Project must do. |
-| `scripts/file-groups.json` | The Feature, Project-owned and shared file patterns (everything else is Baseline) and the Template's repository name. |
+| `scripts/file-groups.json` | The Feature, Project-owned and shared file patterns (everything else is Baseline), the `.scratch/` pattern the drift check ignores, and the Template's repository name. |
 | `docs/agents/testing.md` | How component, integration and security-rules tests are written. |
 | `docs/features.md` | How to add or remove a Feature, where Features live, and why a Feature's Firestore code stays behind its lazy route. |
 | `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. Links to `docs/project/AGENTS.md`. |

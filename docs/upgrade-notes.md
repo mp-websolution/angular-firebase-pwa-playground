@@ -13,6 +13,8 @@ Every file belongs to one of four groups. `scripts/file-groups.json` lists the p
 | Shared files | The npm manifest and lockfile. | Both. An entry here says how to resolve conflicts. |
 | Baseline files | Everything else. | Only the Template. A Project that changes one has Baseline drift. |
 
+The list also names files in no group: the specs and tickets under `.scratch/`. They are scratch work, cleared now and then (e.g. before a Project's first Feature), so the drift check skips them.
+
 ## Versions
 
 Baseline releases are tags `baseline-vX.Y.Z` on the Template's `main`, numbered with [semantic versioning](https://semver.org):

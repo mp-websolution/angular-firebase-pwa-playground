@@ -63,6 +63,21 @@ describe('checking for Baseline drift (npm run baseline:check-drift)', () => {
     expect(stdout).toBe('No Baseline drift since baseline-v1.0.0.\n');
   });
 
+  it('ignores specs and tickets under .scratch', async () => {
+    const project = await fixtures.cloneProject(template, 'scratch', 'baseline-v1.0.0');
+    await fixtures.commit(
+      project,
+      { '.scratch/todo/spec.md': '# Spec: Todo\n' },
+      'Spec the todo Feature',
+    );
+
+    const { status, stdout, stderr } = fixtures.run(checkBaselineDrift, project);
+
+    expect(stderr).toBe('');
+    expect(status).toBe(0);
+    expect(stdout).toBe('No Baseline drift since baseline-v1.0.0.\n');
+  });
+
   it('fails naming each Baseline file added, changed or deleted since the release, and only those', async () => {
     const project = await fixtures.cloneProject(template, 'fails', 'baseline-v1.0.0');
     await fixtures.commit(

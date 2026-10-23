@@ -55,7 +55,7 @@ A Project changes only Feature, Project-owned and shared files (see the [upgrade
 npm run baseline:check-drift
 ```
 
-It finds the newest Baseline release reachable from `HEAD`, lists every file added, changed or deleted since that release, drops those matching the Feature, Project-owned and shared patterns in `scripts/file-groups.json`, and fails naming the rest. It fails too when no Baseline release is reachable, e.g. in a Project created without the Template's history. Before the tag of the merged release is on `origin` (step 5 above), it compares against the release merged before and fails naming every Baseline file the new release changed.
+It finds the newest Baseline release reachable from `HEAD`, lists every file added, changed or deleted since that release, drops those matching the Feature, Project-owned, shared and ignored (`.scratch/`) patterns in `scripts/file-groups.json`, and fails naming the rest. It fails too when no Baseline release is reachable, e.g. in a Project created without the Template's history. Before the tag of the merged release is on `origin` (step 5 above), it compares against the release merged before and fails naming every Baseline file the new release changed.
 
 The checks workflow (`.github/workflows/checks.yml`) runs it on every PR and deploy of a Project, with full history and tags, and skips it in the Template, whose repository name `scripts/file-groups.json` holds as `templateRepository`. It isn't part of `npm run check`, because the Template, which changes Baseline files all the time, would always fail it.
 
