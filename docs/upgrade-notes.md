@@ -1,6 +1,6 @@
 # Baseline upgrade notes
 
-What a Project must do when it merges a Baseline release (ADR 0008). This file is Baseline: only the Template changes it, and a Project reads it, never edits it.
+What a Project must do when it merges a Baseline release (ADR 0008). This file is Baseline: only the Template changes it, and a Project reads it, never edits it. How to merge a release is in [Syncing Baseline releases](syncing-baseline-releases.md); `npm run baseline:update` prints the entries a merge needs.
 
 ## File groups
 
@@ -32,7 +32,7 @@ A Baseline release contains the Baseline and the notes reference Feature only. P
 
 ## Entry format
 
-Each release gets one entry under [Releases](#releases), newest first. The update script reads the entries from that section only, so keep to this shape:
+Each release gets one entry under [Releases](#releases), newest first. The update script (`npm run baseline:update`) reads the entries from that section only, so keep to this shape:
 
 - The entry starts with a level-3 heading that is the tag alone, e.g. `### baseline-v1.2.0`, and runs to the next heading. It has no headings of its own.
 - A first paragraph says what changed in one or two sentences.
@@ -47,6 +47,27 @@ The web app manifest gets an `id`, so browsers keep an installed app when its st
 
 - In `public/manifest.webmanifest`, add `"id": "/"`.
 ```
+
+## Resolving conflicts that every release can bring
+
+These apply to any release, so the entries don't repeat them.
+
+### The npm manifest and lockfile
+
+Both sides change `package.json` and `package-lock.json`: the Baseline bumps its dependencies, and the Project adds its Features' dependencies and merges Dependabot's updates. Keep both:
+
+1. **Resolve `package.json` by hand.** Keep every dependency and script of both sides. Where both sides changed the same dependency, take the Baseline's version, unless the Project's is newer (a Dependabot update, or a version a Feature needs): then keep the newer one. Take the Baseline's version of the `engines` and `packageManager` fields.
+2. **Let npm resolve `package-lock.json`.** Don't edit its conflict markers. Once `package.json` has no markers left, run `npm install`: npm resolves the conflicts in the lockfile itself. If it can't, start from the release's lockfile with `git checkout --theirs package-lock.json` and run `npm install` again, which adds the Project's own dependencies back.
+3. `git add package.json package-lock.json`, then run `npm ci` and `npm run check` before committing the merge.
+
+### A release that changes the notes Feature you deleted
+
+A Project deletes the notes reference Feature once (`docs/features.md`, "What a Feature owns"). A release that changes it then conflicts with that deletion, or brings part of it back. Keep it deleted:
+
+1. **Modify/delete conflicts** (`deleted by us`) on files in `src/app/features/notes/` or on `scripts/seed/feature-notes.mjs`: delete them again with `git rm <file>`.
+2. **A conflict in the Feature route list** (`src/app/features/features.routes.ts`): keep the Project's list, without a `notes` entry.
+3. **Files that came back without a conflict:** a release that adds a file to the notes Feature brings it into the merge cleanly. Before committing (or in a commit after the merge), check that `src/app/features/notes/` and `scripts/seed/feature-notes.mjs` don't exist, and `git rm -r` what does.
+4. **Read the entry.** If the release changed the notes Feature to show a new way of building Features, its entry says what your own Features should change to match.
 
 ## Releases
 
