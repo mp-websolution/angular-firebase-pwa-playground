@@ -1,5 +1,6 @@
 import { screen, within } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
+import { appIdentity } from '../../../app-identity/app-identity';
 import { featureRoutes } from '../../features/features.routes';
 import { FakeAuthSession } from '../../testing/fake-auth-session';
 import { renderApp } from '../../testing/render-app';
@@ -57,5 +58,12 @@ describe('Home', () => {
       'Close the app in your other tabs, then sign out again.',
     );
     expect(screen.getByText('Signed in as ada@example.com')).toBeVisible();
+  });
+
+  it("is headed and titled with the app identity's name", async () => {
+    await renderApp('/', { session: new FakeAuthSession({ signedInAs: 'ada@example.com' }) });
+
+    expect(await screen.findByRole('heading', { level: 1, name: appIdentity.name })).toBeVisible();
+    expect(document.title).toBe(appIdentity.name);
   });
 });
