@@ -17,7 +17,7 @@ export const slowEmulatorTimeout = { timeout: 5_000 };
 /**
  * `beforeAll` for specs that read or write the app's Firestore data through the emulator, e.g.
  * with the rules disabled or to test them. Passes no rules: the emulator already runs
- * `firestore.rules`, the file that gets deployed. Finds the emulator through
+ * `assembled-rules/firestore.rules`, the file that gets deployed. Finds the emulator through
  * `FIRESTORE_EMULATOR_HOST`, which `emulators:exec` sets. Call `cleanup()` on the result in
  * `afterAll`.
  */
