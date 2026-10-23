@@ -11,6 +11,7 @@ export const config: SheriffConfig = {
   modules: {
     // A new Baseline folder needs an entry here and in the `feature` rule below.
     'src/environments': 'env',
+    'src/app-identity': 'app-identity',
     'src/app/firebase': 'baseline:firebase',
     'src/app/browser': 'baseline:browser',
     'src/app/auth': 'baseline:auth',
@@ -29,13 +30,14 @@ export const config: SheriffConfig = {
       ({ to, fromFilePath }) => to === 'feature-route-list' && isAppRoutes(fromFilePath),
     ],
     env: 'baseline:firebase',
+    'app-identity': noDependencies,
     'baseline:firebase': noDependencies,
     'baseline:browser': noDependencies,
     'baseline:auth': ['baseline:firebase', 'baseline:browser'],
     'baseline:live-data': ['baseline:auth', 'baseline:firebase'],
     'baseline:profile': ['baseline:auth', 'baseline:live-data', 'baseline:firebase'],
     'baseline:pwa': 'baseline:browser',
-    'baseline:home': ['baseline:auth', 'feature-route-list'],
+    'baseline:home': ['baseline:auth', 'feature-route-list', 'app-identity'],
     'feature-route-list': 'feature',
     // Not home: it imports the Feature route list, so Feature → home would close a cycle.
     feature: [
@@ -45,9 +47,11 @@ export const config: SheriffConfig = {
       'baseline:live-data',
       'baseline:profile',
       'baseline:pwa',
+      'app-identity',
     ],
     testing: ['root', 'env', 'baseline:*'],
     '*': ({ to, fromFilePath }) =>
-      isSpec(fromFilePath) && (to === 'testing' || to === 'env' || to.startsWith('baseline:')),
+      isSpec(fromFilePath) &&
+      (to === 'testing' || to === 'env' || to === 'app-identity' || to.startsWith('baseline:')),
   },
 };
