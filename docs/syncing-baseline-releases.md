@@ -33,7 +33,7 @@ How a Project merges a Baseline release from the Template (ADR 0008). The Projec
    git push origin baseline-vX.Y.Z
    ```
 
-   The tag tells CI which release the Project merged last. Only repo admins can push it (the tag ruleset covers `baseline-v*`).
+   The tag tells CI which release the Project merged last, for the [Baseline drift check](#the-baseline-drift-check). Only repo admins can push it (the tag ruleset covers `baseline-v*`).
 
 6. **Merge the PR with a merge commit**, never squash or rebase. Either would drop the release from `main`'s history, so the next merge would conflict on every file the release changed.
 
@@ -46,3 +46,17 @@ It stops before changing anything when:
 - the working tree has uncommitted changes. It lists them;
 - `upstream` has no such release;
 - the branch `merge-baseline-vX.Y.Z` exists already, e.g. from an earlier attempt. Finish the merge there, or delete the branch and run the script again.
+
+## The Baseline drift check
+
+A Project changes only Feature, Project-owned and shared files (see the [upgrade notes](upgrade-notes.md)). A change to a Baseline file is Baseline drift: the next merge of a release that touches the same file conflicts. The drift check catches it on the PR instead:
+
+```sh
+npm run baseline:check-drift
+```
+
+It finds the newest Baseline release reachable from `HEAD`, lists every file added, changed or deleted since that release, drops those matching the Feature, Project-owned and shared patterns in `scripts/file-groups.json`, and fails naming the rest. It fails too when no Baseline release is reachable, e.g. in a Project created without the Template's history, or before the tag of the merged release is pushed to `origin` (step 5 above).
+
+The checks workflow (`.github/workflows/checks.yml`) runs it on every PR and deploy of a Project, with full history and tags, and skips it in the Template, whose repository name `scripts/file-groups.json` holds as `templateRepository`. It isn't part of `npm run check`, because the Template, which changes Baseline files all the time, would always fail it.
+
+When it fails, revert the listed changes. If the Project needs one, make it in the Template, cut a Baseline release and merge that.

@@ -12,6 +12,7 @@
     "seed": "node scripts/seed.mjs",
     "rules:assemble": "node scripts/assemble-rules.mjs",
     "baseline:update": "node scripts/update-baseline.mjs",
+    "baseline:check-drift": "node scripts/check-baseline-drift.mjs",
     "icons": "node scripts/icons/generate.mjs",
     "lint": "ng lint",
     "format": "prettier --write .",

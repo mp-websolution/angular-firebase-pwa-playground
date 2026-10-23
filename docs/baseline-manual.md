@@ -44,11 +44,13 @@ No Firebase project or credentials are needed: development runs against the `dem
 | `npm run test:sheriff` | Sheriff tests (`sheriff-tests/`): lint fixture files with the real ESLint config and check that Sheriff's module boundaries (ADRs 0005–0007) hold. No emulators needed. |
 | `npm run test:scripts` | Script tests (`script-tests/`): run the repo's scripts against throwaway fixtures in `script-tests/.fixtures/`. No emulators needed. |
 | `npm run test:integration` | Assembles the rules, then runs the integration tests (`*.integration.spec.ts`), including the security-rules tests, inside the emulators. |
-| `npm run lint` / `npm run format` | ESLint / Prettier. CI runs `npm run check` and `npm run test:integration`. |
+| `npm run lint` / `npm run format` | ESLint / Prettier. CI runs `npm run check` and `npm run test:integration`, and in a Project also `npm run baseline:check-drift`. |
 | `npm run build` | Production build into `dist/browser/`. |
 | `npm run check` | Every check that needs no emulator, in CI's order: Sheriff tests, script tests, lint, format check, component tests once, production build. Stops at the first failure. |
 | `npm run deps:graph` | Prints Sheriff's JSON export of the project: each file's module, tags and imports. |
 | `npm run icons` | Renders the app icons from `scripts/icons/` (see [App icons](#app-icons)). |
+| `npm run baseline:update -- baseline-vX.Y.Z` | In a Project: merges that Baseline release on a new branch (see [Syncing Baseline releases](syncing-baseline-releases.md)). |
+| `npm run baseline:check-drift` | In a Project: fails naming each Baseline file changed since the newest Baseline release merged (see [the Baseline drift check](syncing-baseline-releases.md#the-baseline-drift-check)). CI runs it in Projects, not in the Template. Not part of `npm run check`. |
 
 After `npm start`, sign in as the seeded demo user `demo@example.com` with password `demo-password` (see `scripts/seed/01-demo-user.mjs`; its profile comes from `02-demo-profile.mjs`), create an account, or use "Sign in with Google": the Auth emulator opens a popup where you pick or add a fake Google account.
 
