@@ -17,11 +17,12 @@ export function sortReleaseTagsByVersionAsc(a, b) {
 }
 
 export function newestReleaseReachableFromHead() {
-  return git('tag', '--merged', 'HEAD', '--list', 'baseline-v*')
-    .stdout.split('\n')
-    .filter(isReleaseTag)
-    .sort(sortReleaseTagsByVersionAsc)
-    .at(-1);
+  const { status, stdout, stderr } = git('tag', '--merged', 'HEAD', '--list', 'baseline-v*');
+  if (status !== 0) {
+    console.error(`Could not list the Baseline releases reachable from HEAD.\n${stderr.trimEnd()}`);
+    process.exit(1);
+  }
+  return stdout.split('\n').filter(isReleaseTag).sort(sortReleaseTagsByVersionAsc).at(-1);
 }
 
 /** Runs git in the working directory; never throws, so callers check `status`. */

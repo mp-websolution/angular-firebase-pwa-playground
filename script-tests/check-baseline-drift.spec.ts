@@ -1,3 +1,4 @@
+import { rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { GitFixtures } from './git-fixtures';
@@ -122,6 +123,36 @@ describe('checking for Baseline drift (npm run baseline:check-drift)', () => {
       'Baseline drift since baseline-v1.1.0: these Baseline files differ from the release.\n' +
         '  changed  src/farewell.ts\n' +
         'Only the Template',
+    );
+  });
+
+  it("fails with git's error when the files changed since the release can't be listed", async () => {
+    const project = await fixtures.cloneProject(template, 'diff-fails', 'baseline-v1.0.0');
+    await fixtures.commit(project, { 'README.md': '# Todo\n' }, 'Name the Project');
+    const releaseTree = fixtures.git(project, 'rev-parse', 'baseline-v1.0.0^{tree}');
+    await rm(join(project, '.git/objects', releaseTree.slice(0, 2), releaseTree.slice(2)));
+
+    const { status, stdout, stderr } = fixtures.run(checkBaselineDrift, project);
+
+    expect(status).toBe(1);
+    expect(stdout).toBe('');
+    expect(stderr).toBe(
+      'Could not list the files changed since baseline-v1.0.0, so Baseline drift cannot be checked.\n' +
+        `fatal: unable to read tree ${releaseTree}\n`,
+    );
+  });
+
+  it("fails with git's error when the releases reachable from HEAD can't be listed", async () => {
+    const project = await fixtures.cloneProject(template, 'tags-fail', 'baseline-v1.0.0');
+    fixtures.git(project, 'checkout', '--quiet', '--orphan', 'unborn');
+
+    const { status, stdout, stderr } = fixtures.run(checkBaselineDrift, project);
+
+    expect(status).toBe(1);
+    expect(stdout).toBe('');
+    expect(stderr).toBe(
+      'Could not list the Baseline releases reachable from HEAD.\n' +
+        'fatal: malformed object name HEAD\n',
     );
   });
 

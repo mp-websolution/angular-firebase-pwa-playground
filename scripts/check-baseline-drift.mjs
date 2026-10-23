@@ -31,8 +31,15 @@ if (drift.length > 0) {
 console.log(`No Baseline drift since ${release}.`);
 
 function changedFilesSince(tag) {
-  return git('diff', '--name-status', '--no-renames', tag, 'HEAD')
-    .stdout.split('\n')
+  const { status, stdout, stderr } = git('diff', '--name-status', '--no-renames', tag, 'HEAD');
+  if (status !== 0) {
+    fail(
+      `Could not list the files changed since ${tag}, so Baseline drift cannot be checked.\n` +
+        stderr.trimEnd(),
+    );
+  }
+  return stdout
+    .split('\n')
     .filter(Boolean)
     .map((line) => {
       const [status, path] = line.split('\t');
