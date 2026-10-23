@@ -1,6 +1,6 @@
-# Angular Firebase PWA Playground
+# Baseline glossary
 
-A template repository for Angular PWAs backed by Firebase, used for trying out Angular and Firebase updates and ideas, and the source of every Project built on its Baseline.
+The domain terms of the Baseline context: a template repository for Angular PWAs backed by Firebase, used for trying out Angular and Firebase updates and ideas, and the source of every Project built on its Baseline. A Project's own terms are in `docs/project/CONTEXT.md` (both are listed in `CONTEXT-MAP.md`).
 
 ## Language
 

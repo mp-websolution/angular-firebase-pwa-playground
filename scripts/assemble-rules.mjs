@@ -7,13 +7,13 @@ const featureName = /^[a-z]+(-[a-z]+)*$/;
 const outputFolder = 'assembled-rules';
 
 const features = await featuresInNameOrder();
-const inputs = [];
+const rulesToAssemble = [];
 for (const service of services) {
   const source = await sourceWithOneMarkerOrRefuse(service);
-  inputs.push({ service, source, fragments: await fragmentsOrRefuse(features, service) });
+  rulesToAssemble.push({ service, source, fragments: await fragmentsOrRefuse(features, service) });
 }
 await mkdir(outputFolder, { recursive: true });
-for (const { service, source, fragments } of inputs) {
+for (const { service, source, fragments } of rulesToAssemble) {
   await writeFile(`${outputFolder}/${service}.rules`, withFragmentsAtMarker(source, fragments));
   const names = fragments.map(({ feature }) => feature);
   console.log(`Assembled ${outputFolder}/${service}.rules: Baseline + [${names.join(', ')}].`);

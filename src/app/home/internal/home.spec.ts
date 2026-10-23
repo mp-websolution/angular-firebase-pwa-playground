@@ -4,6 +4,7 @@ import { appIdentity } from '../../../app-identity/app-identity';
 import { featureRoutes } from '../../features/features.routes';
 import { FakeAuthSession } from '../../testing/fake-auth-session';
 import { renderApp } from '../../testing/render-app';
+import { FEATURE_LINKS } from './feature-links';
 
 describe('Home', () => {
   it('shows who is signed in', async () => {
@@ -28,12 +29,10 @@ describe('Home', () => {
   );
 
   it('shows no Features navigation when there are no Features', async () => {
-    const features = featureRoutes.splice(0);
-    onTestFinished(() => {
-      featureRoutes.push(...features);
+    await renderApp('/', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: FEATURE_LINKS, useValue: [] }],
     });
-
-    await renderApp('/', { session: new FakeAuthSession({ signedInAs: 'ada@example.com' }) });
 
     expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
     expect(screen.queryByRole('navigation', { name: 'Features' })).not.toBeInTheDocument();

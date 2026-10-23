@@ -28,7 +28,7 @@ A Baseline release contains the Baseline and the notes reference Feature only. P
 ## Cutting a release
 
 1. In the PR that finishes the release, add its entry under [Releases](#releases), newest first.
-2. Once it is merged, tag `main` as `baseline-vX.Y.Z` and push the tag. Only repo admins can (see the tag ruleset in the README's setup steps).
+2. Once it is merged, tag `main` as `baseline-vX.Y.Z` and push the tag. Only repo admins can (see the tag ruleset in the [Baseline manual's setup steps](baseline-manual.md#8-rulesets)).
 
 ## Entry format
 

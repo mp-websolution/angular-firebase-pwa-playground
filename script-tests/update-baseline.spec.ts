@@ -5,7 +5,7 @@ import { GitFixtures } from './git-fixtures';
 const updateBaseline = resolve(import.meta.dirname, '../scripts/update-baseline.mjs');
 const fixtures = new GitFixtures(join(import.meta.dirname, '.fixtures/update-baseline'));
 
-const entries = {
+const upgradeNotesEntries = {
   'baseline-v1.0.0':
     '### baseline-v1.0.0\n\nThe first Baseline release.\n\n**Project action:** None.\n',
   'baseline-v1.1.0':
@@ -14,13 +14,13 @@ const entries = {
     '### baseline-v2.0.0\n\nThe greeting says goodbye.\n\n**Project action:**\n\n- Say goodbye in `README.md`.\n',
 };
 
-function upgradeNotes(...releases: (keyof typeof entries)[]): string {
+function upgradeNotes(...releases: (keyof typeof upgradeNotesEntries)[]): string {
   return [
     '# Baseline upgrade notes',
     '## Entry format',
     '### baseline-v1.1.0\n\nA format example, never printed.\n',
     '## Releases',
-    ...releases.reverse().map((release) => entries[release]),
+    ...releases.reverse().map((release) => upgradeNotesEntries[release]),
   ].join('\n\n');
 }
 
@@ -65,7 +65,7 @@ async function templateWithReleasesAndDeployTags(): Promise<string> {
   return repo;
 }
 
-async function projectWithAFeature(name: string): Promise<string> {
+async function projectWithFeature(name: string): Promise<string> {
   const project = await fixtures.cloneProject(template, name, 'baseline-v1.0.0');
   await fixtures.commit(
     project,
@@ -86,7 +86,7 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
   });
 
   it('merges the release with a merge commit on a new branch named after it', async () => {
-    const project = await projectWithAFeature('merges-on-new-branch');
+    const project = await projectWithFeature('merges-on-new-branch');
     const projectMain = fixtures.git(project, 'rev-parse', 'main');
 
     const { status, stderr } = fixtures.run(updateBaseline, project, 'baseline-v1.1.0');
@@ -106,7 +106,7 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
   });
 
   it('fetches only the asked release tag: no deploy tag and no other Baseline release', async () => {
-    const project = await projectWithAFeature('fetches-one-tag');
+    const project = await projectWithFeature('fetches-one-tag');
 
     expect(fixtures.run(updateBaseline, project, 'baseline-v2.0.0').status).toBe(0);
 
@@ -117,31 +117,31 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
   });
 
   it("prints the release's upgrade notes entries after the newest release already merged, newest first", async () => {
-    const project = await projectWithAFeature('prints-upgrade-notes');
+    const project = await projectWithFeature('prints-upgrade-notes');
 
     const { stdout } = fixtures.run(updateBaseline, project, 'baseline-v2.0.0');
 
     expect(stdout).toContain(
       'Upgrade notes from baseline-v1.0.0 to baseline-v2.0.0 (docs/upgrade-notes.md):\n\n' +
-        entries['baseline-v2.0.0'] +
+        upgradeNotesEntries['baseline-v2.0.0'] +
         '\n' +
-        entries['baseline-v1.1.0'],
+        upgradeNotesEntries['baseline-v1.1.0'],
     );
     expect(stdout).not.toContain('The first Baseline release.');
     expect(stdout).not.toContain('A format example');
   });
 
   it('prints every upgrade notes entry up to the release when no release is merged yet', async () => {
-    const project = await projectWithAFeature('prints-all-upgrade-notes');
+    const project = await projectWithFeature('prints-all-upgrade-notes');
     fixtures.git(project, 'tag', '--delete', 'baseline-v1.0.0');
 
     const { stdout } = fixtures.run(updateBaseline, project, 'baseline-v1.1.0');
 
     expect(stdout).toContain(
       'Upgrade notes up to baseline-v1.1.0 (docs/upgrade-notes.md), as no Baseline release is merged yet:\n\n' +
-        entries['baseline-v1.1.0'] +
+        upgradeNotesEntries['baseline-v1.1.0'] +
         '\n' +
-        entries['baseline-v1.0.0'],
+        upgradeNotesEntries['baseline-v1.0.0'],
     );
   });
 
@@ -150,7 +150,7 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
     ['a version without patch number', 'baseline-v1.1'],
     ['no tag at all', undefined],
   ])('refuses %s, asking for a Baseline release tag', async (_, argument) => {
-    const project = await projectWithAFeature(`refuses-${argument ?? 'no-tag'}`);
+    const project = await projectWithFeature(`refuses-${argument ?? 'no-tag'}`);
 
     const { status, stderr } = fixtures.run(
       updateBaseline,
@@ -166,7 +166,7 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
   });
 
   it('refuses without an upstream remote, saying how to add the Template as one', async () => {
-    const project = await projectWithAFeature('refuses-without-upstream');
+    const project = await projectWithFeature('refuses-without-upstream');
     fixtures.git(project, 'remote', 'remove', 'upstream');
 
     const { status, stderr } = fixtures.run(updateBaseline, project, 'baseline-v1.1.0');
@@ -180,7 +180,7 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
   });
 
   it('refuses with uncommitted changes, listing them', async () => {
-    const project = await projectWithAFeature('refuses-dirty-tree');
+    const project = await projectWithFeature('refuses-dirty-tree');
     await fixtures.write(project, { 'src/greeting.ts': "export const greeting = 'hey';\n" });
 
     const { status, stderr } = fixtures.run(updateBaseline, project, 'baseline-v1.1.0');
@@ -194,7 +194,7 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
   });
 
   it('refuses a release the upstream remote does not have', async () => {
-    const project = await projectWithAFeature('refuses-unknown-release');
+    const project = await projectWithFeature('refuses-unknown-release');
 
     const { status, stderr } = fixtures.run(updateBaseline, project, 'baseline-v3.0.0');
 
@@ -204,7 +204,7 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
   });
 
   it("refuses when the release's branch exists already", async () => {
-    const project = await projectWithAFeature('refuses-existing-branch');
+    const project = await projectWithFeature('refuses-existing-branch');
     fixtures.git(project, 'branch', 'merge-baseline-v1.1.0');
     const projectMain = fixtures.git(project, 'rev-parse', 'main');
 
@@ -219,7 +219,7 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
   });
 
   it('stops on conflicts, listing the conflicting files and leaving the merge to finish', async () => {
-    const project = await projectWithAFeature('stops-on-conflict');
+    const project = await projectWithFeature('stops-on-conflict');
     await fixtures.commit(
       project,
       { 'src/greeting.ts': "export const greeting = 'hey';\n" },
@@ -229,14 +229,15 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
     const { status, stdout, stderr } = fixtures.run(updateBaseline, project, 'baseline-v1.1.0');
 
     expect(status).toBe(1);
-    expect(stdout).toContain(entries['baseline-v1.1.0']);
+    expect(stdout).toContain(upgradeNotesEntries['baseline-v1.1.0']);
     expect(stderr).toContain(
       'The merge of baseline-v1.1.0 stopped on conflicts in:\n  src/greeting.ts\n',
     );
     expect(stderr).toContain(
       'Resolve them, git add them and git commit. Then push the branch and the tag and open a PR:\n' +
         '  git push -u origin merge-baseline-v1.1.0\n' +
-        '  git push origin baseline-v1.1.0',
+        '  git push origin baseline-v1.1.0\n' +
+        'Only a repo admin can push the tag.',
     );
     expect(fixtures.git(project, 'branch', '--show-current')).toBe('merge-baseline-v1.1.0');
     expect(fixtures.git(project, 'rev-parse', 'MERGE_HEAD^{commit}')).toBe(
@@ -244,15 +245,15 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
     );
   });
 
-  it('never pushes, and ends by saying to push the branch and the tag and open a PR', async () => {
-    const project = await projectWithAFeature('never-pushes');
+  it('never pushes, and ends by saying to push the branch and the tag and open a PR, and that only a repo admin can push the tag', async () => {
+    const project = await projectWithFeature('never-pushes');
     const originBefore = fixtures.git(project, 'ls-remote', 'origin');
 
     const { stdout } = fixtures.run(updateBaseline, project, 'baseline-v2.0.0');
 
     expect(fixtures.git(project, 'ls-remote', 'origin')).toBe(originBefore);
     expect(stdout).toMatch(
-      /Merged baseline-v2\.0\.0 into the new branch merge-baseline-v2\.0\.0\. Do what the upgrade notes above say, then push the branch and the tag and open a PR:\n {2}git push -u origin merge-baseline-v2\.0\.0\n {2}git push origin baseline-v2\.0\.0\n$/,
+      /Merged baseline-v2\.0\.0 into the new branch merge-baseline-v2\.0\.0\. Do what the upgrade notes above say, then push the branch and the tag and open a PR:\n {2}git push -u origin merge-baseline-v2\.0\.0\n {2}git push origin baseline-v2\.0\.0\nOnly a repo admin can push the tag. If you aren't one, ask one to push it, then re-run the PR's checks: its Baseline drift check fails until the tag is on origin\.\n$/,
     );
   });
 });

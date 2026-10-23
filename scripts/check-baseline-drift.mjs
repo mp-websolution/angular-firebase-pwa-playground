@@ -1,14 +1,11 @@
-import { spawnSync } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
 import { matchesGlob } from 'node:path/posix';
+import { fileGroups, git, newestReleaseReachableFromHead } from './baseline-releases.mjs';
 
-const fileGroups = JSON.parse(await readFile(new URL('file-groups.json', import.meta.url), 'utf8'));
 const notBaselinePatterns = [
   ...fileGroups.feature,
   ...fileGroups.projectOwned,
   ...fileGroups.shared,
 ].map(({ pattern }) => pattern);
-const releaseTag = /^baseline-v\d+\.\d+\.\d+$/;
 const changeNames = { A: 'added', M: 'changed', T: 'changed', D: 'deleted' };
 
 const release = newestReleaseReachableFromHead();
@@ -32,12 +29,6 @@ if (drift.length > 0) {
 }
 console.log(`No Baseline drift since ${release}.`);
 
-function newestReleaseReachableFromHead() {
-  return git('tag', '--merged', 'HEAD', '--sort=-version:refname', '--list', 'baseline-v*')
-    .stdout.split('\n')
-    .find((tag) => releaseTag.test(tag));
-}
-
 function changedFilesSince(tag) {
   return git('diff', '--name-status', '--no-renames', tag, 'HEAD')
     .stdout.split('\n')
@@ -55,9 +46,4 @@ function isBaselineFile(path) {
 function fail(message) {
   console.error(message);
   process.exit(1);
-}
-
-function git(...args) {
-  const { status, stdout, stderr } = spawnSync('git', args, { encoding: 'utf8' });
-  return { status, stdout: stdout.trimEnd(), stderr };
 }
