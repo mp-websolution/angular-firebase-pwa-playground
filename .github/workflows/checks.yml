@@ -43,9 +43,11 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
-      - name: Read the Template's repository name from the file groups
+      - name: Read the Template's repository name from the Baseline config
         id: template
         run: echo "repository=$(jq -r .templateRepository scripts/baseline-config.json)" >> "$GITHUB_OUTPUT"
+      # Skip the step, never the job: the ruleset requires this job, and a skipped job leaves the
+      # required check pending in the Template.
       - name: Fail on changed Baseline files, only in a Project, as the Template changes them by design
         if: github.repository != steps.template.outputs.repository
         run: npm run baseline:check-drift

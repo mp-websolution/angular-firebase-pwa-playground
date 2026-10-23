@@ -157,7 +157,7 @@ Settings → Rules → Rulesets. Nobody pushes to `main` directly, admins includ
 1. **Branches:** New branch ruleset, e.g. `protected branches`.
    - Enforcement status: **Active**. Bypass list: **empty**, so admins can't bypass it either.
    - Target branches: add **Include default branch** (`main`) and the pattern `release/*`.
-   - Rules: **Restrict deletions**, **Block force pushes**, **Require a pull request before merging** (0 required approvals, so a solo owner can merge), and **Require status checks to pass** with `checks / lint-test-build` and `checks / integration`. The checks are only offered once they have run in a PR, so open one first if the list is empty.
+   - Rules: **Restrict deletions**, **Block force pushes**, **Require a pull request before merging** (0 required approvals, so a solo owner can merge), and **Require status checks to pass** with `checks / lint-test-build`, `checks / integration` and `checks / baseline-drift`. The checks are only offered once they have run in a PR, so open one first if the list is empty.
 2. **Tags:** New tag ruleset, e.g. `release tags`.
    - Enforcement status: **Active**. Target tags: the patterns `v*` (deploy tags) and `baseline-v*` (Baseline releases, see `docs/upgrade-notes.md`).
    - Rules: **Restrict creations**, **Restrict updates** and **Restrict deletions**.

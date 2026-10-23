@@ -13,4 +13,5 @@
 - [ ] Compares against the newest reachable release after a second merge
 - [ ] Fails clearly with no reachable release
 - [ ] The checks workflow runs it in Projects only, with full history and tags
+- [ ] `checks / baseline-drift` is a required status check in the Baseline manual's ruleset step
 - [ ] The Baseline manual describes the check; `npm run check` passes

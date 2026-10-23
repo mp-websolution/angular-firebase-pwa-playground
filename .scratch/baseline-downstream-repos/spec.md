@@ -171,12 +171,13 @@ Two scripts support the routine:
 - An npm script finds the newest `baseline-v*` tag reachable from HEAD. It lists files added, changed or deleted between that tag and HEAD, drops those matching the Feature, Project-owned and shared patterns, and fails listing the rest.
 - It fails clearly when no Baseline release is reachable.
 - CI runs it as a step in the checks workflow, with full history and tags fetched, only when the repository is not the Template. The Template's repository name is held next to the file-group list.
+- The drift check's job is a required status check in the `main` ruleset. The Template skips the step, not the job, so the job still runs and passes there.
 - It is not part of `npm run check`, because the Template never passes it meaningfully.
 
 ## Testing Decisions
 
 - Good tests check external behaviour through the highest existing seam: what a user sees, what the rules allow, and what a script does to a git repo. They never check how the code does it. Follow `docs/agents/testing.md`.
-- **Home component test** (existing seam, rendered through `renderApp`): the Features navigation shows a link for each entry of the Feature route list, by title and with its href, in list order. With no entries, the navigation is absent. Prior art: home's current Features test.
+- **Home component test** (existing seam, rendered through `renderApp`): the Features navigation shows a link for each entry of the Feature route list, by title and with its href, in list order. It assumes at least one entry. Prior art: home's current Features test.
 - **Security rules integration tests** (existing seam): the notes, profile and avatar rules specs run unchanged against the assembled rules. That they stay green proves that the assembly inserts the notes fragment and that the Baseline helpers are in scope. Prior art: the existing rules integration specs.
 - **Script tests** (one new seam): a new Vitest suite beside the Sheriff tests creates throwaway git repos as fixtures. One plays the Template, with Baseline release tags and `v*` deploy tags; one plays a Project cloned from it. The suite runs the npm scripts as a developer would. It covers:
   - **Update script:** merges the asked release onto a new branch; fetches no `v*` tag and no other Baseline release tag; prints the upgrade notes between releases; refuses with a dirty tree, with no `upstream` remote, or with a non-release tag; stops and lists files on a conflict; never pushes.
