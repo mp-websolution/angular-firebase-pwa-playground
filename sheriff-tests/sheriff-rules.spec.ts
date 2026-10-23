@@ -1,5 +1,4 @@
 import { ESLint } from 'eslint';
-import { randomInt } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -16,9 +15,7 @@ interface LintCase {
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const appFolder = join(repoRoot, 'src/app');
-// Letters only: Sheriff takes a Feature folder only if its name is lowercase letters and hyphens.
-const runId = Array.from({ length: 8 }, () => String.fromCharCode(97 + randomInt(26))).join('');
-const throwawayFeature = `features/lint-fixture-${runId}`;
+const throwawayFeature = 'features/sheriff-fixture';
 
 function importing(name: string, path: string): string {
   return `import { ${name} } from '${path}';\nexport const fixture = ${name};\n`;
@@ -78,7 +75,7 @@ const cases: LintCase[] = [
 
 const fixtures = cases.map((lintCase, index) => {
   const extension = lintCase.isSpec ? '.spec.ts' : '.ts';
-  const path = join(appFolder, lintCase.folder, `lint-fixture-${runId}-${index}${extension}`);
+  const path = join(appFolder, lintCase.folder, `sheriff-fixture-${index}${extension}`);
   return { ...lintCase, path };
 });
 
@@ -98,6 +95,7 @@ describe('sheriff rules', () => {
   const ruleIdsByPath = new Map<string, (RuleId | null)[]>();
 
   beforeAll(async () => {
+    await removeFixtures();
     await writeFixtures();
     const results = await new ESLint({ cwd: repoRoot }).lintFiles(fixtures.map(({ path }) => path));
     for (const { filePath, messages } of results) {
