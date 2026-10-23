@@ -20,7 +20,7 @@ Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/age
 
 ## Code style
 
-Code style lives in `CODING_STANDARDS.md`, which overrides the `angular-developer` skill where they disagree (signal forms). Lint also caps inline templates at 10 lines; a longer one goes in a `templateUrl` file.
+Code style lives in `CODING_STANDARDS.md`, which overrides the `angular-developer` skill where they disagree (signal forms). Lint caps inline templates at angular-eslint's default of 3 lines; a longer one goes in a `templateUrl` file.
 
 ## Workflow
 
