@@ -2,50 +2,46 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
+This repo is multi-context: the Baseline and the Project each have a glossary and an ADR folder. In the Template the Project's are empty starters; in a Project they hold its own terms and decisions. The skills say `GLOSSARY.md` and `GLOSSARY-MAP.md`; here they are `CONTEXT.md` and `CONTEXT-MAP.md`.
+
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root, or
-- **`CONTEXT-MAP.md`** at the repo root if it exists: it points at one `CONTEXT.md` per context. Read each one relevant to the topic.
-- **`docs/adr/`**: read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
+- **`CONTEXT-MAP.md`** at the repo root: it points at both glossaries.
+- **`CONTEXT.md`** at the repo root: the Baseline glossary.
+- **`docs/project/CONTEXT.md`**: the Project glossary.
+- **`docs/adr/`** (Baseline ADRs) and **`docs/project/adr/`** (Project ADRs): read the ADRs in both that touch the area you're about to work in.
 
-If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
+If a Project file has no terms or ADRs yet, **proceed silently**. Don't flag their absence; don't suggest filling them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) adds to them when terms or decisions actually get resolved.
 
 ## File structure
-
-Single-context repo (most repos):
-
-```
-/
-├── CONTEXT.md
-├── docs/adr/
-│   ├── 0001-event-sourced-orders.md
-│   └── 0002-postgres-for-write-model.md
-└── src/
-```
-
-Multi-context repo (presence of `CONTEXT-MAP.md` at the root):
 
 ```
 /
 ├── CONTEXT-MAP.md
-├── docs/adr/                          ← system-wide decisions
+├── CONTEXT.md                 ← Baseline glossary
+├── docs/
+│   ├── adr/                   ← Baseline ADRs: 0001, 0002, …
+│   └── project/
+│       ├── CONTEXT.md         ← Project glossary
+│       └── adr/               ← Project ADRs: their own 0001, 0002, …
 └── src/
-    ├── ordering/
-    │   ├── CONTEXT.md
-    │   └── docs/adr/                  ← context-specific decisions
-    └── billing/
-        ├── CONTEXT.md
-        └── docs/adr/
 ```
+
+## Which context to write to
+
+- **In the Template**, new terms and decisions about the Baseline go in `CONTEXT.md` and `docs/adr/`.
+- **In a Project**, new terms and decisions go in `docs/project/CONTEXT.md` and `docs/project/adr/`, never in the Baseline's files: those are Baseline files, and changing them is Baseline drift (see `docs/upgrade-notes.md`). A term or decision the Baseline itself needs is made in the Template and merged down with a Baseline release.
+
+Project ADRs are numbered from `0001` on their own: scan only `docs/project/adr/` for the highest number. Where a bare number could mean either folder, say "Baseline ADR 0008" or "Project ADR 0001".
 
 ## Use the glossary's vocabulary
 
-When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to synonyms the glossary explicitly avoids.
+When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in either glossary. Don't drift to synonyms a glossary explicitly avoids. A Project term never redefines a Baseline term.
 
-If the concept you need isn't in the glossary yet, that's a signal: either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`).
+If the concept you need isn't in either glossary yet, that's a signal: either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`).
 
 ## Flag ADR conflicts
 
-If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
+If your output contradicts an existing ADR in either folder, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-0007 (event-sourced orders), but worth reopening because…_
+> _Contradicts Baseline ADR 0007 (Baseline page modules expose a routes file), but worth reopening because…_
