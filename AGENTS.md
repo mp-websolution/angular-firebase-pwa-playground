@@ -1,5 +1,7 @@
 # Agents
 
+This file is Baseline. A Project's own agent instructions, if it has any, are in `docs/project/AGENTS.md`: read that file too. It adds to this one and wins where they disagree.
+
 ## Agent skills
 
 ### Testing
@@ -16,7 +18,7 @@ The five default triage roles (`needs-triage`, `needs-info`, `ready-for-agent`, 
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Multi-context: `CONTEXT-MAP.md` points at the Baseline glossary (`CONTEXT.md`) and the Project glossary (`docs/project/CONTEXT.md`). ADRs are in `docs/adr/` (Baseline) and `docs/project/adr/` (Project, numbered on their own). See `docs/agents/domain.md`.
 
 ## Code style
 

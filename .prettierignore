@@ -9,5 +9,6 @@ package-lock.json
 # Planning docs, kept as written
 /README.md
 /CONTEXT.md
+/CONTEXT-MAP.md
 /AGENTS.md
 /docs
