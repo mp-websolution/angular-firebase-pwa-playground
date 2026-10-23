@@ -1,6 +1,6 @@
 # Syncing Baseline releases
 
-How a Project merges a Baseline release from the Template (ADR 0008). The Project needs the Template as its `upstream` remote and its history from the clone, as the [Baseline manual](baseline-manual.md)'s setup steps create them. What each release asks of a Project is in the [upgrade notes](upgrade-notes.md).
+How a Project merges a Baseline release from the Template (ADR 0008). The Project needs the Template as its `upstream` remote and its history from the clone, as the Baseline manual's [setup steps](baseline-manual.md#1-repository) create them. What each release asks of a Project is in the [upgrade notes](upgrade-notes.md).
 
 ## The routine
 
