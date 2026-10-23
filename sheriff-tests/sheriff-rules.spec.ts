@@ -4,10 +4,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-type RuleId =
-  | '@softarc/sheriff/dependency-rule'
-  | '@softarc/sheriff/encapsulation'
-  | '@angular-eslint/component-max-inline-declarations';
+type RuleId = '@softarc/sheriff/dependency-rule' | '@softarc/sheriff/encapsulation';
 
 interface LintCase {
   name: string;
@@ -25,21 +22,6 @@ const throwawayFeature = `features/lint-fixture-${runId}`;
 
 function importing(name: string, path: string): string {
   return `import { ${name} } from '${path}';\nexport const fixture = ${name};\n`;
-}
-
-function componentWithInlineTemplate(lineCount: number): string {
-  const lines = Array.from({ length: lineCount }, (_, index) => `    <p>Line ${index + 1}</p>`);
-  return [
-    `import { Component } from '@angular/core';`,
-    `@Component({`,
-    `  selector: 'app-lint-fixture',`,
-    `  template: \``,
-    ...lines,
-    `  \`,`,
-    `})`,
-    `export class LintFixture {}`,
-    ``,
-  ].join('\n');
 }
 
 const cases: LintCase[] = [
@@ -92,18 +74,6 @@ const cases: LintCase[] = [
     source: importing('ProfileData', '../../profile/profile-data'),
     expectedRuleIds: [],
   },
-  {
-    name: 'component-max-inline-declarations: an 11-line inline template fails',
-    folder: 'profile',
-    source: componentWithInlineTemplate(11),
-    expectedRuleIds: ['@angular-eslint/component-max-inline-declarations'],
-  },
-  {
-    name: 'component-max-inline-declarations: a 10-line inline template passes',
-    folder: 'profile',
-    source: componentWithInlineTemplate(10),
-    expectedRuleIds: [],
-  },
 ];
 
 const fixtures = cases.map((lintCase, index) => {
@@ -124,7 +94,7 @@ async function removeFixtures(): Promise<void> {
   await rm(join(appFolder, throwawayFeature), { recursive: true, force: true });
 }
 
-describe('lint rules', () => {
+describe('sheriff rules', () => {
   const ruleIdsByPath = new Map<string, (RuleId | null)[]>();
 
   beforeAll(async () => {

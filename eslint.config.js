@@ -32,11 +32,7 @@ module.exports = defineConfig([
           style: 'kebab-case',
         },
       ],
-      // Only the template limit is wanted; the rule otherwise caps styles at 3 and animations at 15 lines.
-      '@angular-eslint/component-max-inline-declarations': [
-        'error',
-        { template: 10, styles: Number.MAX_SAFE_INTEGER, animations: Number.MAX_SAFE_INTEGER },
-      ],
+      '@angular-eslint/component-max-inline-declarations': 'error',
     },
   },
   {

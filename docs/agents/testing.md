@@ -31,6 +31,6 @@ Each collection's rules get a `*-rules.integration.spec.ts` beside its data-acce
 Storage paths follow the same pattern, e.g. `src/app/profile/avatar-rules.integration.spec.ts`: `initializeTestEnvironment` with `storage: {}`, files at fresh paths per test, and ``context.storage(`gs://${storageBucket}`)`` so the bucket matches the app's. Run these files in Node (`// @vitest-environment node`): in jsdom, Storage's Node build sends jsdom's Blobs, which Node's `fetch` can't, so every upload fails before the rules see it. Integration tests that need TestBed stay in jsdom and swap in Node's `Blob` instead (see `profile-data.integration.spec.ts`).
 
 
-## Lint tests
+## Sheriff tests
 
-Prove a lint boundary (a Sheriff dependency or encapsulation rule, or another lint rule) with a row in `lint-tests/lint-rules.spec.ts` and run `npm run test:lint`. Don't verify it with a throwaway violating import.
+Prove a module boundary (a Sheriff dependency or encapsulation rule) with a row in `sheriff-tests/sheriff-rules.spec.ts` and run `npm run test:sheriff`. Don't verify it with a throwaway violating import.
