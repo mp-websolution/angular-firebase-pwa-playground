@@ -1,0 +1,29 @@
+{
+  "about": "Which group each file belongs to (ADR 0008, docs/upgrade-notes.md). A file matching no pattern is a Baseline file. Patterns are repo-relative globs for Node's path.posix.matchesGlob: '*' matches within one path segment, a final '/**' matches everything below a folder.",
+  "templateRepository": "mp-websolution/angular-firebase-pwa-playground",
+  "feature": [
+    { "pattern": "src/app/features/features.routes.ts", "what": "The Feature route list" },
+    {
+      "pattern": "src/app/features/*/**",
+      "what": "Every Feature's folder, including its rules fragments"
+    },
+    { "pattern": "scripts/seed/feature-*.mjs", "what": "Feature seeders" }
+  ],
+  "projectOwned": [
+    { "pattern": "src/app-identity/**", "what": "The app identity" },
+    { "pattern": "src/environments/environment.ts", "what": "The production environment config" },
+    { "pattern": "public/manifest.webmanifest", "what": "The web app manifest" },
+    { "pattern": "src/index.html", "what": "The page head" },
+    { "pattern": "scripts/icons/*.svg", "what": "Icon sources" },
+    { "pattern": "public/icons/**", "what": "Rendered icons" },
+    { "pattern": "public/favicon.ico", "what": "Rendered favicon" },
+    { "pattern": "README.md", "what": "The README" },
+    { "pattern": "docs/project/CONTEXT.md", "what": "The Project glossary" },
+    { "pattern": "docs/project/adr/**", "what": "The Project ADR folder" },
+    { "pattern": "docs/project/AGENTS.md", "what": "The Project agents file" }
+  ],
+  "shared": [
+    { "pattern": "package.json", "what": "The npm manifest" },
+    { "pattern": "package-lock.json", "what": "The npm lockfile" }
+  ]
+}

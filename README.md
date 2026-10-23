@@ -8,7 +8,7 @@ The repo is a **Playground** (terms from `CONTEXT.md`): the **Baseline** plus an
 
 - The **Baseline** is the minimal shell every future project inherits: sign-in (email/password and Google), the user profile with avatar, Firebase wiring, PWA behaviour (offline shell, update prompt), tests, CI and the deploy pipeline. It never depends on a Feature.
 - A **Feature** is a self-contained piece of the app beside the Baseline, in `src/app/features/`. The notes page (`/notes`) is the example. Deleting a Feature leaves the Baseline intact. In the Playground a Feature is usually thrown away once tried; in a project created from the Template the Features are the product.
-- As the **Template**, the repo is the starting point of a new project: "Use this template" on GitHub, then follow [Setup](#setup-from-zero-to-live). Changes don't flow back.
+- As the **Template**, the repo is the source of every **Project**: see [Setup](#setup-from-zero-to-live). Changes flow one way, from the Template to Projects through **Baseline releases** ([ADR 0008](docs/adr/0008-projects-keep-merging-baseline-releases.md), [upgrade notes](docs/upgrade-notes.md)).
 
 The non-obvious choices are recorded as ADRs:
 
@@ -128,9 +128,9 @@ Settings → Rules → Rulesets. Nobody pushes to `main` directly, admins includ
    - Target branches: add **Include default branch** (`main`) and the pattern `release/*`.
    - Rules: **Restrict deletions**, **Block force pushes**, **Require a pull request before merging** (0 required approvals, so a solo owner can merge), and **Require status checks to pass** with `checks / lint-test-build` and `checks / integration`. The checks are only offered once they have run in a PR, so open one first if the list is empty.
 2. **Tags:** New tag ruleset, e.g. `release tags`.
-   - Enforcement status: **Active**. Target tags: the pattern `v*`.
+   - Enforcement status: **Active**. Target tags: the patterns `v*` (deploy tags) and `baseline-v*` (Baseline releases, see `docs/upgrade-notes.md`).
    - Rules: **Restrict creations**, **Restrict updates** and **Restrict deletions**.
-   - Bypass list: **Repository admin** only. On a personal repo that is the owner, so only the owner can create release tags.
+   - Bypass list: **Repository admin** only. On a personal repo that is the owner, so only the owner can create, move or delete either kind of tag, including pushing a merged Baseline release to a Project.
 
 ### 9. First deploy
 
@@ -198,11 +198,14 @@ The tickets were then implemented in order with `/implement`, test-first with [`
 | File | Meaning |
 |---|---|
 | `README.md` | This file: what the Playground is, development, setup, deploy and updates. |
-| `CONTEXT.md` | Domain glossary (**Playground**, **Template**, **Baseline**, **Feature**). Terms only, no implementation details. |
+| `CONTEXT.md` | Domain glossary (**Playground**, **Template**, **Baseline**, **Feature**, **Project**, **Baseline release** and more). Terms only, no implementation details. |
 | `docs/adr/0001-native-firebase-sdk-instead-of-angularfire.md` | Why the native Firebase SDK is used instead of AngularFire: Angular updates shouldn't wait on a wrapper library. |
 | `docs/adr/0002-ftp-deploy-instead-of-firebase-hosting.md` | Why the app is deployed by FTP to existing webspace, and what that means (static build, `.htaccess`, Google sign-in by popup only). |
 | `docs/adr/0003-lazy-firestore-loader-token.md` | Why the `FIRESTORE` token gives a loader instead of an instance: the Firestore SDK stays out of the initial bundle. |
 | `docs/adr/0004-testing-library-for-component-tests.md` | Why component tests use Testing Library and render the whole app through the router. |
+| `docs/adr/0008-projects-keep-merging-baseline-releases.md` | Why Projects are cloned with history and keep merging `baseline-vX.Y.Z` releases, and why an npm library, submodules, runtime federation and a one-time copy were rejected. |
+| `docs/upgrade-notes.md` | The four file groups, how Baseline releases are numbered and cut, and one entry per release saying what a Project must do. |
+| `scripts/file-groups.json` | The Feature, Project-owned and shared file patterns (everything else is Baseline) and the Template's repository name. |
 | `docs/agents/testing.md` | How component, integration and security-rules tests are written. |
 | `docs/features.md` | How to add or remove a Feature, where Features live, and why a Feature's Firestore code stays behind its lazy route. |
 | `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. |
