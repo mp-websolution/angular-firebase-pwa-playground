@@ -199,5 +199,5 @@ Two scripts support the routine:
 
 - This contradicts the current Template definition in `CONTEXT.md` and the README line "Changes don't flow back". The new ADR supersedes both.
 - Cut the first Baseline release, `baseline-v0.1.0`, only after this spec is implemented, so that every Project starts from a release where Features need no Baseline edits.
-- Keeping Playground experiments off the Template's `main` changes how the Playground is used. If that proves too strict, the alternative is to let experimental Features into releases and have Projects delete them. The drift check doesn't care about Feature folders, so it allows either.
+- Keeping Playground experiments off the Template's `main`, and so out of every Project's `main`, was confirmed. The notes Feature stays in the Template as the example; a Project deletes it once.
 - Firestore rules have no include mechanism, which is why the rules are assembled by a script rather than split natively.
