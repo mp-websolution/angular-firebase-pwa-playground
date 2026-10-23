@@ -42,6 +42,12 @@ __screenshots__/
 # Firebase emulators
 *-debug.log
 
+# Assembled from the Baseline rules and each Feature's fragments by `npm run rules:assemble`
+/assembled-rules
+
+# Script tests' fixtures
+/script-tests/.fixtures
+
 # System files
 .DS_Store
 Thumbs.db
