@@ -29,6 +29,27 @@ jobs:
       - name: Run every check that needs no emulator, the same command agents run locally
         run: npm run check
 
+  baseline-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out with full history and tags, to find the Baseline release merged last
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Read the Template's repository name from the file groups
+        id: template
+        run: echo "repository=$(jq -r .templateRepository scripts/file-groups.json)" >> "$GITHUB_OUTPUT"
+      - name: Fail on changed Baseline files, only in a Project, as the Template changes them by design
+        if: github.repository != steps.template.outputs.repository
+        run: npm run baseline:check-drift
+
   integration:
     runs-on: ubuntu-latest
     timeout-minutes: 15
