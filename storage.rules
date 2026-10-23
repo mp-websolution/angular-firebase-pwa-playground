@@ -22,5 +22,7 @@ service firebase.storage {
           && image.contentType.matches('image/(png|jpeg|webp|gif)');
       }
     }
+
+    // Feature rules: inserted here by scripts/assemble-rules.mjs
   }
 }
