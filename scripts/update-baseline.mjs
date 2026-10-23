@@ -1,8 +1,12 @@
-import { spawnSync } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import {
+  byVersion,
+  fileGroups,
+  git,
+  isReleaseTag,
+  newestReleaseReachableFromHead,
+} from './baseline-releases.mjs';
 
 const upgradeNotesFile = 'docs/upgrade-notes.md';
-const releaseTag = /^baseline-v(\d+)\.(\d+)\.(\d+)$/;
 
 const release = process.argv[2];
 const branch = `merge-${release}`;
@@ -13,7 +17,7 @@ const pushAndOpenPr =
   `  git push origin ${release}`;
 
 refuseUnlessReleaseTag(release);
-await refuseWithoutUpstream();
+refuseWithoutUpstream();
 refuseWithUncommittedChanges();
 refuseWhenBranchExists(branch);
 const mergedRelease = newestReleaseReachableFromHead();
@@ -26,21 +30,18 @@ console.log(
 );
 
 function refuseUnlessReleaseTag(tag) {
-  if (!releaseTag.test(tag ?? '')) {
+  if (!isReleaseTag(tag)) {
     refuse(
       'Give a Baseline release tag of the form baseline-vX.Y.Z: npm run baseline:update -- baseline-v1.2.0',
     );
   }
 }
 
-async function refuseWithoutUpstream() {
+function refuseWithoutUpstream() {
   if (git('remote', 'get-url', 'upstream').status !== 0) {
-    const { templateRepository } = JSON.parse(
-      await readFile(new URL('file-groups.json', import.meta.url), 'utf8'),
-    );
     refuse(
       'This repo has no "upstream" remote. Add the Template as one:\n' +
-        `  git remote add upstream https://github.com/${templateRepository}.git`,
+        `  git remote add upstream https://github.com/${fileGroups.templateRepository}.git`,
     );
   }
 }
@@ -88,19 +89,6 @@ function indented(lines) {
     .join('\n');
 }
 
-function newestReleaseReachableFromHead() {
-  const tags = git('tag', '--merged', 'HEAD', '--list', 'baseline-v*').stdout.split('\n');
-  return tags
-    .filter((tag) => releaseTag.test(tag))
-    .sort(byVersion)
-    .at(-1);
-}
-
-function byVersion(a, b) {
-  const [aVersion, bVersion] = [a, b].map((tag) => tag.match(releaseTag).slice(1).map(Number));
-  return aVersion.map((part, index) => part - bVersion[index]).find((diff) => diff !== 0) ?? 0;
-}
-
 function fetchOnlyTheReleaseTag(tag) {
   if (git('fetch', '--quiet', '--no-tags', 'upstream', 'tag', tag).status !== 0) {
     refuse(`upstream has no Baseline release ${tag}.`);
@@ -127,7 +115,7 @@ function releaseEntries(notes) {
   const entries = [];
   for (const line of lines.slice(start, end === -1 ? undefined : end)) {
     const tag = line.match(/^### (\S+)\s*$/)?.[1];
-    if (tag && releaseTag.test(tag)) {
+    if (isReleaseTag(tag)) {
       entries.push({ tag, lines: [line] });
     } else {
       entries.at(-1)?.lines.push(line);
@@ -139,9 +127,4 @@ function releaseEntries(notes) {
 function refuse(message) {
   console.error(message);
   process.exit(1);
-}
-
-function git(...args) {
-  const { status, stdout, stderr } = spawnSync('git', args, { encoding: 'utf8' });
-  return { status, stdout: stdout.trimEnd(), stderr };
 }
