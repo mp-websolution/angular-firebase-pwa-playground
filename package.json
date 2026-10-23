@@ -6,7 +6,7 @@
     "start": "firebase emulators:exec --ui \"npm run seed && ng serve\"",
     "build": "ng build",
     "test": "ng test",
-    "test:sheriff": "vitest run --config vitest-sheriff.config.mts",
+    "test:sheriff": "vitest run sheriff-tests",
     "test:integration": "firebase emulators:exec --only auth,firestore,storage \"ng test --configuration=integration --watch=false\"",
     "seed": "node scripts/seed.mjs",
     "icons": "node scripts/icons/generate.mjs",
