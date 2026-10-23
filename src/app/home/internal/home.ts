@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthSession } from '../../auth/auth-session';
 import { messageOf } from '../../auth/auth-session-error';
 import { appIdentity } from '../../../app-identity/app-identity';
-import { featureRoutes } from '../../features/features.routes';
+import { FEATURE_LINKS } from './feature-links';
 
 @Component({
   selector: 'app-home',
@@ -13,7 +13,7 @@ import { featureRoutes } from '../../features/features.routes';
 export class Home {
   protected readonly session = inject(AuthSession);
   protected readonly appIdentity = appIdentity;
-  protected readonly featureRoutes = featureRoutes;
+  protected readonly featureLinks = inject(FEATURE_LINKS);
   readonly #router = inject(Router);
 
   protected readonly signingOut = signal(false);

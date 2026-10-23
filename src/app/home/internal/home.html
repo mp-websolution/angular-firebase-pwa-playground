@@ -14,9 +14,9 @@
       Sign out
     </button>
   </div>
-  @if (featureRoutes.length > 0) {
+  @if (featureLinks.length > 0) {
     <nav aria-label="Features" class="flex gap-4">
-      @for (feature of featureRoutes; track feature.path) {
+      @for (feature of featureLinks; track feature.path) {
         <a class="underline" [routerLink]="'/' + feature.path">{{ feature.title }}</a>
       }
     </nav>
