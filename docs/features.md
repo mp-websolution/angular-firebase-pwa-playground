@@ -15,7 +15,7 @@ Every Feature lives in its own folder under `src/app/features/`, next to the Fea
 | Rules section | The block between the `Feature: notes` markers in `firestore.rules` | Deleting the block |
 | Seed data | `scripts/seed/feature-notes.mjs` | Deleting the file |
 
-Removing those four leaves the Baseline building and its tests green, except home's test of the Features navigation in `src/app/home/internal/home.spec.ts`, which lists every Feature's link. Only docs mention a Feature elsewhere: `README.md` and `docs/agents/testing.md` use the notes Feature as their example.
+Removing those four leaves the Baseline building and its tests green: home's test of the Features navigation in `src/app/home/internal/home.spec.ts` reads the Feature route list, so it needs no edit. Only docs mention a Feature elsewhere: `README.md` and `docs/agents/testing.md` use the notes Feature as their example.
 
 ## Adding a Feature
 
@@ -29,7 +29,6 @@ Removing those four leaves the Baseline building and its tests green, except hom
 3. Store per-user data under `users/{uid}/<collection>`, and add a delimited section to `firestore.rules` (and `storage.rules` if needed) that opens it to its owner only.
 4. Add `scripts/seed/feature-<name>.mjs` for demo data.
 5. Write the tests (see `docs/agents/testing.md`):
-   - Add the new Feature's link to home's Features navigation test in `src/app/home/internal/home.spec.ts`.
    - Component tests render through `renderApp` and pass the fake with `providers: [{ provide: NotesData, useValue: new FakeNotesData(...) }]`. `renderApp` has no default for a Feature's service, so the Baseline's tests never depend on one.
    - Integration tests for the service covering its mapping, commands and ordering, and rules tests covering the owner allowed and other users and signed-out visitors denied. Sync, offline and sign-out behaviour belong to `injectLiveData()` and are tested there, not per Feature.
 
@@ -48,8 +47,7 @@ The Firestore SDK is most of Firebase's weight, so it loads on first use, never 
 2. Delete its folder under `src/app/features/`.
 3. Delete its section in `firestore.rules` (and `storage.rules`).
 4. Delete its `scripts/seed/feature-<name>.mjs`.
-5. Drop its link from home's Features navigation test in `src/app/home/internal/home.spec.ts`.
-6. Run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
-7. Removing the notes Feature? Point the examples in `README.md` and `docs/agents/testing.md` at another Feature, or drop them.
+5. Run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
+6. Removing the notes Feature? Point the examples in `README.md` and `docs/agents/testing.md` at another Feature, or drop them.
 
 Data already stored in a deployed project stays there; with the rules section gone, nobody can read or write it.
