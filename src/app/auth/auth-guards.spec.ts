@@ -1,15 +1,20 @@
 import { Component } from '@angular/core';
-import { Routes } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
+import { Router, Routes } from '@angular/router';
 import { screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { renderApp } from '../testing/render-app';
 import { signedInGuard } from './auth-guards';
 import { Credentials } from './credentials.model';
 import { FakeAuthSession } from '../testing/fake-auth-session';
+import { SIGN_IN_METHODS } from './sign-in-methods-token';
 import { standInStartPage } from '../testing/stand-in-start-page';
 
 @Component({ template: '<h1>Deep page</h1>' })
 class DeepPage {}
+
+@Component({ template: '<h1>Start page</h1>' })
+class StartPage {}
 
 @Component({ template: '<h1>Signed-in start page</h1>' })
 class SignedInStartPage {}
@@ -101,4 +106,14 @@ describe('auth guards', () => {
       expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
     },
   );
+
+  it('sends /sign-up to the start page when passwords are not a sign-in method', async () => {
+    await renderApp('/sign-up', {
+      extraRoutes: [{ path: '', pathMatch: 'full', component: StartPage }],
+      providers: [{ provide: SIGN_IN_METHODS, useValue: ['google'] }],
+    });
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Start page' })).toBeVisible();
+    expect(TestBed.inject(Router).url).toBe('/');
+  });
 });

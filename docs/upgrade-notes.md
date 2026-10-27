@@ -9,7 +9,7 @@ Every file belongs to one of four groups. `scripts/baseline-config.json` lists t
 | Group | Files | Who changes them |
 |---|---|---|
 | Feature files | Every Feature's folder (including its rules fragments), the Feature seeders, the Feature route list. | The Project. A Baseline release changes them only in the notes reference Feature. |
-| Project-owned files | The app identity, the production environment config, the web app manifest, the page head, the icon sources and rendered icons, the README, the Project glossary, the Project ADR folder, the Project agents file and the Dependabot config. | The Project. The Template ships a starting version and changes it only with an entry here. |
+| Project-owned files | The app identity and sign-in methods, the production environment config, the web app manifest, the page head, the icon sources and rendered icons, the README, the Project glossary, the Project ADR folder, the Project agents file and the Dependabot config. | The Project. The Template ships a starting version and changes it only with an entry here. |
 | Shared files | The npm manifest and lockfile. | Both. An entry here says how to resolve conflicts. |
 | Baseline files | Everything else. | Only the Template. A Project that changes one has Baseline drift. |
 
@@ -81,13 +81,14 @@ A Project deletes the notes reference Feature once (`docs/features.md`, "What a 
 
 ### baseline-v2.0.0
 
-A Feature is now the start page at `/`, set by the required `startPage` in the Feature route list, and the Baseline's home page is gone: sign-out moves to the profile page, and signing in, signing up and signing out all end at `/` (ADR 0009).
+A Feature is now the start page at `/`, set by the required `startPage` in the Feature route list, and the Baseline's home page is gone: sign-out moves to the profile page, and signing in, signing up and signing out all end at `/` (ADR 0009). A Project picks its sign-in methods; `/sign-up` exists only with passwords.
 
 **Project action:**
 
 - In `src/app/features/features.routes.ts`, export `startPage`, `{ title, loadChildren }` without a `path`, pointing at the Feature that should own `/`, and take that Feature's entry out of `featureRoutes`. Give its children paths that no Baseline page or other Feature uses.
 - Home is gone, and with it the Features navigation and the only page that showed the app's name: link `/profile` from a Feature where people need it, and other Features as literals. A Feature that shows the app's name reads it from `src/app-identity/app-identity.ts`.
 - Sign-out is on the profile page.
+- New Project-owned `src/app-identity/sign-in-methods.ts`: keep `['password', 'google']` or set your own, and match the console's providers (see the [Baseline manual's Authentication step](baseline-manual.md#3-authentication)).
 
 ### baseline-v1.0.0
 

@@ -7,6 +7,7 @@ import { routes, routesWithStartPage } from '../app.routes';
 import { AuthSession } from '../auth/auth-session';
 import { FakeAuthSession } from './fake-auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
+import { SIGN_IN_METHODS } from '../auth/sign-in-methods-token';
 import { ProfileData } from '../profile/profile-data';
 import { FakeProfileData } from './fake-profile-data';
 import { FakeSwUpdate } from './fake-sw-update';
@@ -54,6 +55,8 @@ export async function renderApp(
       { provide: ProfileData, useValue: profile },
       { provide: SwUpdate, useValue: swUpdate },
       { provide: RELOAD_PAGE, useValue: reloadPage },
+      // The Template's methods, so the Baseline's tests pass whichever ones a Project picks.
+      { provide: SIGN_IN_METHODS, useValue: ['password', 'google'] },
       ...providers,
     ],
   });

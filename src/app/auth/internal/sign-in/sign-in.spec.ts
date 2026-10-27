@@ -3,9 +3,21 @@ import userEvent from '@testing-library/user-event';
 import { renderApp } from '../../../testing/render-app';
 import { Credentials } from '../../credentials.model';
 import { FakeAuthSession } from '../../../testing/fake-auth-session';
+import { SignInMethods } from '../../../../app-identity/sign-in-methods';
+import { SIGN_IN_METHODS } from '../../sign-in-methods-token';
 import { standInStartPage } from '../../../testing/stand-in-start-page';
 
 const ada: Credentials = { email: 'ada@example.com', password: 'correct-horse' };
+
+function offering(methods: SignInMethods) {
+  return { providers: [{ provide: SIGN_IN_METHODS, useValue: methods }] };
+}
+
+function signInButtonNames(): string[] {
+  return screen
+    .getAllByRole('button', { name: /^Sign in/ })
+    .map((button) => button.textContent.trim());
+}
 
 async function signIn({ email, password }: Credentials) {
   const user = userEvent.setup();
@@ -103,5 +115,39 @@ describe('SignIn', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The Google sign-in window was closed before you finished.',
     );
+  });
+
+  it('offers email and password first, then Google, and a link to create an account', async () => {
+    await renderApp('/sign-in', offering(['password', 'google']));
+
+    expect(await screen.findByLabelText('Email')).toBeVisible();
+    expect(screen.getByLabelText('Password')).toBeVisible();
+    expect(signInButtonNames()).toEqual(['Sign in', 'Sign in with Google']);
+    expect(screen.getByRole('link', { name: 'Create one' })).toBeVisible();
+  });
+
+  it('offers Google first when the list puts it first', async () => {
+    await renderApp('/sign-in', offering(['google', 'password']));
+
+    expect(await screen.findByLabelText('Email')).toBeVisible();
+    expect(signInButtonNames()).toEqual(['Sign in with Google', 'Sign in']);
+  });
+
+  it('offers only Google, with no password fields and no way to create an account', async () => {
+    await renderApp('/sign-in', offering(['google']));
+
+    expect(await screen.findByRole('button', { name: 'Sign in with Google' })).toBeVisible();
+    expect(signInButtonNames()).toEqual(['Sign in with Google']);
+    expect(screen.queryByLabelText('Email')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Create one' })).not.toBeInTheDocument();
+  });
+
+  it('offers only email and password, with no Google button', async () => {
+    await renderApp('/sign-in', offering(['password']));
+
+    expect(await screen.findByLabelText('Email')).toBeVisible();
+    expect(signInButtonNames()).toEqual(['Sign in']);
+    expect(screen.getByRole('link', { name: 'Create one' })).toBeVisible();
   });
 });

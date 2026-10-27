@@ -10,7 +10,7 @@
     { "pattern": "scripts/seed/feature-*.mjs", "what": "Feature seeders" }
   ],
   "projectOwned": [
-    { "pattern": "src/app-identity/**", "what": "The app identity" },
+    { "pattern": "src/app-identity/**", "what": "The app identity and sign-in methods" },
     { "pattern": "src/environments/environment.ts", "what": "The production environment config" },
     { "pattern": "public/manifest.webmanifest", "what": "The web app manifest" },
     { "pattern": "src/index.html", "what": "The page head" },
