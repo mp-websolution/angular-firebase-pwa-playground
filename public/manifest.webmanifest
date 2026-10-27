@@ -1,6 +1,6 @@
 {
-  "name": "Angular Firebase PWA Playground",
-  "short_name": "Playground",
+  "name": "PWA Base",
+  "short_name": "PWA Base",
   "theme_color": "#0f172a",
   "background_color": "#ffffff",
   "display": "standalone",

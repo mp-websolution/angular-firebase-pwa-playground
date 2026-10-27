@@ -1,4 +1,4 @@
-# Angular Firebase PWA Playground
+# PWA Base
 
 A template repo for trying out Angular and Firebase updates and ideas for future PWA projects, and the source of every **Project** built on its **Baseline**: sign-in, the user profile, Firebase wiring, PWA behaviour, tests, CI and an FTP deploy. Projects keep merging its **Baseline releases** (terms from `CONTEXT.md`).
 
@@ -13,7 +13,7 @@ Create a Project by cloning the Template with its history and keeping it as the 
 In short, starting from an empty GitHub repository and the newest Baseline release (see [Releases](docs/upgrade-notes.md#releases)):
 
 ```bash
-git clone --no-tags --origin upstream https://github.com/mp-websolution/angular-firebase-pwa-playground.git my-project
+git clone --no-tags --origin upstream https://github.com/mp-websolution/pwa-base.git my-project
 cd my-project
 git fetch upstream tag baseline-vX.Y.Z
 git reset --hard baseline-vX.Y.Z

@@ -174,7 +174,7 @@ describe('merging a Baseline release (npm run baseline:update -- baseline-vX.Y.Z
     expect(status).toBe(1);
     expect(stderr).toContain(
       'This repo has no "upstream" remote. Add the Template as one:\n' +
-        '  git remote add upstream https://github.com/mp-websolution/angular-firebase-pwa-playground.git',
+        '  git remote add upstream https://github.com/mp-websolution/pwa-base.git',
     );
     expect(fixtures.git(project, 'branch', '--show-current')).toBe('main');
   });

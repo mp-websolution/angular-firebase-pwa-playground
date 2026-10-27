@@ -1,3 +1,3 @@
 export const appIdentity = {
-  name: 'Angular Firebase PWA Playground',
+  name: 'PWA Base',
 };
