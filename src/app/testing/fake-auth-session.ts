@@ -105,11 +105,15 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
     this.#user.set(fakeUserWithEmail(this.#googlePopup.email));
   }
 
+  /** Stands in for loading the start page afresh after sign-out; `renderApp` navigates to `/`. */
+  loadStartPage: () => void = () => undefined;
+
   async signOut(): Promise<void> {
     if (this.#otherTabsOpen) {
       throw new AuthSessionError('other-tabs-open');
     }
     this.#user.set(null);
+    this.loadStartPage();
   }
 }
 

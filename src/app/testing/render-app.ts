@@ -1,9 +1,9 @@
 import { render } from '@testing-library/angular';
 import { Provider } from '@angular/core';
-import { Route, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { App } from '../app';
-import { routes, routesWithStartPage } from '../app.routes';
+import { StartPage, routes, routesWithStartPage } from '../app.routes';
 import { AuthSession } from '../auth/auth-session';
 import { FakeAuthSession } from './fake-auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
@@ -25,7 +25,7 @@ export interface RenderAppOptions {
    * Replaces the start page at `/`; defaults to the real one. A Baseline test that lands on `/`
    * passes `standInStartPage`, so it depends on no Feature.
    */
-  startPage?: Route;
+  startPage?: StartPage;
   /** Go before the app's own routes, e.g. to stand in for pages that don't exist yet. */
   extraRoutes?: Routes;
   /**
@@ -34,6 +34,9 @@ export interface RenderAppOptions {
    */
   providers?: Provider[];
 }
+
+/** The Template's sign-in methods, so the Baseline's tests pass whichever ones a Project picks. */
+const templateSignInMethods = ['password', 'google'] as const;
 
 /** Renders the whole app through the router at `url`, with its data-access services faked in memory. */
 export async function renderApp(
@@ -55,11 +58,11 @@ export async function renderApp(
       { provide: ProfileData, useValue: profile },
       { provide: SwUpdate, useValue: swUpdate },
       { provide: RELOAD_PAGE, useValue: reloadPage },
-      // The Template's methods, so the Baseline's tests pass whichever ones a Project picks.
-      { provide: SIGN_IN_METHODS, useValue: ['password', 'google'] },
+      { provide: SIGN_IN_METHODS, useValue: templateSignInMethods },
       ...providers,
     ],
   });
+  session.loadStartPage = () => void result.navigate('/');
   await result.navigate(url);
   return result;
 }

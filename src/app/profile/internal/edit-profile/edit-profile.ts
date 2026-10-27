@@ -1,5 +1,5 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import {
   FormField,
   FormRoot,
@@ -28,7 +28,6 @@ interface ProfileModel {
 export class EditProfile {
   protected readonly profileData = inject(ProfileData);
   readonly #session = inject(AuthSession);
-  readonly #router = inject(Router);
 
   readonly #profileModel = linkedSignal<string, ProfileModel>({
     source: () => this.profileData.profile()?.displayName ?? '',
@@ -96,7 +95,6 @@ export class EditProfile {
     } finally {
       this.signingOut.set(false);
     }
-    await this.#router.navigateByUrl('/');
   }
 
   async #updateDisplayName(): Promise<TreeValidationResult> {

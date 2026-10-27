@@ -10,7 +10,7 @@
 
 ## Why
 
-The first Project, `tango-calendar-pwa`, has an anonymous public Calendar and a signed-in Admin section for a hand-picked group of Editors and Admins. Its rules match roles by `request.auth.token.email` and require `email_verified == true`. So it wants Google only, with no passwords and no public sign-up (its ADR 0002). Today the Baseline's sign-in and sign-up pages always offer email/password and link to `/sign-up`, and the Project can't change them.
+The first Project has an anonymous public Calendar and a signed-in Admin section for a hand-picked group of Editors and Admins. Its rules match roles by `request.auth.token.email` and require `email_verified == true`. So it wants Google only, with no passwords and no public sign-up. Today the Baseline's sign-in and sign-up pages always offer email/password and link to `/sign-up`, and the Project can't change them.
 
 ## Decisions (grilling, 2026-10-27)
 

@@ -36,7 +36,13 @@
       </fieldset>
     }
     @if (notes.length === 0) {
-      <p class="text-slate-600" [class.opacity-50]="notesData.loading()">No notes yet.</p>
+      <p
+        class="text-slate-600"
+        [class.opacity-50]="notesData.loading()"
+        [attr.aria-busy]="notesData.loading()"
+      >
+        No notes yet.
+      </p>
     } @else {
       <ul
         class="flex flex-col gap-3 transition-opacity"

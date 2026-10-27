@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth';
 import { environment } from '../../environments/environment';
 import { FIREBASE_AUTH, provideFirebase } from '../firebase/provide-firebase';
 import { RELOAD_PAGE } from '../browser/reload-page';
+import { LOAD_START_PAGE } from '../browser/load-start-page';
 import { AuthSession } from './auth-session';
 import { enablePersistentCacheInJsdom, signOutForTheNextTest } from '../testing/emulator-setup';
 
@@ -28,14 +29,17 @@ function failToDeleteFirestoreCache(because: Error) {
 
 describe('AuthSession against the Auth emulator', () => {
   const reloadPage = vi.fn<() => void>();
+  const loadStartPage = vi.fn<() => void>();
 
   beforeEach(() => {
     reloadPage.mockReset();
+    loadStartPage.mockReset();
     enablePersistentCacheInJsdom();
     TestBed.configureTestingModule({
       providers: [
         provideFirebase(environment.firebase),
         { provide: RELOAD_PAGE, useValue: reloadPage },
+        { provide: LOAD_START_PAGE, useValue: loadStartPage },
       ],
     });
   });
@@ -113,14 +117,15 @@ describe('AuthSession against the Auth emulator', () => {
     ).rejects.toMatchObject({ reason: 'weak-password' });
   });
 
-  it('signs out, then reloads the page', async () => {
+  it('signs out, then loads the start page afresh', async () => {
     const session = TestBed.inject(AuthSession);
     await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
 
     await session.signOut();
 
     expect(session.user()).toBeNull();
-    expect(reloadPage).toHaveBeenCalled();
+    expect(loadStartPage).toHaveBeenCalledOnce();
+    expect(reloadPage).not.toHaveBeenCalled();
   });
 
   it('reloads the page when the user is signed out elsewhere, e.g. in another tab', async () => {
@@ -130,6 +135,7 @@ describe('AuthSession against the Auth emulator', () => {
     await signOutAsAnotherTabWould();
 
     expect(reloadPage).toHaveBeenCalled();
+    expect(loadStartPage).not.toHaveBeenCalled();
   });
 
   it('keeps the user signed in when sign-out cannot delete the cache', async () => {
@@ -142,6 +148,7 @@ describe('AuthSession against the Auth emulator', () => {
     expect(session.user()).not.toBeNull();
     expect(TestBed.inject(FIREBASE_AUTH).currentUser).not.toBeNull();
     expect(reloadPage).not.toHaveBeenCalled();
+    expect(loadStartPage).not.toHaveBeenCalled();
   });
 
   it('asks to close the other tabs when one holds on to the cache', async () => {

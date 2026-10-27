@@ -127,6 +127,25 @@ describe('NotesData against the emulators', () => {
     );
   });
 
+  it("marks a note with no author, e.g. one an admin wrote, as nobody's to a signed-out visitor", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'notes', idInThisTest('authorless')), {
+        text: 'Welcome',
+        createdAt: Timestamp.fromDate(new Date('2026-01-01')),
+      });
+    });
+
+    const notesData = TestBed.inject(NotesData);
+
+    await vi.waitFor(
+      () =>
+        expect(notesOfThisTest(notesData)).toEqual([
+          { id: idInThisTest('authorless'), text: 'Welcome', mine: false },
+        ]),
+      slowEmulatorTimeout,
+    );
+  });
+
   it("marks the signed-in user's own notes among everyone's", async () => {
     const uid = await signInAsNewUser();
     await storeNoteAsAnotherDeviceWithDisabledRules(

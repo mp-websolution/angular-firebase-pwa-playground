@@ -90,6 +90,7 @@ A Feature is now the start page at `/`, set by the required `startPage` in the F
 - Sign-out is on the profile page.
 - New Project-owned `src/app-identity/sign-in-methods.ts`: keep `['password', 'google']` or set your own, and match the console's providers (see the [Baseline manual's Authentication step](baseline-manual.md#3-authentication)).
 - Rename `refFor` to `userRefFor` in every `injectLiveData()` call.
+- `listenTo` now runs tracked: a signal it reads (e.g. `session.user()`) makes Live data listen again when it changes. Wrap reads that must not re-query in `untracked()`.
 - Projects that kept the notes Feature: its data moved from `users/{uid}/notes` to `notes`, and there's no migration.
 
 ### baseline-v1.0.0
