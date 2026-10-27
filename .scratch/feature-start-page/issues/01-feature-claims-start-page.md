@@ -21,7 +21,7 @@ The first Project, `tango-calendar-pwa`, has a public, anonymous Calendar Featur
    - Profile's "Back to home" becomes "Back", linking to `/`.
    - Notes' "Back to home" becomes a "Profile" link to `/profile`.
    - Features link `/profile`, `/` and each other as literals.
-4. **The Template's start page is notes:** notes moves from `featureRoutes` (`path: 'notes'`) to `startPage`. Visiting `/` signed out still ends at `/sign-in` through notes' `signedInGuard`.
+4. **The Template's start page is notes:** notes moves from `featureRoutes` (`path: 'notes'`) to `startPage`. Until `.scratch/public-live-data/` lands, visiting `/` signed out still ends at `/sign-in` through notes' `signedInGuard`. That ticket then makes notes public.
 5. **Auth destinations are all `/`:** `signedOutGuard` and the default return URL (`injectReturnUrl()`) keep `/`. Sign-out (now on profile) goes to `/` instead of `/sign-in`. `returnUrlQueryParams` still leaves `/` out.
 6. **`**` fallback:** unchanged; it redirects to `/`.
 7. **ADR 0003:** unchanged, and so is the initial-bundle budget. The start page is a lazy chunk, so Firestore stays out of the initial bundle. First paint at `/` waits on that chunk, and ADR 0009 records the trade-off.
