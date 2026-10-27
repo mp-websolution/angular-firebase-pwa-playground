@@ -79,4 +79,10 @@ A Project deletes the notes reference Feature once (`docs/features.md`, "What a 
 
 ## Releases
 
-None yet.
+### baseline-v1.0.0
+
+The first Baseline release: sign-in (email/password and Google), the user profile with avatar, Firebase wiring, Live data, PWA behaviour (offline shell, update prompt), tests, CI and the deploy pipeline, with the notes reference Feature. Projects start from it as described in the [Baseline manual's setup steps](baseline-manual.md#1-repository).
+
+**Project action:**
+
+None.
