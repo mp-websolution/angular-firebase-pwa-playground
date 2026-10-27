@@ -1,9 +1,9 @@
 import { render } from '@testing-library/angular';
 import { Provider } from '@angular/core';
-import { Routes } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { App } from '../app';
-import { routes, routesWithStartPage, StartPage } from '../app.routes';
+import { routes, routesWithStartPage } from '../app.routes';
 import { AuthSession } from '../auth/auth-session';
 import { FakeAuthSession } from './fake-auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
@@ -24,7 +24,7 @@ export interface RenderAppOptions {
    * Replaces the start page at `/`; defaults to the real one. A Baseline test that lands on `/`
    * passes `standInStartPage`, so it depends on no Feature.
    */
-  startPage?: StartPage;
+  startPage?: Route;
   /** Go before the app's own routes, e.g. to stand in for pages that don't exist yet. */
   extraRoutes?: Routes;
   /**

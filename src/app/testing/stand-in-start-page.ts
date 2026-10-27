@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import type { StartPage } from '../app.routes';
+import { Route } from '@angular/router';
 import { AuthSession } from '../auth/auth-session';
 
 @Component({
@@ -11,7 +11,7 @@ class StandInStartPage {
 }
 
 /** Stands in for the Feature at `/`, so a Baseline test that lands there depends on no Feature. */
-export const standInStartPage: StartPage = {
+export const standInStartPage: Route = {
   title: 'Start page',
   loadChildren: async () => [{ path: '', component: StandInStartPage }],
 };

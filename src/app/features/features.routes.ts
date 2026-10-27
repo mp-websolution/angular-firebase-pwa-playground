@@ -1,10 +1,6 @@
-import { LoadChildren, Route } from '@angular/router';
+import { Route } from '@angular/router';
 
 type FeatureRoute = Route & { path: string; title: string };
-interface StartPage {
-  title: string;
-  loadChildren: LoadChildren;
-}
 
 /**
  * Where the Baseline meets the Features: one lazy route area per Feature, each kept out of the
@@ -13,7 +9,7 @@ interface StartPage {
  * a Feature removes its entry here, and removing the start page points `startPage` at another
  * Feature first (see docs/features.md).
  */
-export const startPage: StartPage = {
+export const startPage: Route = {
   loadChildren: () => import('./notes/notes.routes').then((m) => m.notesRoutes),
   title: 'Notes',
 };
