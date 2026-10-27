@@ -17,5 +17,5 @@ What `/` shows used to be a Baseline file (home, in `app.routes.ts`), so a Proje
 - A Feature's `title` only sets the page title. Nothing reads the Feature route list but `app.routes.ts`.
 - `startPage` being required replaces home's test as the rule that a Project keeps at least one Feature. Removing the start page's Feature means pointing `startPage` at another Feature first.
 - First paint at `/` waits for the start page's lazy chunk. That keeps Firestore out of the initial bundle (ADR 0003), whose budget is unchanged.
-- Until the notes Feature is public, visiting `/` signed out ends at `/sign-in` through its `signedInGuard`.
+- A start page decides for itself whether signed-out visitors may see it. The Template's notes board is public; a start page with a `signedInGuard` sends signed-out visitors at `/` to `/sign-in`.
 - A Baseline test that lands on `/` renders `standInStartPage` from `src/app/testing/` through `renderApp`'s `startPage` option, so it depends on no Feature.

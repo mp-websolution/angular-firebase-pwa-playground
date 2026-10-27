@@ -232,6 +232,25 @@ describe('injectLiveData against the emulators', () => {
       );
     });
 
+    it('says when the query cannot be built, and reports why, and stops loading', async () => {
+      await signInAsNewUser();
+      const broken = new Error('no query');
+
+      const unbuildable = TestBed.runInInjectionContext(() =>
+        injectLiveData({
+          userRefFor: (firestore, uid) => doc(firestore, 'scratch', uid),
+          listenTo: () => {
+            throw broken;
+          },
+          map: () => 'never mapped',
+        }),
+      );
+
+      await vi.waitFor(() => expect(unbuildable.loadFailed()).toBe(true), slowEmulatorTimeout);
+      expect(unbuildable.loading()).toBe(false);
+      expect(reportError).toHaveBeenCalledWith(broken);
+    });
+
     it('reports no failure once destroyed, even if the data then fails to load', async () => {
       await signInAsNewUser();
       const injector = createEnvironmentInjector([], TestBed.inject(EnvironmentInjector));
