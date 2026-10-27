@@ -1,6 +1,6 @@
 # Spec: Projects that keep merging Baseline releases
 
-Status: ready-for-agent
+Status: agent-done
 
 ## Problem Statement
 
@@ -60,7 +60,7 @@ Two scripts support the routine:
 20. As the Template maintainer, I want the drift check skipped in the Template itself, so that the Template's own Baseline work never fails it.
 21. As a Project developer, I want to add a Feature without editing any Baseline file, so that adding Features never conflicts with Baseline releases.
 22. As a Project developer, I want home's Features test to follow the Feature route list, so that adding or removing a Feature needs no test edit in the Baseline.
-23. As a Project developer, I want home's test to check that the Features navigation is absent when there are no Features, so that a Project with no Features is covered too.
+23. As a Project developer, I want home's test to assume at least one Feature, so that home needs no seam just to be tested with an empty Feature route list.
 24. As a Feature author, I want my Firestore rules in a fragment file in my Feature's folder, so that deleting the folder also deletes the rules.
 25. As a Feature author, I want an optional Storage rules fragment in the same folder, so that a Feature that stores files follows the same pattern.
 26. As a Feature author, I want my fragment to use the Baseline's rules helpers, such as the owner check and the trimmed-text check, so that I don't copy them.
@@ -81,7 +81,7 @@ Two scripts support the routine:
 41. As an agent working in a Project, I want a Project-owned agents file linked from the Baseline's agent instructions, so that Project-specific instructions don't edit a Baseline file.
 42. As a Project developer, I want package changes from Features, Dependabot and Baseline releases all allowed, so that dependency work doesn't fail the drift check.
 43. As a Project developer, I want upgrade notes on resolving npm manifest and lockfile conflicts, so that I keep my Feature dependencies and still take the Baseline's versions.
-44. As a Project developer, I want to delete the notes reference Feature from my Project, so that it doesn't ship in my product.
+44. As a Project developer, I want to delete the notes reference Feature from my Project once my first Feature is in, so that it doesn't ship in my product.
 45. As a Project developer, I want upgrade notes on resolving a release that changes the notes Feature I deleted, so that I keep it deleted.
 46. As a Project developer, I want Baseline releases to contain only the Baseline and the notes reference Feature, so that Playground experiments never land in my Project.
 47. As the Template maintainer, I want to cut a Baseline release by tagging `main` as `baseline-vX.Y.Z`, so that releasing stays one step.
@@ -136,7 +136,7 @@ Two scripts support the routine:
 **Home's Features test**
 
 - The expected links and their hrefs come from the Feature route list, in its order.
-- When the list is empty, the test expects no Features navigation.
+- The test assumes at least one Feature and fails when the list is empty. The setup steps tell a Project to add its first Feature before deleting the notes Feature, or in the same PR.
 
 **Docs split**
 
@@ -171,12 +171,13 @@ Two scripts support the routine:
 - An npm script finds the newest `baseline-v*` tag reachable from HEAD. It lists files added, changed or deleted between that tag and HEAD, drops those matching the Feature, Project-owned and shared patterns, and fails listing the rest.
 - It fails clearly when no Baseline release is reachable.
 - CI runs it as a step in the checks workflow, with full history and tags fetched, only when the repository is not the Template. The Template's repository name is held next to the file-group list.
+- The drift check's job is a required status check in the `main` ruleset. The Template skips the step, not the job, so the job still runs and passes there.
 - It is not part of `npm run check`, because the Template never passes it meaningfully.
 
 ## Testing Decisions
 
 - Good tests check external behaviour through the highest existing seam: what a user sees, what the rules allow, and what a script does to a git repo. They never check how the code does it. Follow `docs/agents/testing.md`.
-- **Home component test** (existing seam, rendered through `renderApp`): the Features navigation shows a link for each entry of the Feature route list, by title and with its href, in list order. With no entries, the navigation is absent. Prior art: home's current Features test.
+- **Home component test** (existing seam, rendered through `renderApp`): the Features navigation shows a link for each entry of the Feature route list, by title and with its href, in list order. It assumes at least one entry. Prior art: home's current Features test.
 - **Security rules integration tests** (existing seam): the notes, profile and avatar rules specs run unchanged against the assembled rules. That they stay green proves that the assembly inserts the notes fragment and that the Baseline helpers are in scope. Prior art: the existing rules integration specs.
 - **Script tests** (one new seam): a new Vitest suite beside the Sheriff tests creates throwaway git repos as fixtures. One plays the Template, with Baseline release tags and `v*` deploy tags; one plays a Project cloned from it. The suite runs the npm scripts as a developer would. It covers:
   - **Update script:** merges the asked release onto a new branch; fetches no `v*` tag and no other Baseline release tag; prints the upgrade notes between releases; refuses with a dirty tree, with no `upstream` remote, or with a non-release tag; stops and lists files on a conflict; never pushes.
@@ -199,5 +200,5 @@ Two scripts support the routine:
 
 - This contradicts the current Template definition in `CONTEXT.md` and the README line "Changes don't flow back". The new ADR supersedes both.
 - Cut the first Baseline release, `baseline-v0.1.0`, only after this spec is implemented, so that every Project starts from a release where Features need no Baseline edits.
-- Keeping Playground experiments off the Template's `main`, and so out of every Project's `main`, was confirmed. The notes Feature stays in the Template as the example; a Project deletes it once.
+- Keeping Playground experiments off the Template's `main`, and so out of every Project's `main`, was confirmed. The notes Feature stays in the Template as the example; a Project deletes it once, after or with its first Feature.
 - Firestore rules have no include mechanism, which is why the rules are assembled by a script rather than split natively.

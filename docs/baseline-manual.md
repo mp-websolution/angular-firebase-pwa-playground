@@ -44,11 +44,13 @@ No Firebase project or credentials are needed: development runs against the `dem
 | `npm run test:sheriff` | Sheriff tests (`sheriff-tests/`): lint fixture files with the real ESLint config and check that Sheriff's module boundaries (ADRs 0005–0007) hold. No emulators needed. |
 | `npm run test:scripts` | Script tests (`script-tests/`): run the repo's scripts against throwaway fixtures in `script-tests/.fixtures/`. No emulators needed. |
 | `npm run test:integration` | Assembles the rules, then runs the integration tests (`*.integration.spec.ts`), including the security-rules tests, inside the emulators. |
-| `npm run lint` / `npm run format` | ESLint / Prettier. CI runs `npm run check` and `npm run test:integration`. |
+| `npm run lint` / `npm run format` | ESLint / Prettier. CI runs `npm run check` and `npm run test:integration`, and in a Project also `npm run baseline:check-drift`. |
 | `npm run build` | Production build into `dist/browser/`. |
 | `npm run check` | Every check that needs no emulator, in CI's order: Sheriff tests, script tests, lint, format check, component tests once, production build. Stops at the first failure. |
 | `npm run deps:graph` | Prints Sheriff's JSON export of the project: each file's module, tags and imports. |
 | `npm run icons` | Renders the app icons from `scripts/icons/` (see [App icons](#app-icons)). |
+| `npm run baseline:update -- baseline-vX.Y.Z` | In a Project: merges that Baseline release on a new branch (see [Syncing Baseline releases](syncing-baseline-releases.md)). |
+| `npm run baseline:check-drift` | In a Project: fails naming each Baseline file changed since the newest Baseline release merged (see [the Baseline drift check](syncing-baseline-releases.md#the-baseline-drift-check)). CI runs it in Projects, not in the Template. Not part of `npm run check`. |
 
 After `npm start`, sign in as the seeded demo user `demo@example.com` with password `demo-password` (see `scripts/seed/01-demo-user.mjs`; its profile comes from `02-demo-profile.mjs`), create an account, or use "Sign in with Google": the Auth emulator opens a popup where you pick or add a fake Google account.
 
@@ -66,7 +68,7 @@ Production builds need the production project's web config in `src/environments/
 2. Its folder, e.g. `src/app/features/notes/`, including its rules fragments, e.g. `notes.firestore.rules` (and `<name>.storage.rules` if needed). `npm run rules:assemble` inserts them into the Baseline's `firestore.rules` and `storage.rules`.
 3. Its seeder, e.g. `scripts/seed/feature-notes.mjs`.
 
-**Add** one by copying those 3 from the notes Feature and renaming. **Remove** one by deleting them, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
+**Add** one by copying those 3 from the notes Feature and renaming. **Remove** one by deleting them, keeping at least one Feature, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
 
 ## App icons
 
@@ -106,7 +108,7 @@ A Project is created by cloning the Template with its history and keeping the Te
 
    The Project's CI finds the Baseline release it last merged among the Project's own tags, so every merged release is pushed to `origin` too.
 4. Run `npm ci` and `npm start` to check that it works locally.
-5. Make it the Project's own, in Project-owned files only (the file groups are in the [upgrade notes](upgrade-notes.md#file-groups)): replace `README.md` with the Project's front page, set the app's name in `src/app-identity/app-identity.ts`, its colours in `public/manifest.webmanifest` and `src/index.html`, and its icons (see [App icons](#app-icons)). Delete the notes Feature (see [Removing a Feature](features.md#removing-a-feature)). The Project's own terms, decisions and agent instructions go in `docs/project/` (see [Docs](#docs)).
+5. Make it the Project's own, in Project-owned files only (the file groups are in the [upgrade notes](upgrade-notes.md#file-groups)): replace `README.md` with the Project's front page, set the app's name in `src/app-identity/app-identity.ts`, its colours in `public/manifest.webmanifest` and `src/index.html`, and its icons (see [App icons](#app-icons)). Delete the `github-actions` entry from `.github/dependabot.yml`: the Template's copy adds it so the Template bumps the actions in its workflows, and a Project gets those bumps with Baseline releases (see [Updates](#updates)). Add the Project's first Feature (see [Adding a Feature](features.md#adding-a-feature)) before deleting the notes Feature (see [Removing a Feature](features.md#removing-a-feature)), or in the same PR: home's test fails without a Feature. The Project's own terms, decisions and agent instructions go in `docs/project/` (see [Docs](#docs)).
 
 From then on, the Project merges each new Baseline release as described in [Syncing Baseline releases](syncing-baseline-releases.md).
 
@@ -155,7 +157,7 @@ Settings → Rules → Rulesets. Nobody pushes to `main` directly, admins includ
 1. **Branches:** New branch ruleset, e.g. `protected branches`.
    - Enforcement status: **Active**. Bypass list: **empty**, so admins can't bypass it either.
    - Target branches: add **Include default branch** (`main`) and the pattern `release/*`.
-   - Rules: **Restrict deletions**, **Block force pushes**, **Require a pull request before merging** (0 required approvals, so a solo owner can merge), and **Require status checks to pass** with `checks / lint-test-build` and `checks / integration`. The checks are only offered once they have run in a PR, so open one first if the list is empty.
+   - Rules: **Restrict deletions**, **Block force pushes**, **Require a pull request before merging** (0 required approvals, so a solo owner can merge), and **Require status checks to pass** with `checks / lint-test-build`, `checks / integration` and `checks / baseline-drift`. The checks are only offered once they have run in a PR, so open one first if the list is empty.
 2. **Tags:** New tag ruleset, e.g. `release tags`.
    - Enforcement status: **Active**. Target tags: the patterns `v*` (deploy tags) and `baseline-v*` (Baseline releases, see `docs/upgrade-notes.md`).
    - Rules: **Restrict creations**, **Restrict updates** and **Restrict deletions**.
@@ -195,7 +197,9 @@ Dependabot (`.github/dependabot.yml`) checks weekly and opens grouped PRs:
 | `angular` | `@angular/*`, `@angular-devkit/*`, `@schematics/angular`, `angular-eslint`, `@angular-eslint/*`, `typescript` and `typescript-eslint`. |
 | `firebase` | `firebase`, `firebase-tools` and `@firebase/*`. |
 | `other` | Every other npm package. |
-| `github-actions` | The actions used in `.github/workflows/` (pinned by commit SHA). |
+| `github-actions` | The actions used in `.github/workflows/` (pinned by commit SHA). Template only. |
+
+A Project's Dependabot updates npm only. The workflows are Baseline files, so the Template's Dependabot bumps their actions and a Project gets the bumps when it merges the next Baseline release (see the [upgrade notes](upgrade-notes.md#github-actions-updates)).
 
 A new version is only proposed once it is a few days old (npm: 3 days for patches, 7 for minors, 14 for majors; actions: 7), so a hijacked release is usually pulled before it reaches a PR. Security updates are not delayed.
 
@@ -208,6 +212,8 @@ npx ng update @angular/core @angular/cli angular-eslint
 ```
 
 Then run the checks locally (`npm run check` and `npm run test:integration`) and open a PR.
+
+Template only: the migrations rewrite Baseline files, which in a Project fails the [Baseline drift check](syncing-baseline-releases.md#the-baseline-drift-check). A Project gets a major upgrade by merging the Baseline release that carries it, whose [upgrade notes](upgrade-notes.md) say what its Features must change.
 
 ## How this repo was planned
 
@@ -242,7 +248,7 @@ Paths are from the repo root. Files under `docs/project/` and the README are Pro
 | `docs/adr/0004-testing-library-for-component-tests.md` | Why component tests use Testing Library and render the whole app through the router. |
 | `docs/adr/0008-projects-keep-merging-baseline-releases.md` | Why Projects are cloned with history and keep merging `baseline-vX.Y.Z` releases, and why an npm library, submodules, runtime federation and a one-time copy were rejected. |
 | `docs/upgrade-notes.md` | The four file groups, how Baseline releases are numbered and cut, and one entry per release saying what a Project must do. |
-| `scripts/file-groups.json` | The Feature, Project-owned and shared file patterns (everything else is Baseline) and the Template's repository name. |
+| `scripts/baseline-config.json` | The Feature, Project-owned and shared file patterns (everything else is Baseline), the `.scratch/` pattern the drift check ignores, and the Template's repository name. |
 | `docs/agents/testing.md` | How component, integration and security-rules tests are written. |
 | `docs/features.md` | How to add or remove a Feature, where Features live, and why a Feature's Firestore code stays behind its lazy route. |
 | `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. Links to `docs/project/AGENTS.md`. |

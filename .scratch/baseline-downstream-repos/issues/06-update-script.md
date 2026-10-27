@@ -6,7 +6,7 @@
 
 **Blocked by:** 02 (Feature rules fragments; starts the script-test suite), 04 (Projects and Baseline releases defined)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
 - [ ] Script tests use throwaway git repos: a Template with Baseline release tags and `v*` deploy tags, and a Project cloned from it
 - [ ] Merges the asked release on a new branch; fetches no `v*` tag and no other Baseline release tag

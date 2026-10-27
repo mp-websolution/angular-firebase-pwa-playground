@@ -1,5 +1,5 @@
 {
-  "about": "Which group each file belongs to (ADR 0008, docs/upgrade-notes.md). A file matching no pattern is a Baseline file. Patterns are repo-relative globs for Node's path.posix.matchesGlob: '*' matches within one path segment, a final '/**' matches everything below a folder.",
+  "about": "Which group each file belongs to (ADR 0008, docs/upgrade-notes.md), and the Template's repository name. A file matching no pattern is a Baseline file; the drift check skips the ignored ones. Patterns are repo-relative globs for Node's path.posix.matchesGlob: '*' matches within one path segment, a final '/**' matches everything below a folder.",
   "templateRepository": "mp-websolution/angular-firebase-pwa-playground",
   "feature": [
     { "pattern": "src/app/features/features.routes.ts", "what": "The Feature route list" },
@@ -20,10 +20,17 @@
     { "pattern": "README.md", "what": "The README" },
     { "pattern": "docs/project/CONTEXT.md", "what": "The Project glossary" },
     { "pattern": "docs/project/adr/**", "what": "The Project ADR folder" },
-    { "pattern": "docs/project/AGENTS.md", "what": "The Project agents file" }
+    { "pattern": "docs/project/AGENTS.md", "what": "The Project agents file" },
+    { "pattern": ".github/dependabot.yml", "what": "The Dependabot config" }
   ],
   "shared": [
     { "pattern": "package.json", "what": "The npm manifest" },
     { "pattern": "package-lock.json", "what": "The npm lockfile" }
+  ],
+  "ignored": [
+    {
+      "pattern": ".scratch/**",
+      "what": "Specs and tickets: scratch work, cleared now and then, e.g. before a Project's first Feature"
+    }
   ]
 }

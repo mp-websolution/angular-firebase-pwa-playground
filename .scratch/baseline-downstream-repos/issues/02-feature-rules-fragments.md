@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
 - [ ] The notes, profile and avatar rules integration specs pass unchanged against the assembled rules
 - [ ] No committed rules file contains Feature rules; the assembled output is gitignored

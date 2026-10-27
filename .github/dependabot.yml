@@ -48,6 +48,8 @@ updates:
         patterns:
           - '*'
 
+  # Template only: the workflows are Baseline files, so the Template bumps their actions and a Project
+  # gets them with Baseline releases. A Project deletes this entry when it is created.
   - package-ecosystem: github-actions
     directory: /
     schedule:
