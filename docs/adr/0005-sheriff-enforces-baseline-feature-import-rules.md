@@ -1,6 +1,6 @@
 # Sheriff enforces the Baseline/Feature import rules at lint time
 
-Sheriff (`@softarc/sheriff-core` with its ESLint plugin) checks every import in `src/` against the rules in `sheriff.config.ts`, so `npm run lint` fails when the Baseline imports a Feature, a Feature imports another, anything but the app routes and home imports the Feature route list, production code imports the test helpers, or a Baseline folder imports one that `sheriff.config.ts` doesn't allow it. Each Baseline folder, the environments, the app identity, the test helpers, the Feature route list and each Feature folder is a Sheriff module with one tag.
+Sheriff (`@softarc/sheriff-core` with its ESLint plugin) checks every import in `src/` against the rules in `sheriff.config.ts`, so `npm run lint` fails when the Baseline imports a Feature, a Feature imports another, anything but the app routes imports the Feature route list, production code imports the test helpers, or a Baseline folder imports one that `sheriff.config.ts` doesn't allow it. Each Baseline folder, the environments, the app identity, the test helpers, the Feature route list and each Feature folder is a Sheriff module with one tag.
 
 The modules are barrel-less: there is no `index.ts`, and only files outside a module's `internal/` folder (ADR 0006) are open to the modules allowed to import it. A barrel could pull Firestore into eager code (ADR 0003), and the test helpers import the app shell, which a barrel rule would block unless every check on the app shell were switched off. Automatic tagging is off, so a stray `index.ts` fails instead of becoming an untagged module.
 
@@ -12,7 +12,7 @@ The test helpers count as Baseline but get their own tag, so that production cod
 
 ## Consequences
 
-- Sheriff detects no cycles. Features may use every Baseline module except home, because home imports the Feature route list and Feature → home would close a cycle nothing reports.
+- Sheriff detects no cycles. None can form while only the app routes import the Feature route list (ADR 0009).
 - Third-party imports aren't checked: a value import from `firebase/firestore` in eager code is still caught only by ADR 0003's bundle budget.
 - Static and dynamic `import()` count the same, so lint can't tell whether a Feature is reached only through `loadChildren`.
 - Features have no shared area yet: no Feature may import code from another, even code meant for several Features.

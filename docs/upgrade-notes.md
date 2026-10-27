@@ -73,7 +73,7 @@ If a release changes `.github/dependabot.yml`, keep the Project's version, witho
 A Project deletes the notes reference Feature once (`docs/features.md`, "What a Feature owns"). A release that changes it then conflicts with that deletion, or brings part of it back. Keep it deleted:
 
 1. **Modify/delete conflicts** (`deleted by us`) on files in `src/app/features/notes/` or on `scripts/seed/feature-notes.mjs`: delete them again with `git rm <file>`.
-2. **A conflict in the Feature route list** (`src/app/features/features.routes.ts`): keep the Project's list, without a `notes` entry.
+2. **A conflict in the Feature route list** (`src/app/features/features.routes.ts`): keep the Project's list, with its own `startPage` and without a notes entry.
 3. **Files that came back without a conflict:** a release that adds a file to the notes Feature brings it into the merge cleanly. Before committing (or in a commit after the merge), check that `src/app/features/notes/` and `scripts/seed/feature-notes.mjs` don't exist, and `git rm -r` what does.
 4. **Read the entry.** If the release changed the notes Feature to show a new way of building Features, its entry says what your own Features should change to match.
 
@@ -81,10 +81,13 @@ A Project deletes the notes reference Feature once (`docs/features.md`, "What a 
 
 ### baseline-v2.0.0
 
-A Project picks its sign-in methods; `/sign-up` exists only with passwords.
+A Feature is now the start page at `/`, set by the required `startPage` in the Feature route list, and the Baseline's home page is gone: sign-out moves to the profile page, and signing in, signing up and signing out all end at `/` (ADR 0009). A Project picks its sign-in methods; `/sign-up` exists only with passwords.
 
 **Project action:**
 
+- In `src/app/features/features.routes.ts`, export `startPage`, `{ title, loadChildren }` without a `path`, pointing at the Feature that should own `/`, and take that Feature's entry out of `featureRoutes`. Give its children paths that no Baseline page or other Feature uses.
+- Home is gone, and with it the Features navigation and the only page that showed the app's name: link `/profile` from a Feature where people need it, and other Features as literals. A Feature that shows the app's name reads it from `src/app-identity/app-identity.ts`.
+- Sign-out is on the profile page.
 - New Project-owned `src/app-identity/sign-in-methods.ts`: keep `['password', 'google']` or set your own, and match the console's providers (see the [Baseline manual's Authentication step](baseline-manual.md#3-authentication)).
 
 ### baseline-v1.0.0

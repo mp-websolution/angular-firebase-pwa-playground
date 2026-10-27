@@ -1,9 +1,9 @@
 import { render } from '@testing-library/angular';
 import { Provider } from '@angular/core';
-import { Routes } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { App } from '../app';
-import { routes } from '../app.routes';
+import { routes, routesWithStartPage } from '../app.routes';
 import { AuthSession } from '../auth/auth-session';
 import { FakeAuthSession } from './fake-auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
@@ -21,6 +21,11 @@ export interface RenderAppOptions {
   swUpdate?: FakeSwUpdate;
   /** Called instead of reloading the page, which tests cannot do; defaults to doing nothing. */
   reloadPage?: () => void;
+  /**
+   * Replaces the start page at `/`; defaults to the real one. A Baseline test that lands on `/`
+   * passes `standInStartPage`, so it depends on no Feature.
+   */
+  startPage?: Route;
   /** Go before the app's own routes, e.g. to stand in for pages that don't exist yet. */
   extraRoutes?: Routes;
   /**
@@ -38,12 +43,13 @@ export async function renderApp(
     profile = new FakeProfileData(),
     swUpdate = new FakeSwUpdate(),
     reloadPage = () => undefined,
+    startPage,
     extraRoutes = [],
     providers = [],
   }: RenderAppOptions = {},
 ) {
   const result = await render(App, {
-    routes: [...extraRoutes, ...routes],
+    routes: [...extraRoutes, ...(startPage ? routesWithStartPage(startPage) : routes)],
     providers: [
       { provide: AuthSession, useValue: session },
       { provide: ProfileData, useValue: profile },

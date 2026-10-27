@@ -21,8 +21,12 @@ A self-contained piece of the app that sits beside the Baseline. It may depend o
 _Avoid_: Prototype, experiment, demo, module
 
 **Feature route list**:
-The one list of every Feature's entry point, where the Baseline meets the Features. It belongs to neither: the Baseline may read it, and only it reaches into a Feature. Adding or removing a Feature means adding or removing its entry.
+The one list of every Feature's entry point, where the Baseline meets the Features: `startPage`, the Feature at `/`, and `featureRoutes`, the others at their own paths. It belongs to neither: the Baseline may read it, and only it reaches into a Feature. Adding or removing a Feature means adding or removing its entry.
 _Avoid_: Feature registry, feature index
+
+**Start page**:
+The one Feature mounted at `/`, set by `startPage` in the Feature route list. The Baseline has no home page of its own.
+_Avoid_: Home, landing page, index page
 
 **Live data**:
 The signed-in user's Firestore data, kept up to date on this device, with whether changes are waiting to sync and whether loading failed.

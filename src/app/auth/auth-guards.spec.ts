@@ -8,6 +8,7 @@ import { signedInGuard } from './auth-guards';
 import { Credentials } from './credentials.model';
 import { FakeAuthSession } from '../testing/fake-auth-session';
 import { SIGN_IN_METHODS } from './sign-in-methods-token';
+import { standInStartPage } from '../testing/stand-in-start-page';
 
 @Component({ template: '<h1>Deep page</h1>' })
 class DeepPage {}
@@ -15,6 +16,15 @@ class DeepPage {}
 @Component({ template: '<h1>Start page</h1>' })
 class StartPage {}
 
+@Component({ template: '<h1>Signed-in start page</h1>' })
+class SignedInStartPage {}
+
+const signedInStartPage = {
+  title: 'Signed-in start page',
+  loadChildren: async () => [
+    { path: '', component: SignedInStartPage, canActivate: [signedInGuard] },
+  ],
+};
 const deepRoutes: Routes = [
   { path: 'deep/page', component: DeepPage, canActivate: [signedInGuard] },
 ];
@@ -27,14 +37,14 @@ async function fillInCredentials({ email, password }: Credentials) {
 }
 
 describe('auth guards', () => {
-  it('sends a signed-out user from home to sign-in', async () => {
-    await renderApp('/');
+  it('sends a signed-out user from a signed-in start page to sign-in', async () => {
+    await renderApp('/', { startPage: signedInStartPage });
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
   });
 
-  it('remembers no return URL for home', async () => {
-    await renderApp('/');
+  it('remembers no return URL for the start page', async () => {
+    await renderApp('/', { startPage: signedInStartPage });
 
     expect(await screen.findByRole('link', { name: 'Create one' })).toHaveAttribute(
       'href',
@@ -46,9 +56,11 @@ describe('auth guards', () => {
     const session = new FakeAuthSession({ restoring: 'ada@example.com' });
     setTimeout(() => session.finishRestoring(), 50);
 
-    await renderApp('/', { session });
+    await renderApp('/', { session, startPage: signedInStartPage });
 
-    expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Signed-in start page' }),
+    ).toBeVisible();
   });
 
   it('remembers the requested page in the return URL', async () => {
@@ -83,11 +95,17 @@ describe('auth guards', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Deep page' })).toBeVisible();
   });
 
-  it.each(['/sign-in', '/sign-up'])('sends a signed-in user from %s to home', async (url) => {
-    await renderApp(url, { session: new FakeAuthSession({ signedInAs: 'ada@example.com' }) });
+  it.each(['/sign-in', '/sign-up'])(
+    'sends a signed-in user from %s to the start page',
+    async (url) => {
+      await renderApp(url, {
+        session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+        startPage: standInStartPage,
+      });
 
-    expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
-  });
+      expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
+    },
+  );
 
   it('sends /sign-up to the start page when passwords are not a sign-in method', async () => {
     await renderApp('/sign-up', {

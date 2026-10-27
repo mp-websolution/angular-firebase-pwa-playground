@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { FakeAuthSession } from '../../../testing/fake-auth-session';
 import { renderApp } from '../../../testing/render-app';
 import { FakeProfileData } from '../../../testing/fake-profile-data';
+import { standInStartPage } from '../../../testing/stand-in-start-page';
 
 async function changeDisplayName(displayName: string) {
   const user = userEvent.setup();
@@ -32,16 +33,40 @@ describe('EditProfile', () => {
     expect(await screen.findByLabelText('Display name')).toHaveValue('Ada Lovelace');
   });
 
-  it('opens from home', async () => {
-    await renderApp('/', {
+  it('goes back to the start page', async () => {
+    await renderApp('/profile', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile: new FakeProfileData({ displayName: 'Ada Lovelace' }),
+      startPage: standInStartPage,
     });
 
-    await userEvent.setup().click(await screen.findByRole('link', { name: 'Profile' }));
+    await userEvent.setup().click(await screen.findByRole('link', { name: 'Back' }));
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
-    expect(screen.getByLabelText('Display name')).toHaveValue('Ada Lovelace');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Start page' })).toBeVisible();
+  });
+
+  it('signs out and opens the start page', async () => {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      startPage: standInStartPage,
+    });
+
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Sign out' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Start page' })).toBeVisible();
+    expect(screen.getByText('Signed out')).toBeVisible();
+  });
+
+  it('keeps the user signed in and asks to close other tabs when they block sign-out', async () => {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com', otherTabsOpen: true }),
+    });
+
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Sign out' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Close the app in your other tabs, then sign out again.',
+    );
+    expect(screen.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
   });
 
   it('sends signed-out visitors to sign-in', async () => {

@@ -12,20 +12,30 @@ async function addNote(text: string) {
 }
 
 describe('Notes', () => {
-  it('opens from home', async () => {
+  it('is the start page, titled Notes', async () => {
     await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: new FakeNotesData({ notes: ['Buy milk'] }) }],
     });
 
-    await userEvent.setup().click(await screen.findByRole('link', { name: 'Notes' }));
-
     expect(await screen.findByRole('heading', { level: 1, name: 'Notes' })).toBeVisible();
     expect(await screen.findByRole('listitem', { name: 'Buy milk' })).toBeVisible();
+    expect(document.title).toBe('Notes');
+  });
+
+  it('links to the profile', async () => {
+    await renderApp('/', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
+    });
+
+    await userEvent.setup().click(await screen.findByRole('link', { name: 'Profile' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
   });
 
   it('sends signed-out visitors to sign-in', async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
     });
 
@@ -33,7 +43,7 @@ describe('Notes', () => {
   });
 
   it('lists the notes, newest first', async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [
         { provide: NotesData, useValue: new FakeNotesData({ notes: ['Call Grace', 'Buy milk'] }) },
@@ -49,7 +59,7 @@ describe('Notes', () => {
   });
 
   it('says when there are no notes yet', async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
     });
@@ -58,7 +68,7 @@ describe('Notes', () => {
   });
 
   it("says so when the notes can't be loaded", async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: new FakeNotesData({ loadFails: true }) }],
     });
@@ -70,7 +80,7 @@ describe('Notes', () => {
 
   it('adds a note on top of the list and clears the field', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });
@@ -88,7 +98,7 @@ describe('Notes', () => {
 
   it('adds the note without surrounding spaces', async () => {
     const notes = new FakeNotesData();
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });
@@ -101,7 +111,7 @@ describe('Notes', () => {
 
   it('asks for some text instead of adding a blank note', async () => {
     const notes = new FakeNotesData();
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });
@@ -115,7 +125,7 @@ describe('Notes', () => {
 
   it('asks for at most 1000 characters for a note', async () => {
     const notes = new FakeNotesData();
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });
@@ -128,7 +138,7 @@ describe('Notes', () => {
   });
 
   it("doesn't mark the new note invalid before it's touched", async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
     });
@@ -137,7 +147,7 @@ describe('Notes', () => {
   });
 
   it('describes the new note by its error', async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
     });
@@ -151,7 +161,7 @@ describe('Notes', () => {
 
   it('leaves spaces around a note out of the 1000 characters', async () => {
     const notes = new FakeNotesData();
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });
@@ -163,7 +173,7 @@ describe('Notes', () => {
 
   it('changes a note', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });
@@ -181,7 +191,7 @@ describe('Notes', () => {
   });
 
   it('puts the cursor in the note to change', async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: new FakeNotesData({ notes: ['Buy milk'] }) }],
     });
@@ -194,7 +204,7 @@ describe('Notes', () => {
   });
 
   it('changes one note at a time, leaving the first as it was when another is edited', async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [
         { provide: NotesData, useValue: new FakeNotesData({ notes: ['Call Grace', 'Buy milk'] }) },
@@ -217,7 +227,7 @@ describe('Notes', () => {
 
   it('keeps the note as it was when the change is cancelled', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });
@@ -234,7 +244,7 @@ describe('Notes', () => {
 
   it('keeps what is typed when the note being changed is changed elsewhere', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });
@@ -252,7 +262,7 @@ describe('Notes', () => {
 
   it('asks for some text instead of saving a blank note', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });
@@ -269,7 +279,7 @@ describe('Notes', () => {
   });
 
   it('describes the note being changed by its own error, not the new note', async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: new FakeNotesData({ notes: ['Buy milk'] }) }],
     });
@@ -287,7 +297,7 @@ describe('Notes', () => {
 
   it('asks for at most 1000 characters for a changed note', async () => {
     const notes = new FakeNotesData({ notes: ['x'.repeat(1000)] });
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });
@@ -305,7 +315,7 @@ describe('Notes', () => {
 
   it('deletes a note', async () => {
     const notes = new FakeNotesData({ notes: ['Call Grace', 'Buy milk'] });
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });
@@ -319,7 +329,7 @@ describe('Notes', () => {
   });
 
   it("says a note added offline is saved on this device until it's synced", async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: new FakeNotesData({ offline: true }) }],
     });
@@ -333,7 +343,7 @@ describe('Notes', () => {
   });
 
   it("says a note changed offline is saved on this device until it's synced", async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [
         { provide: NotesData, useValue: new FakeNotesData({ notes: ['Buy milk'], offline: true }) },
@@ -352,7 +362,7 @@ describe('Notes', () => {
   });
 
   it("says a deletion made offline is saved on this device until it's synced", async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [
         { provide: NotesData, useValue: new FakeNotesData({ notes: ['Buy milk'], offline: true }) },
@@ -368,7 +378,7 @@ describe('Notes', () => {
   });
 
   it('says nothing about syncing once a change has reached the server', async () => {
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
     });
@@ -381,7 +391,7 @@ describe('Notes', () => {
 
   it('shows a note added elsewhere, e.g. in another tab', async () => {
     const notes = new FakeNotesData({ notes: ['Buy milk'] });
-    await renderApp('/notes', {
+    await renderApp('/', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       providers: [{ provide: NotesData, useValue: notes }],
     });

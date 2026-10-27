@@ -17,7 +17,7 @@ To keep merges clean, every file belongs to one of four groups, listed in `scrip
 
 ## Consequences
 
-- Building a Feature must not edit a Baseline file. Home reads the Feature route list instead of naming Features, and each Feature keeps its rules in fragments in its own folder.
+- Building a Feature must not edit a Baseline file. `app.routes.ts` reads the Feature route list instead of naming Features, the start page included (ADR 0009), and each Feature keeps its rules in fragments in its own folder.
 - The Template changes a Project-owned or shared file only with an entry in `docs/upgrade-notes.md` saying what a Project must do, and bumps the major version when a Project must act by hand.
 - A Baseline release contains the Baseline and the notes reference Feature only. Playground experiments stay on their own branches and never reach the Template's `main`. A Project deletes the notes Feature once.
 - The tag ruleset protects `baseline-v*` like `v*`: only admins create, move or delete a Baseline release.
