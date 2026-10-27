@@ -1,38 +1,61 @@
-# How a Project picks its sign-in methods
+# A Project picks its sign-in methods
 
-Type: grilling
+**Release:** `baseline-v2.0.0`, shared with `.scratch/feature-start-page/` and `.scratch/public-live-data/`
 
-## Question
+**What to build:** A new Project-owned file, `src/app-identity/sign-in-methods.ts`, lists the sign-in methods the Baseline offers: `'password'`, `'google'` or both. `/sign-in` shows only the listed methods. `/sign-up` exists only when `'password'` is listed.
 
-How does a Project choose which sign-in methods the Baseline offers: email/password, Google, and a new email link (passwordless) method? And how does it turn off public sign-up, all without Baseline drift?
+**Blocked by:** none
+
+**Status:** ready-for-agent
 
 ## Why
 
-The first Project, `tango-calendar-pwa`, has an anonymous public Calendar and a signed-in Admin section for a hand-picked group of Editors and Admins. Its rules match roles by `request.auth.token.email` and require `email_verified == true`. So it wants Google and email link only, both of which give a verified email, and no passwords and no public sign-up (its ADR 0002). The Baseline's sign-in and sign-up pages always offer email/password and link to `/sign-up`, and the Project can't change them.
+The first Project, `tango-calendar-pwa`, has an anonymous public Calendar and a signed-in Admin section for a hand-picked group of Editors and Admins. Its rules match roles by `request.auth.token.email` and require `email_verified == true`. So it wants Google only, with no passwords and no public sign-up (its ADR 0002). Today the Baseline's sign-in and sign-up pages always offer email/password and link to `/sign-up`, and the Project can't change them.
 
-## Facts
+## Decisions (grilling, 2026-10-27)
 
-- `AuthSession` (`src/app/auth/auth-session.ts`) has `signUpWithEmail`, `signInWithEmail` (email/password) and `signInWithGoogle` (popup). It has no email link method.
-- `/sign-in` shows the credentials form, a "Sign in with Google" button and a "Create one" link to `/sign-up`. `/sign-up` shows the credentials form. Both use `signedOutGuard`, and `authRoutes` declares both (ADR 0007).
-- `signedInGuard` redirects to `/sign-in` with a `returnUrl`. `injectReturnUrl()` defaults to `/`.
-- `SessionUser` is `{ uid, email, displayName }`, with no `emailVerified`.
-- Email link sign-in needs an action URL the app handles (a completion route), the email kept on the device between sending and returning (or asked for again on another device), and the provider turned on in the Firebase console. Firebase's authorized domains apply.
-- The Project-owned files a Project may edit are listed in `scripts/baseline-config.json` (e.g. `src/app-identity/**`, `src/environments/environment.ts`).
+1. **Where the choice lives:** `src/app-identity/sign-in-methods.ts` exports `signInMethods`. `src/app-identity/**` is already Project-owned, so the drift check's groups don't change.
+   - **Type:** a non-empty tuple of `SignInMethod = 'password' | 'google'`, so the list can't be empty.
+   - **Order:** the list order is the order on the page.
+2. **No email link:** dropped. Only the 2 existing methods remain, and `AuthSession` gets no new method.
+3. **No sign-up flag:** "sign-up" means only the password `/sign-up` page. It is routed and linked only when `'password'` is listed. Google still creates an account on first sign-in, and Firebase has no plain toggle against that. Such an account gets no rights, because authorization stays in the Project's rules and roles.
+4. **Template default:** `['password', 'google']`, which is today's behaviour, so a Project that keeps it needs no console change.
+5. **How pages and routes read the list:**
+   - A `SIGN_IN_METHODS` injection token defaults, through a root factory, to `signInMethods`.
+   - `/sign-in` shows the credentials form only with `'password'` and the Google button only with `'google'`, in list order. The "Create one" link to `/sign-up` only shows with `'password'`.
+   - `/sign-up` stays in `authRoutes` (ADR 0007), with a `canMatch` that reads the token. Without `'password'`, the route doesn't match, so `**` sends it to `/`.
+   - Tests override the token, so they need no module mocking.
+6. **`SessionUser`:** unchanged, with no `emailVerified`. Rules read `request.auth.token.email_verified` directly, and the Baseline sends no verification mails.
+7. **Auth destinations:** every one is `/`, and sign-out lives on the profile page (settled in `.scratch/feature-start-page/`, decisions 3 and 5).
+8. **ADR and glossary:** none.
 
-## Decisions to settle
+## Tests
 
-- Where the choice lives: a Project-owned file (e.g. in `src/app-identity/` or the environment) or something else. Its shape (a list of methods plus a sign-up flag?) and the Template's default (today's behaviour).
-- Email link in the Baseline: the completion route and its path, the email storage across the round trip, the cross-device case, errors (expired or used link), and how the return URL survives the email.
-- Sign-up when it is off: is `/sign-up` not routed at all, or does it redirect? What happens to the "Create one" link, and to an email link or Google sign-in for an unknown user (both create accounts)?
-- Whether `SessionUser` exposes `emailVerified`.
-- What a Project still has to do in the Firebase console (providers on or off, authorized domains), and whether the Baseline manual says so.
-- Tests (auth pages, guards, the `AuthSession` integration tests against the Auth emulator, which supports email link).
+- **Sign-in page:** component tests run with `['password', 'google']`, `['google']` and `['password']`. They check which controls and links show, and in what order.
+- **Routes:** a route test checks that `/sign-up` → `/` without `'password'`.
+- **`AuthSession`:** the integration tests stay unchanged, since the methods themselves don't change.
 
-## Release (settled)
+## Docs
 
-Part of `baseline-v2.0.0`, one tag for all 3 tickets (see `.scratch/feature-start-page/`, decision 9). The first ticket to merge creates `### baseline-v2.0.0` in `docs/upgrade-notes.md`. This ticket adds its own sentence to the summary paragraph and its own **Project action** steps. The tag goes on `main` after the third ticket merges. Settled there too: every auth destination is `/`, and sign-out lives on the profile page.
+- **Baseline manual:** a setup step that does the following:
+  - Turn on exactly the providers in `signInMethods` in the Firebase console, with Email/Password off if `'password'` isn't listed.
+  - Add the deploy domain (ADR 0002) to Auth's authorized domains.
+  - Note that the emulator's Google sign-in uses its fake account picker. There's no runtime check against the console.
+- **File groups:** in `scripts/baseline-config.json` and the file groups table in `docs/upgrade-notes.md`, the `src/app-identity/**` description becomes "The app identity and sign-in methods".
+- **Release entry** (`baseline-v2.0.0`, see `.scratch/feature-start-page/` decision 9):
+  - **Sentence:** A Project picks its sign-in methods; `/sign-up` exists only with passwords.
+  - **Project action:** New Project-owned `src/app-identity/sign-in-methods.ts`: keep `['password', 'google']` or set your own, and match the console's providers.
 
-## Related
+## Acceptance
 
-- `.scratch/feature-start-page/` and `.scratch/public-live-data/` (the same Project).
-- Out of scope: roles and authorization. The Project keeps them in its own Firestore documents and rules.
+- [ ] `src/app-identity/sign-in-methods.ts` and the `SIGN_IN_METHODS` token, written test-first
+- [ ] `/sign-in` shows the listed methods in list order. `/sign-up` has `canMatch`.
+- [ ] Sign-in component tests for the 3 lists, and the `/sign-up` route test
+- [ ] Manual setup step, file-group descriptions, and the release entry
+- [ ] `npm run lint`, `npm test`, `npm run test:integration` and `npm run build` pass
+
+## Out of scope
+
+- Email link (passwordless) sign-in.
+- Roles and authorization. The Project keeps them in its own Firestore documents and rules.
+- Shared and public Live data: `.scratch/public-live-data/`.
