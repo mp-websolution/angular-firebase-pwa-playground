@@ -78,6 +78,12 @@ const cases: LintCase[] = [
     expectedRuleIds: [],
   },
   {
+    name: 'App identity: auth reading the sign-in methods passes',
+    folder: 'auth',
+    source: importing('signInMethods', '../../app-identity/sign-in-methods'),
+    expectedRuleIds: [],
+  },
+  {
     name: 'App identity: a Feature reading the app identity passes',
     folder: throwawayFeature,
     source: importing('appIdentity', '../../../app-identity/app-identity'),

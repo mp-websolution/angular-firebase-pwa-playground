@@ -8,7 +8,7 @@ This manual is a Baseline file: only the Template changes it, and a Project read
 
 The repo is a **Playground** (terms from `CONTEXT.md`): the **Baseline** plus any **Features**.
 
-- The **Baseline** is the minimal shell every Project inherits: sign-in (email/password and Google), the user profile with avatar, Firebase wiring, PWA behaviour (offline shell, update prompt), tests, CI and the deploy pipeline. It never depends on a Feature.
+- The **Baseline** is the minimal shell every Project inherits: sign-in (email/password, Google or both, as the Project picks), the user profile with avatar, Firebase wiring, PWA behaviour (offline shell, update prompt), tests, CI and the deploy pipeline. It never depends on a Feature.
 - A **Feature** is a self-contained piece of the app beside the Baseline, in `src/app/features/`. The notes page (`/notes`) is the example. Deleting a Feature leaves the Baseline intact. In the Playground a Feature is usually thrown away once tried; in a Project the Features are the product.
 - As the **Template**, the repo is the source of every **Project**: see [Setup](#setup-from-zero-to-live). Changes flow one way, from the Template to Projects through **Baseline releases** ([ADR 0008](adr/0008-projects-keep-merging-baseline-releases.md), [upgrade notes](upgrade-notes.md)). A Project merges each one as described in [Syncing Baseline releases](syncing-baseline-releases.md).
 
@@ -45,7 +45,7 @@ No Firebase project or credentials are needed: development runs against the `dem
 | `npm run baseline:update -- baseline-vX.Y.Z` | In a Project: merges that Baseline release on a new branch (see [Syncing Baseline releases](syncing-baseline-releases.md)). |
 | `npm run baseline:check-drift` | In a Project: fails naming each Baseline file changed since the newest Baseline release merged (see [the Baseline drift check](syncing-baseline-releases.md#the-baseline-drift-check)). CI runs it in Projects, not in the Template. Not part of `npm run check`. |
 
-After `npm start`, sign in as the seeded demo user `demo@example.com` with password `demo-password` (see `scripts/seed/01-demo-user.mjs`; its profile comes from `02-demo-profile.mjs`), create an account, or use "Sign in with Google": the Auth emulator opens a popup where you pick or add a fake Google account.
+After `npm start`, sign in as the seeded demo user `demo@example.com` with password `demo-password` (see `scripts/seed/01-demo-user.mjs`; its profile comes from `02-demo-profile.mjs`), create an account, or use "Sign in with Google": the Auth emulator opens a popup where you pick or add a fake Google account. The sign-in page offers only the methods listed in `src/app-identity/sign-in-methods.ts`, and "create an account" (`/sign-up`) exists only when `'password'` is listed.
 
 How tests are written is in `docs/agents/testing.md`.
 
@@ -101,7 +101,7 @@ A Project is created by cloning the Template with its history and keeping the Te
 
    The Project's CI finds the Baseline release it last merged among the Project's own tags, so every merged release is pushed to `origin` too.
 4. Run `npm ci` and `npm start` to check that it works locally.
-5. Make it the Project's own, in Project-owned files only (the file groups are in the [upgrade notes](upgrade-notes.md#file-groups)): replace `README.md` with the Project's front page, set the app's name in `src/app-identity/app-identity.ts`, `public/manifest.webmanifest` (`name` and `short_name`) and the `<title>` in `src/index.html`, its colours in the same two files, and its icons (see [App icons](#app-icons)). Delete the `github-actions` entry from `.github/dependabot.yml`: the Template's copy adds it so the Template bumps the actions in its workflows, and a Project gets those bumps with Baseline releases (see [Updates](#updates)). Add the Project's first Feature (see [Adding a Feature](features.md#adding-a-feature)) before deleting the notes Feature (see [Removing a Feature](features.md#removing-a-feature)), or in the same PR: home's test fails without a Feature. The Project's own terms, decisions and agent instructions go in `docs/project/` (see [Docs](#docs)).
+5. Make it the Project's own, in Project-owned files only (the file groups are in the [upgrade notes](upgrade-notes.md#file-groups)): replace `README.md` with the Project's front page, set the app's name in `src/app-identity/app-identity.ts`, `public/manifest.webmanifest` (`name` and `short_name`) and the `<title>` in `src/index.html`, its colours in the same two files, its icons (see [App icons](#app-icons)), and its sign-in methods in `src/app-identity/sign-in-methods.ts` (see [Authentication](#3-authentication)). Delete the `github-actions` entry from `.github/dependabot.yml`: the Template's copy adds it so the Template bumps the actions in its workflows, and a Project gets those bumps with Baseline releases (see [Updates](#updates)). Add the Project's first Feature (see [Adding a Feature](features.md#adding-a-feature)) before deleting the notes Feature (see [Removing a Feature](features.md#removing-a-feature)), or in the same PR: home's test fails without a Feature. The Project's own terms, decisions and agent instructions go in `docs/project/` (see [Docs](#docs)).
 
 From then on, the Project merges each new Baseline release as described in [Syncing Baseline releases](syncing-baseline-releases.md).
 
@@ -118,8 +118,12 @@ The location of Firestore and Storage can't be changed later.
 
 ### 3. Authentication
 
-1. **Authentication** → Sign-in method: enable **Email/Password** and **Google**.
-2. **Authentication** → Settings → **Authorized domains**: add the production domain, e.g. `playground.example.com`. Without it Google sign-in fails there. (`localhost` is already listed.)
+`src/app-identity/sign-in-methods.ts` lists the sign-in methods the app offers, in page order: `'password'` (email/password, with the `/sign-up` page), `'google'`, or both. The Template's `['password', 'google']` offers both. Nothing checks the list against the console at runtime, and the emulators accept every method, so match them by hand:
+
+1. **Authentication** → Sign-in method: enable exactly the providers in the list: **Email/Password** for `'password'`, **Google** for `'google'`. Leave Email/Password off when `'password'` isn't listed, so nobody can create a password account through the Auth API. Google still creates an account on first sign-in; it gets no rights beyond what the Project's rules give it.
+2. **Authentication** → Settings → **Authorized domains**: add the production domain (the deploy domain, ADR 0002), e.g. `playground.example.com`. Without it Google sign-in fails there. (`localhost` is already listed.)
+
+Locally, Google sign-in goes to the Auth emulator's fake account picker, never to Google.
 
 ### 4. Web config
 
@@ -160,7 +164,7 @@ Settings → Rules → Rulesets. Nobody pushes to `main` directly, admins includ
 
 Merge a PR to `main` (e.g. the web config from step 4). The **Deploy** workflow runs the checks, deploys the rules, then uploads the app. Then:
 
-1. Open the production domain, create an account, sign in with Google and upload an avatar.
+1. Open the production domain, sign in with each listed method (create an account first for `'password'`) and upload an avatar.
 2. Confirm the service-account roles in [Deploy](#deploy).
 3. Check that the app installs as a PWA (Chrome's address bar offers it).
 

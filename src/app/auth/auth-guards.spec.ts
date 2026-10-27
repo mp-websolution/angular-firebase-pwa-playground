@@ -6,9 +6,13 @@ import { renderApp } from '../testing/render-app';
 import { signedInGuard } from './auth-guards';
 import { Credentials } from './credentials.model';
 import { FakeAuthSession } from '../testing/fake-auth-session';
+import { SIGN_IN_METHODS } from './internal/sign-in-methods';
 
 @Component({ template: '<h1>Deep page</h1>' })
 class DeepPage {}
+
+@Component({ template: '<h1>Start page</h1>' })
+class StartPage {}
 
 const deepRoutes: Routes = [
   { path: 'deep/page', component: DeepPage, canActivate: [signedInGuard] },
@@ -82,5 +86,14 @@ describe('auth guards', () => {
     await renderApp(url, { session: new FakeAuthSession({ signedInAs: 'ada@example.com' }) });
 
     expect(await screen.findByText('Signed in as ada@example.com')).toBeVisible();
+  });
+
+  it('sends /sign-up to the start page when passwords are not a sign-in method', async () => {
+    await renderApp('/sign-up', {
+      extraRoutes: [{ path: '', pathMatch: 'full', component: StartPage }],
+      providers: [{ provide: SIGN_IN_METHODS, useValue: ['google'] }],
+    });
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Start page' })).toBeVisible();
   });
 });
