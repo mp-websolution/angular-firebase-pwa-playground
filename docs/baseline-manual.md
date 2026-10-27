@@ -12,18 +12,11 @@ The repo is a **Playground** (terms from `CONTEXT.md`): the **Baseline** plus an
 - A **Feature** is a self-contained piece of the app beside the Baseline, in `src/app/features/`. The notes page (`/notes`) is the example. Deleting a Feature leaves the Baseline intact. In the Playground a Feature is usually thrown away once tried; in a Project the Features are the product.
 - As the **Template**, the repo is the source of every **Project**: see [Setup](#setup-from-zero-to-live). Changes flow one way, from the Template to Projects through **Baseline releases** ([ADR 0008](adr/0008-projects-keep-merging-baseline-releases.md), [upgrade notes](upgrade-notes.md)). A Project merges each one as described in [Syncing Baseline releases](syncing-baseline-releases.md).
 
-The non-obvious choices are recorded as ADRs:
-
-- [0001: Native Firebase SDK instead of AngularFire](adr/0001-native-firebase-sdk-instead-of-angularfire.md)
-- [0002: FTP deploy instead of Firebase Hosting](adr/0002-ftp-deploy-instead-of-firebase-hosting.md)
-- [0003: Lazy Firestore loader token](adr/0003-lazy-firestore-loader-token.md)
-- [0004: Testing Library for component tests](adr/0004-testing-library-for-component-tests.md)
-
-These are the Baseline ADRs, in `docs/adr/`. A Project records its own decisions in `docs/project/adr/`, numbered from 0001 on its own (see [Docs](#docs)).
+The Baseline's non-obvious choices are recorded as ADRs in [`docs/adr/`](adr/). A Project records its own decisions in `docs/project/adr/`, numbered from 0001 on its own (see [Docs](#docs)).
 
 ## Agent skills
 
-Run `npx skills install` to add the skills referenced in `skills-lock.json`.
+Run `npx skills install` to add the skills referenced in `skills-lock.json`. [Matt Pocock's agent skills](https://github.com/mattpocock/skills), which `AGENTS.md` configures, come as the Claude Code plugin `mattpocock-skills` from the official plugin marketplace.
 
 ## Development
 
@@ -215,52 +208,21 @@ Then run the checks locally (`npm run check` and `npm run test:integration`) and
 
 Template only: the migrations rewrite Baseline files, which in a Project fails the [Baseline drift check](syncing-baseline-releases.md#the-baseline-drift-check). A Project gets a major upgrade by merging the Baseline release that carries it, whose [upgrade notes](upgrade-notes.md) say what its Features must change.
 
-## How this repo was planned
-
-Planning was done in a conversation with Claude Code, using [Matt Pocock's agent skills](https://github.com/mattpocock/skills). Each step used one skill:
-
-1. **Grill the idea**: [`/grill-with-docs`](https://aihero.dev/skills-grill-with-docs). It combines two skills:
-   - [grilling](https://aihero.dev/skills-grilling): the agent asks numbered questions in rounds, each with a recommended answer. I accept or override each one, and the next round builds on the answers. This continues until every design decision is settled.
-   - [domain-modeling](https://aihero.dev/skills-domain-modeling): while grilling, the agent records domain terms in a glossary. It writes an ADR for any decision that is hard to reverse, surprising, and the result of a real trade-off.
-2. **Configure the skills**: [`/setup-matt-pocock-skills`](https://aihero.dev/skills-setup-matt-pocock-skills). This tells the other skills where issues live (local markdown files), which triage labels to use, and where the domain docs are.
-3. **Write the spec**: [`/to-spec`](https://aihero.dev/skills-to-spec). The agent turns the conversation into a spec without asking anything new. The only check-in was agreeing the test seams.
-4. **Break it into tickets**: [`/to-tickets`](https://aihero.dev/skills-to-tickets). The agent splits the spec into vertical "tracer bullet" slices, each with its blocking tickets. We iterated on size and dependencies, then published one file per ticket.
-
-The tickets were then implemented in order with `/implement`, test-first with [`/tdd`](https://aihero.dev/skills-tdd) where possible.
-
 ## Docs
 
-Paths are from the repo root. Files under `docs/project/` and the README are Project-owned; the Template ships a starting version of each. Every other file here is Baseline.
+Paths are from the repo root. The README and everything under `docs/project/` are Project-owned; the Template ships a starting version of each. Every other file here is Baseline.
 
 | File | Meaning |
 |---|---|
-| `README.md` | The front page: a short intro, how to create a Project, and links to this manual. Project-owned: a Project replaces it with its own. |
+| `README.md` | The front page: a short intro, how to create a Project, and links to this manual. A Project replaces it with its own. |
 | `docs/baseline-manual.md` | This file: what the Baseline is, development, Features, setup, deploy and updates. |
-| `docs/syncing-baseline-releases.md` | How a Project merges a Baseline release. |
-| `CONTEXT-MAP.md` | The context map: points at the Baseline glossary and the Project glossary. |
-| `CONTEXT.md` | The Baseline glossary (**Playground**, **Template**, **Baseline**, **Feature**, **Project**, **Baseline release** and more). Terms only, no implementation details. |
-| `docs/project/CONTEXT.md` | The Project glossary: the Project's own domain terms. Empty in the Template. |
-| `docs/project/adr/` | The Project's ADRs, numbered from 0001 on their own, apart from the Baseline ADRs in `docs/adr/`. Empty in the Template. |
-| `docs/project/AGENTS.md` | Optional agent instructions for the Project, read on top of `AGENTS.md`. Empty in the Template. |
-| `docs/adr/0001-native-firebase-sdk-instead-of-angularfire.md` | Why the native Firebase SDK is used instead of AngularFire: Angular updates shouldn't wait on a wrapper library. |
-| `docs/adr/0002-ftp-deploy-instead-of-firebase-hosting.md` | Why the app is deployed by FTP to existing webspace, and what that means (static build, `.htaccess`, Google sign-in by popup only). |
-| `docs/adr/0003-lazy-firestore-loader-token.md` | Why the `FIRESTORE` token gives a loader instead of an instance: the Firestore SDK stays out of the initial bundle. |
-| `docs/adr/0004-testing-library-for-component-tests.md` | Why component tests use Testing Library and render the whole app through the router. |
-| `docs/adr/0008-projects-keep-merging-baseline-releases.md` | Why Projects are cloned with history and keep merging `baseline-vX.Y.Z` releases, and why an npm library, submodules, runtime federation and a one-time copy were rejected. |
-| `docs/upgrade-notes.md` | The four file groups, how Baseline releases are numbered and cut, and one entry per release saying what a Project must do. |
-| `scripts/baseline-config.json` | The Feature, Project-owned and shared file patterns (everything else is Baseline), the `.scratch/` pattern the drift check ignores, and the Template's repository name. |
-| `docs/agents/testing.md` | How component, integration and security-rules tests are written. |
 | `docs/features.md` | How to add or remove a Feature, where Features live, and why a Feature's Firestore code stays behind its lazy route. |
-| `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. Links to `docs/project/AGENTS.md`. |
+| `docs/syncing-baseline-releases.md` | How a Project merges a Baseline release, and the Baseline drift check. |
+| `docs/upgrade-notes.md` | The four file groups, how Baseline releases are numbered and cut, and one entry per release saying what a Project must do. |
+| `scripts/baseline-config.json` | The file patterns of the groups (everything else is Baseline), the `.scratch/` pattern the drift check ignores, and the Template's repository name. |
+| `CONTEXT-MAP.md`, `CONTEXT.md` | The context map, and the Baseline glossary (**Playground**, **Template**, **Baseline**, **Feature**, **Project**, **Baseline release** and more). |
+| `docs/adr/` | The Baseline ADRs: why each non-obvious choice was made and what was rejected. |
+| `docs/project/` | The Project's glossary (`CONTEXT.md`), ADRs (`adr/`, numbered on their own) and agent instructions (`AGENTS.md`). Empty in the Template. |
+| `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. |
+| `docs/agents/` | What `AGENTS.md` points to: how tests are written, the local issue tracker under `.scratch/`, the triage labels, and how agents use the glossaries and ADRs. |
 | `CODING_STANDARDS.md` | Code style rules that reviews check. They override the `angular-developer` skill where they disagree. |
-| `docs/agents/issue-tracker.md` | Issues are local markdown files under `.scratch/<spec-slug>/`. |
-| `docs/agents/triage-labels.md` | The triage labels, stored on each issue's `Status:` line. |
-| `docs/agents/domain.md` | Where agents find both glossaries and both ADR folders, and how to use them. |
-| `.scratch/baseline/spec.md` | The Baseline spec: problem, user stories, implementation and testing decisions, out of scope. |
-| `.scratch/baseline/issues/01-…09-*.md` | Nine tickets in dependency order, each with acceptance criteria and its "Blocked by" tickets. |
-
-## Skill sources
-
-- Repository: [github.com/mattpocock/skills](https://github.com/mattpocock/skills)
-- Skill descriptions: `https://aihero.dev/skills-<skill-name>`, e.g. [grilling](https://aihero.dev/skills-grilling), [domain-modeling](https://aihero.dev/skills-domain-modeling), [to-spec](https://aihero.dev/skills-to-spec), [to-tickets](https://aihero.dev/skills-to-tickets)
-- Installed here as the Claude Code plugin `mattpocock-skills` from the official plugin marketplace.
