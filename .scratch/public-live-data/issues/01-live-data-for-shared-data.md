@@ -27,7 +27,11 @@ The first Project, `tango-calendar-pwa`, has a public Calendar Feature. Anyone r
 - A query that follows a signal: does `listenTo` (or `refFor`) read signals, so Live data re-subscribes when they change? What do `value` and `waitingToSync` show between queries: the old value, `undefined`, or a loading flag?
 - Signed-out use: does Live data stay alive across sign-in and sign-out, given that sign-out reloads the page and clears the cache today?
 - Whether `track()` and `waitingToSync` stay as they are for shared writes, where rules may reject a write another user's change made invalid.
-- Tests: the existing Live data integration tests, plus signed-out and query-change cases. Docs: `docs/features.md` step 1, the glossary, and the release type and its upgrade note.
+- Tests: the existing Live data integration tests, plus signed-out and query-change cases. Docs: `docs/features.md` step 1 and the glossary.
+
+## Release (settled)
+
+Part of `baseline-v2.0.0`, one tag for all 3 tickets (see `.scratch/feature-start-page/`, decision 9). The first ticket to merge creates `### baseline-v2.0.0` in `docs/upgrade-notes.md`. This ticket adds its own sentence to the summary paragraph and its own **Project action** steps. The tag goes on `main` after the third ticket merges.
 
 ## Related
 
