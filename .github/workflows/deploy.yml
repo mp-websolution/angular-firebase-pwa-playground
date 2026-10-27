@@ -83,6 +83,9 @@ jobs:
 
       - run: npm run build
 
+      - name: Assemble the rules from the Baseline and every Feature's fragments, as the integration tests did
+        run: npm run rules:assemble
+
       - name: Deploy the Firestore and Storage rules first, to fail on a setup mistake before anything reaches the webspace
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

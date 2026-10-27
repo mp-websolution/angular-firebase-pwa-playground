@@ -23,7 +23,7 @@ What every service built on `injectLiveData()` shares (live updates, `waitingToS
 
 Each collection's rules get a `*-rules.integration.spec.ts` beside its data-access service, e.g. `src/app/profile/profile-rules.integration.spec.ts`. They use `@firebase/rules-unit-testing`:
 
-- `testEnvironmentWithDeployedFirestoreRules()` from `src/app/testing/emulator-setup.ts` in `beforeAll`: it passes no rules, since the emulator already runs `firestore.rules`, and `emulators:exec` sets `FIRESTORE_EMULATOR_HOST`.
+- `testEnvironmentWithDeployedFirestoreRules()` from `src/app/testing/emulator-setup.ts` in `beforeAll`: it passes no rules, since the emulator already runs the assembled `assembled-rules/firestore.rules` (`npm run test:integration` assembles it first), and `emulators:exec` sets `FIRESTORE_EMULATOR_HOST`.
 - Write the starting documents in `withSecurityRulesDisabled`, under fresh IDs per test (`crypto.randomUUID()`), so tests never see each other's data. Don't call `clearFirestore`: other test files share the emulator.
 - Act as a user through `authenticatedContext(uid)` or `unauthenticatedContext()`, using the modular SDK on `context.firestore()`, and check with `assertSucceeds` / `assertFails`.
 - Cover the owner being allowed, other users and signed-out visitors being denied, and every data check in the rules.
@@ -34,3 +34,7 @@ Storage paths follow the same pattern, e.g. `src/app/profile/avatar-rules.integr
 ## Sheriff tests
 
 Prove a module boundary (a Sheriff dependency or encapsulation rule) with a row in `sheriff-tests/sheriff-rules.spec.ts` and run `npm run test:sheriff`. Don't verify it with a throwaway violating import.
+
+## Script tests
+
+Test a script in `scripts/` from `script-tests/` (`npm run test:scripts`, part of `npm run check`): run it the way a developer would, with its working directory in a throwaway fixture, and check its output files, exit code and messages, e.g. `script-tests/assemble-rules.spec.ts`. Each spec file writes its fixtures under its own folder in `script-tests/.fixtures/` (gitignored) and deletes that folder in `beforeAll`, to clear what a killed run left, and in `afterAll`.

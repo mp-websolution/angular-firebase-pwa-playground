@@ -11,11 +11,10 @@ Every Feature lives in its own folder under `src/app/features/`, next to the Fea
 | Part | Notes Feature | Removed by |
 |---|---|---|
 | Route entry | `notes` in `src/app/features/features.routes.ts`: lazy and titled. Home links to every entry there, by its title | Deleting the entry |
-| Folder | `src/app/features/notes/`: its routes in `notes.routes.ts`, the only public file. Everything else is in `internal/`: pages, data-access service, model, tests and fake (`internal/testing/`) | Deleting the folder |
-| Rules section | The block between the `Feature: notes` markers in `firestore.rules` | Deleting the block |
+| Folder | `src/app/features/notes/`: its routes in `notes.routes.ts`, the only public TypeScript file, and its Firestore rules fragment `notes.firestore.rules`. Everything else is in `internal/`: pages, data-access service, model, tests and fake (`internal/testing/`) | Deleting the folder |
 | Seed data | `scripts/seed/feature-notes.mjs` | Deleting the file |
 
-Removing those four leaves the Baseline building and its tests green, except home's test of the Features navigation in `src/app/home/internal/home.spec.ts`, which lists every Feature's link. Only docs mention a Feature elsewhere: `README.md` and `docs/agents/testing.md` use the notes Feature as their example.
+Removing those 3 leaves the Baseline building and its tests green: home's test of the Features navigation in `src/app/home/internal/home.spec.ts` reads the Feature route list, so it needs no edit. Only docs mention a Feature elsewhere: `README.md` and `docs/agents/testing.md` use the notes Feature as their example.
 
 ## Adding a Feature
 
@@ -26,12 +25,19 @@ Removing those four leaves the Baseline building and its tests green, except hom
    - The service gets its data through `injectLiveData()` from `src/app/live-data/inject-live-data.ts`, in a field initializer: `ref` says where the signed-in user's data lives, `listenTo` optionally narrows it to a query, and `map` turns each snapshot into the service's model. It loads Firestore, listens until destroyed, and exposes `value`, `waitingToSync` and `loadFailed` for the service to pass on. Each command writes to `await live.ref()` and hands the unawaited write to `live.track()`, so it works offline, counts towards `waitingToSync`, and reports a rejection.
    - `internal/testing/` holds an in-memory fake of that service for component tests.
 2. Add an entry to `featureRoutes` in `src/app/features/features.routes.ts` with `loadChildren` and a `title`, which becomes the link on home.
-3. Store per-user data under `users/{uid}/<collection>`, and add a delimited section to `firestore.rules` (and `storage.rules` if needed) that opens it to its owner only.
+3. Store per-user data under `users/{uid}/<collection>`, and open it to its owner only in `<name>.firestore.rules` at the top of the Feature's folder (and `<name>.storage.rules` for files). See "Rules fragments" below.
 4. Add `scripts/seed/feature-<name>.mjs` for demo data.
 5. Write the tests (see `docs/agents/testing.md`):
-   - Add the new Feature's link to home's Features navigation test in `src/app/home/internal/home.spec.ts`.
    - Component tests render through `renderApp` and pass the fake with `providers: [{ provide: NotesData, useValue: new FakeNotesData(...) }]`. `renderApp` has no default for a Feature's service, so the Baseline's tests never depend on one.
    - Integration tests for the service covering its mapping, commands and ordering, and rules tests covering the owner allowed and other users and signed-out visitors denied. Sync, offline and sign-out behaviour belong to `injectLiveData()` and are tested there, not per Feature.
+
+## Rules fragments
+
+Firestore and Storage rules have no include mechanism, so `npm run rules:assemble` (`scripts/assemble-rules.mjs`) builds the deployed rules. For each service it takes the Baseline's `firestore.rules` or `storage.rules` and replaces its marker line with every Feature's fragment, in Feature-name order, each between `Feature: <name>` comments. The result goes to `assembled-rules/`, which is gitignored and is what `firebase.json` points to. `npm start`, `npm run test:integration` and the deploy assemble the rules first, so never edit `assembled-rules/`.
+
+- A fragment holds `match` blocks for the inside of the documents match (Firestore) or the bucket match (Storage), written without indentation. It can call the Baseline's rule functions, e.g. `isSignedInAsOwner` and `isTrimmedTextOfLength`.
+- Name it `<name>.firestore.rules` or `<name>.storage.rules`, at the top of the Feature's folder, next to `<name>.routes.ts`. A Storage fragment is optional.
+- The assembly fails on a fragment named after anything but its folder, in a folder without a routes file, or of a Feature whose name isn't lowercase letters and hyphens.
 
 ## Keep Firestore behind the lazy route
 
@@ -45,11 +51,9 @@ The Firestore SDK is most of Firebase's weight, so it loads on first use, never 
 ## Removing a Feature
 
 1. Delete its entry in `src/app/features/features.routes.ts`.
-2. Delete its folder under `src/app/features/`.
-3. Delete its section in `firestore.rules` (and `storage.rules`).
-4. Delete its `scripts/seed/feature-<name>.mjs`.
-5. Drop its link from home's Features navigation test in `src/app/home/internal/home.spec.ts`.
-6. Run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
-7. Removing the notes Feature? Point the examples in `README.md` and `docs/agents/testing.md` at another Feature, or drop them.
+2. Delete its folder under `src/app/features/`, which deletes its rules fragments too.
+3. Delete its `scripts/seed/feature-<name>.mjs`.
+4. Run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
+5. Removing the notes Feature? Point the examples in `README.md` and `docs/agents/testing.md` at another Feature, or drop them.
 
-Data already stored in a deployed project stays there; with the rules section gone, nobody can read or write it.
+Data already stored in a deployed project stays there; with its rules fragment gone, nobody can read or write it.
