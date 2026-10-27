@@ -139,7 +139,13 @@ export function injectLiveData<Ref extends Listenable, T, ListenTarget extends L
     if (!current) {
       return;
     }
-    const target = listenTo(current);
+    let target: ListenTarget;
+    try {
+      target = listenTo(current);
+    } catch (error) {
+      untracked(() => reportLoadFailureUnlessDestroyed(error));
+      return;
+    }
     untracked(() => {
       startLoadingNewQuery();
       const unsubscribe = listenToDocumentOrQueryIncludingMetadataChanges(
