@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { filter, firstValueFrom } from 'rxjs';
+import { LOAD_START_PAGE } from '../browser/load-start-page';
 import { RELOAD_PAGE } from '../browser/reload-page';
 import { FIREBASE_AUTH, FIRESTORE, signOutAndClearCache } from '../firebase/provide-firebase';
 import { AuthFailure } from './internal/auth-failure.model';
@@ -22,6 +23,8 @@ export class AuthSession {
   readonly #auth = inject(FIREBASE_AUTH);
   readonly #loadFirestoreOnlyOnSignOut = inject(FIRESTORE);
   readonly #reloadPage = inject(RELOAD_PAGE);
+  readonly #loadStartPage = inject(LOAD_START_PAGE);
+  #signingOutInThisTab = false;
   readonly #user = signal<SessionUser | null>(null);
   readonly #resolved = signal(false);
 
@@ -66,16 +69,23 @@ export class AuthSession {
     );
   }
 
+  /** Signs out, then loads the start page afresh. */
   async signOut(): Promise<void> {
+    this.#signingOutInThisTab = true;
     try {
       await signOutAndClearCache(this.#auth, this.#loadFirestoreOnlyOnSignOut);
     } catch (error) {
+      this.#signingOutInThisTab = false;
       throw toSignOutError(error);
     }
   }
 
   #reloadSoNoPageKeepsShowingTheirDataAndFirestoreRestarts(): void {
-    this.#reloadPage();
+    if (this.#signingOutInThisTab) {
+      this.#loadStartPage();
+    } else {
+      this.#reloadPage();
+    }
   }
 
   async #signInAndSetTheUserRightAway(attempt: () => Promise<{ user: User }>): Promise<void> {

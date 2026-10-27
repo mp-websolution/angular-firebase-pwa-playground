@@ -13,9 +13,6 @@ import { standInStartPage } from '../testing/stand-in-start-page';
 @Component({ template: '<h1>Deep page</h1>' })
 class DeepPage {}
 
-@Component({ template: '<h1>Start page</h1>' })
-class StartPage {}
-
 @Component({ template: '<h1>Signed-in start page</h1>' })
 class SignedInStartPage {}
 
@@ -109,7 +106,7 @@ describe('auth guards', () => {
 
   it('sends /sign-up to the start page when passwords are not a sign-in method', async () => {
     await renderApp('/sign-up', {
-      extraRoutes: [{ path: '', pathMatch: 'full', component: StartPage }],
+      startPage: standInStartPage,
       providers: [{ provide: SIGN_IN_METHODS, useValue: ['google'] }],
     });
 

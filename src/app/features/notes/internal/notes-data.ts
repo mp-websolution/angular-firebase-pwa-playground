@@ -44,9 +44,11 @@ export class NotesData {
 
   readonly notes = computed((): Note[] | undefined => {
     const uid = this.#session.user()?.uid;
-    return this.#live
-      .value()
-      ?.map(({ id, text, authorUid }) => ({ id, text, mine: authorUid === uid }));
+    return this.#live.value()?.map(({ id, text, authorUid }) => ({
+      id,
+      text,
+      mine: uid !== undefined && authorUid === uid,
+    }));
   });
   readonly filter = this.#filter.asReadonly();
   readonly loading = this.#live.loading;

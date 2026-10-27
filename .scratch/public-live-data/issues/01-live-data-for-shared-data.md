@@ -14,7 +14,7 @@ The notes reference Feature becomes a public, shared notes board that demos all 
 
 ## Why
 
-The first Project, `tango-calendar-pwa`, has a public Calendar Feature. Anyone reads its top-level `events` and `organizers`, signed in or not. Editors and Admins write shared `events`, and visitors move from month to month, so the query changes while the page stays open. Today Live data needs a uid and listens to one fixed query.
+The first Project has a public Calendar Feature. Anyone reads its top-level `events` and `organizers`, signed in or not. Editors and Admins write shared `events`, and visitors move from month to month, so the query changes while the page stays open. Today Live data needs a uid and listens to one fixed query.
 
 ## Decisions (grilling, 2026-10-27)
 

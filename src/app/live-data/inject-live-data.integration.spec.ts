@@ -24,6 +24,7 @@ import {
 import { environment } from '../../environments/environment';
 import { AuthSession } from '../auth/auth-session';
 import { RELOAD_PAGE } from '../browser/reload-page';
+import { LOAD_START_PAGE } from '../browser/load-start-page';
 import { FIRESTORE, provideFirebase } from '../firebase/provide-firebase';
 import { injectLiveData } from './inject-live-data';
 import {
@@ -76,6 +77,7 @@ describe('injectLiveData against the emulators', () => {
           options: { ...firebase.options, projectId: projectIsolatingTheseRules },
         }),
         { provide: RELOAD_PAGE, useValue: vi.fn() },
+        { provide: LOAD_START_PAGE, useValue: vi.fn() },
         { provide: ErrorHandler, useValue: { handleError: reportError } },
       ],
     });

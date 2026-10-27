@@ -10,7 +10,7 @@
 
 ## Why
 
-The first Project, `tango-calendar-pwa`, has a public, anonymous Calendar Feature. It must be the start page, with month URLs at the root (`/2026/10`) for parity with the site it replaces. Its Admin section is signed in. Everything that decides what `/` does is a Baseline file today (`app.routes.ts`, home, auth), so the Project can't change it without Baseline drift.
+The first Project has a public, anonymous Calendar Feature. It must be the start page, with month URLs at the root (`/2026/10`) for parity with the site it replaces. Its Admin section is signed in. Everything that decides what `/` does is a Baseline file today (`app.routes.ts`, home, auth), so the Project can't change it without Baseline drift.
 
 ## Decisions (grilling, 2026-10-27)
 
