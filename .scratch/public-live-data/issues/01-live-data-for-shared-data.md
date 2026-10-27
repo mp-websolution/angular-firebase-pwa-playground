@@ -10,7 +10,7 @@ The notes reference Feature becomes a public, shared notes board that demos all 
 
 **Blocked by:** `.scratch/feature-start-page/` (notes is the start page there)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
 ## Why
 
@@ -62,11 +62,11 @@ The first Project, `tango-calendar-pwa`, has a public Calendar Feature. Anyone r
 
 ## Acceptance
 
-- [ ] `userRefFor` / `refFor` union, tracked `listenTo` and `loading` in `inject-live-data.ts`, written test-first
-- [ ] `ProfileData` renamed to `userRefFor`. Its spec and fake are unchanged.
-- [ ] Notes is a shared board with public read, author-only edit/delete and a "mine / all" filter. Rules, seeders and specs are updated.
-- [ ] Docs (decision 11) and the release entry (decision 12)
-- [ ] `npm run lint`, `npm test`, `npm run test:integration` and `npm run build` pass. The initial bundle stays under budget (ADR 0003).
+- [x] `userRefFor` / `refFor` union, tracked `listenTo` and `loading` in `inject-live-data.ts`, written test-first
+- [x] `ProfileData` renamed to `userRefFor`. Its spec and fake are unchanged.
+- [x] Notes is a shared board with public read, author-only edit/delete and a "mine / all" filter. Rules, seeders and specs are updated.
+- [x] Docs (decision 11) and the release entry (decision 12)
+- [x] `npm run lint`, `npm test`, `npm run test:integration` and `npm run build` pass. The initial bundle stays under budget (ADR 0003).
 
 ## Out of scope
 

@@ -6,9 +6,11 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { testEnvironmentWithDeployedFirestoreRules } from '../../../testing/emulator-setup';
 
@@ -16,6 +18,8 @@ describe('Firestore rules for notes', () => {
   let testEnv: RulesTestEnvironment;
   let ada: string;
   let grace: string;
+  let adasNote: string;
+  let newNote: string;
 
   beforeAll(async () => {
     testEnv = await testEnvironmentWithDeployedFirestoreRules();
@@ -28,54 +32,82 @@ describe('Firestore rules for notes', () => {
   beforeEach(async () => {
     ada = `ada-${crypto.randomUUID()}`;
     grace = `grace-${crypto.randomUUID()}`;
+    adasNote = `note-${crypto.randomUUID()}`;
+    newNote = `note-${crypto.randomUUID()}`;
     await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'users', ada, 'notes', 'note-1'), {
+      await setDoc(doc(context.firestore(), 'notes', adasNote), {
         text: 'Buy milk',
+        authorUid: ada,
         createdAt: Timestamp.now(),
       });
     });
   });
 
-  function notesAs(uid: string | null, ownerUid: string) {
+  function notesAs(uid: string | null) {
     const context = uid ? testEnv.authenticatedContext(uid) : testEnv.unauthenticatedContext();
-    return collection(context.firestore(), 'users', ownerUid, 'notes');
+    return collection(context.firestore(), 'notes');
   }
 
-  function noteAs(uid: string | null, ownerUid: string, noteId = 'note-1') {
-    return doc(notesAs(uid, ownerUid), noteId);
+  function noteAs(uid: string | null, noteId = adasNote) {
+    return doc(notesAs(uid), noteId);
   }
 
-  it('lets users read and list their own notes', async () => {
-    await assertSucceeds(getDoc(noteAs(ada, ada)));
-    await assertSucceeds(getDocs(notesAs(ada, ada)));
+  it.each([
+    ['its author', () => ada],
+    ['other users', () => grace],
+    ['signed-out visitors', () => null],
+  ])("lets %s read and list every note, and one author's notes", async (_case, reader) => {
+    await assertSucceeds(getDoc(noteAs(reader())));
+    await assertSucceeds(getDocs(notesAs(reader())));
+    await assertSucceeds(getDocs(query(notesAs(reader()), where('authorUid', '==', ada))));
   });
 
-  it('lets users create, change and delete their own notes', async () => {
+  it('lets signed-in users create notes as their author', async () => {
     await assertSucceeds(
-      setDoc(noteAs(ada, ada, 'note-2'), { text: 'Call Grace', createdAt: serverTimestamp() }),
+      setDoc(noteAs(grace, newNote), {
+        text: 'Call Ada',
+        authorUid: grace,
+        createdAt: serverTimestamp(),
+      }),
     );
-    await assertSucceeds(updateDoc(noteAs(ada, ada), { text: 'Buy oat milk' }));
-    await assertSucceeds(deleteDoc(noteAs(ada, ada)));
   });
 
-  it("keeps other users from reading or changing someone's notes", async () => {
-    await assertFails(getDoc(noteAs(grace, ada)));
-    await assertFails(getDocs(notesAs(grace, ada)));
+  it('rejects a new note whose author is someone else', async () => {
     await assertFails(
-      setDoc(noteAs(grace, ada, 'note-2'), { text: 'Hi Ada', createdAt: serverTimestamp() }),
+      setDoc(noteAs(grace, newNote), {
+        text: 'Call Ada',
+        authorUid: ada,
+        createdAt: serverTimestamp(),
+      }),
     );
-    await assertFails(updateDoc(noteAs(grace, ada), { text: 'Buy oat milk' }));
-    await assertFails(deleteDoc(noteAs(grace, ada)));
   });
 
-  it('keeps signed-out visitors from reading or changing notes', async () => {
-    await assertFails(getDoc(noteAs(null, ada)));
-    await assertFails(getDocs(notesAs(null, ada)));
+  it('rejects a new note without an author', async () => {
     await assertFails(
-      setDoc(noteAs(null, ada, 'note-2'), { text: 'Hi Ada', createdAt: serverTimestamp() }),
+      setDoc(noteAs(grace, newNote), { text: 'Call Ada', createdAt: serverTimestamp() }),
     );
-    await assertFails(updateDoc(noteAs(null, ada), { text: 'Buy oat milk' }));
-    await assertFails(deleteDoc(noteAs(null, ada)));
+  });
+
+  it('keeps signed-out visitors from creating notes', async () => {
+    await assertFails(
+      setDoc(noteAs(null, newNote), { text: 'Hi', authorUid: ada, createdAt: serverTimestamp() }),
+    );
+  });
+
+  it('lets authors change and delete their own notes', async () => {
+    await assertSucceeds(updateDoc(noteAs(ada), { text: 'Buy oat milk' }));
+    await assertSucceeds(deleteDoc(noteAs(ada)));
+  });
+
+  it("keeps other users and signed-out visitors from changing or deleting someone's note", async () => {
+    await assertFails(updateDoc(noteAs(grace), { text: 'Buy oat milk' }));
+    await assertFails(deleteDoc(noteAs(grace)));
+    await assertFails(updateDoc(noteAs(null), { text: 'Buy oat milk' }));
+    await assertFails(deleteDoc(noteAs(null)));
+  });
+
+  it('keeps authors from handing a note to someone else', async () => {
+    await assertFails(updateDoc(noteAs(ada), { authorUid: grace }));
   });
 
   it.each([
@@ -84,33 +116,40 @@ describe('Firestore rules for notes', () => {
     ['has surrounding spaces', ' Buy milk '],
     ['is not text', 42],
   ])('rejects a text that %s, on a new note and on an existing one', async (_case, text) => {
-    await assertFails(setDoc(noteAs(ada, ada, 'note-2'), { text, createdAt: serverTimestamp() }));
-    await assertFails(updateDoc(noteAs(ada, ada), { text }));
+    await assertFails(
+      setDoc(noteAs(ada, newNote), { text, authorUid: ada, createdAt: serverTimestamp() }),
+    );
+    await assertFails(updateDoc(noteAs(ada), { text }));
   });
 
   it('accepts texts of 1 and of 1000 characters', async () => {
     await assertSucceeds(
-      setDoc(noteAs(ada, ada, 'note-2'), { text: 'x', createdAt: serverTimestamp() }),
+      setDoc(noteAs(ada, newNote), { text: 'x', authorUid: ada, createdAt: serverTimestamp() }),
     );
-    await assertSucceeds(updateDoc(noteAs(ada, ada), { text: 'x'.repeat(1000) }));
+    await assertSucceeds(updateDoc(noteAs(ada), { text: 'x'.repeat(1000) }));
   });
 
   it('takes the creation time from the server only', async () => {
     await assertFails(
-      setDoc(noteAs(ada, ada, 'note-2'), { text: 'Call Grace', createdAt: Timestamp.now() }),
+      setDoc(noteAs(ada, newNote), {
+        text: 'Call Grace',
+        authorUid: ada,
+        createdAt: Timestamp.now(),
+      }),
     );
-    await assertFails(setDoc(noteAs(ada, ada, 'note-2'), { text: 'Call Grace' }));
-    await assertFails(updateDoc(noteAs(ada, ada), { createdAt: serverTimestamp() }));
+    await assertFails(setDoc(noteAs(ada, newNote), { text: 'Call Grace', authorUid: ada }));
+    await assertFails(updateDoc(noteAs(ada), { createdAt: serverTimestamp() }));
   });
 
   it('rejects fields a note does not have', async () => {
     await assertFails(
-      setDoc(noteAs(ada, ada, 'note-2'), {
+      setDoc(noteAs(ada, newNote), {
         text: 'Call Grace',
+        authorUid: ada,
         createdAt: serverTimestamp(),
         pinned: true,
       }),
     );
-    await assertFails(updateDoc(noteAs(ada, ada), { pinned: true }));
+    await assertFails(updateDoc(noteAs(ada), { pinned: true }));
   });
 });

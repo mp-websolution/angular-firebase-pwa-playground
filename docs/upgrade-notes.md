@@ -81,7 +81,7 @@ A Project deletes the notes reference Feature once (`docs/features.md`, "What a 
 
 ### baseline-v2.0.0
 
-A Feature is now the start page at `/`, set by the required `startPage` in the Feature route list, and the Baseline's home page is gone: sign-out moves to the profile page, and signing in, signing up and signing out all end at `/` (ADR 0009). A Project picks its sign-in methods; `/sign-up` exists only with passwords.
+A Feature is now the start page at `/`, set by the required `startPage` in the Feature route list, and the Baseline's home page is gone: sign-out moves to the profile page, and signing in, signing up and signing out all end at `/` (ADR 0009). A Project picks its sign-in methods; `/sign-up` exists only with passwords. Live data covers shared and public data and queries that follow signals, and gains a `loading` signal. Notes is now a public, shared board.
 
 **Project action:**
 
@@ -89,6 +89,8 @@ A Feature is now the start page at `/`, set by the required `startPage` in the F
 - Home is gone, and with it the Features navigation and the only page that showed the app's name: link `/profile` from a Feature where people need it, and other Features as literals. A Feature that shows the app's name reads it from `src/app-identity/app-identity.ts`.
 - Sign-out is on the profile page.
 - New Project-owned `src/app-identity/sign-in-methods.ts`: keep `['password', 'google']` or set your own, and match the console's providers (see the [Baseline manual's Authentication step](baseline-manual.md#3-authentication)).
+- Rename `refFor` to `userRefFor` in every `injectLiveData()` call.
+- Projects that kept the notes Feature: its data moved from `users/{uid}/notes` to `notes`, and there's no migration.
 
 ### baseline-v1.0.0
 

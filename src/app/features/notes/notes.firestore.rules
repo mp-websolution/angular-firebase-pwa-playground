@@ -1,12 +1,18 @@
-match /users/{uid}/notes/{noteId} {
-  allow read, delete: if isSignedInAsOwner(uid);
-  allow create: if isSignedInAsOwner(uid) && isValidNewNote(request.resource.data);
-  allow update: if isSignedInAsOwner(uid)
+match /notes/{noteId} {
+  allow read: if true;
+  allow create: if isSignedInAsAuthor(request.resource.data)
+    && isValidNewNote(request.resource.data);
+  allow update: if isSignedInAsAuthor(resource.data)
     && changesOnlyTheText(resource.data, request.resource.data)
     && isValidNoteText(request.resource.data.text);
+  allow delete: if isSignedInAsAuthor(resource.data);
+
+  function isSignedInAsAuthor(note) {
+    return isSignedInAsOwner(note.authorUid);
+  }
 
   function isValidNewNote(note) {
-    return note.keys().hasOnly(['text', 'createdAt'])
+    return note.keys().hasOnly(['text', 'authorUid', 'createdAt'])
       && isValidNoteText(note.text)
       && isCreatedAtTheServerTime(note);
   }
