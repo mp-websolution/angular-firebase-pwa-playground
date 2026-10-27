@@ -26,7 +26,11 @@ The first Project, `tango-calendar-pwa`, has an anonymous public Calendar and a 
 - Sign-up when it is off: is `/sign-up` not routed at all, or does it redirect? What happens to the "Create one" link, and to an email link or Google sign-in for an unknown user (both create accounts)?
 - Whether `SessionUser` exposes `emailVerified`.
 - What a Project still has to do in the Firebase console (providers on or off, authorized domains), and whether the Baseline manual says so.
-- Tests (auth pages, guards, the `AuthSession` integration tests against the Auth emulator, which supports email link). Release type and its upgrade note.
+- Tests (auth pages, guards, the `AuthSession` integration tests against the Auth emulator, which supports email link).
+
+## Release (settled)
+
+Part of `baseline-v2.0.0`, one tag for all 3 tickets (see `.scratch/feature-start-page/`, decision 9). The first ticket to merge creates `### baseline-v2.0.0` in `docs/upgrade-notes.md`. This ticket adds its own sentence to the summary paragraph and its own **Project action** steps. The tag goes on `main` after the third ticket merges. Settled there too: every auth destination is `/`, and sign-out lives on the profile page.
 
 ## Related
 
