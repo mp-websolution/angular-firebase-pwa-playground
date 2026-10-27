@@ -8,7 +8,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "angular-firebase-pwa-playground": {
+    "pwa-base": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -64,10 +64,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "angular-firebase-pwa-playground:build:production"
+              "buildTarget": "pwa-base:build:production"
             },
             "development": {
-              "buildTarget": "angular-firebase-pwa-playground:build:development"
+              "buildTarget": "pwa-base:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -75,7 +75,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "buildTarget": "angular-firebase-pwa-playground:build:development",
+            "buildTarget": "pwa-base:build:development",
             "setupFiles": ["src/test-setup.ts"],
             "exclude": ["src/**/*.integration.spec.ts"]
           },

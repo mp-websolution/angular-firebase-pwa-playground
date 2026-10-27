@@ -91,7 +91,7 @@ A Project is created by cloning the Template with its history and keeping the Te
 2. Clone the Template as `upstream`, without its tags, and move `main` to the newest Baseline release (the top entry under [Releases](upgrade-notes.md#releases) in the upgrade notes):
 
    ```bash
-   git clone --no-tags --origin upstream https://github.com/mp-websolution/angular-firebase-pwa-playground.git my-project
+   git clone --no-tags --origin upstream https://github.com/mp-websolution/pwa-base.git my-project
    cd my-project
    git fetch upstream tag baseline-vX.Y.Z
    git reset --hard baseline-vX.Y.Z
