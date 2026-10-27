@@ -1,39 +1,69 @@
-# How Live data covers shared and public data
+# Live data covers shared and public data; notes becomes a shared board
 
-Type: grilling
+**Release:** `baseline-v2.0.0`, shared with `.scratch/feature-start-page/` and `.scratch/sign-in-methods/`
 
-## Question
+**What to build:** Live data works for shared and public data as well as the user's own:
+- `injectLiveData()` takes either `userRefFor(firestore, uid)`, which is today's `refFor` renamed, or a new `refFor(firestore)` with no uid.
+- `listenTo` follows signals.
 
-How does Live data stretch beyond the signed-in user's own data, so a Feature can listen to shared collections (written by many users) and public ones (read signed out) with the same sync and offline behaviour? And how can the listened-to query follow a signal, such as the month on screen?
+The notes reference Feature becomes a public, shared notes board that demos all of this, and profile stays the user-scoped example.
+
+**Blocked by:** `.scratch/feature-start-page/` (notes is the start page there)
+
+**Status:** ready-for-agent
 
 ## Why
 
-The first Project, `tango-calendar-pwa`, has a public Calendar Feature. Anyone reads its top-level `events` and `organizers` collections, signed in or not. The Admin section, which belongs to the same Feature, lets Editors and Admins write shared `events`. Visitors move from month to month, so the query changes while the page stays open. Without a Baseline change the Feature would call `await inject(FIRESTORE)()` and `onSnapshot` itself and copy Live data's pending-write and offline tracking.
+The first Project, `tango-calendar-pwa`, has a public Calendar Feature. Anyone reads its top-level `events` and `organizers`, signed in or not. Editors and Admins write shared `events`, and visitors move from month to month, so the query changes while the page stays open. Today Live data needs a uid and listens to one fixed query.
 
-## Facts
+## Decisions (grilling, 2026-10-27)
 
-- `injectLiveData()` (`src/app/live-data/inject-live-data.ts`): `refFor(firestore, uid)` builds the ref, and `uidOfSignedInUser` throws without a signed-in user. The uid is read once, since sign-out reloads the page.
-- It resolves `listenTo(ref)` once and listens until the injection context is destroyed, so the query can't change.
-- It exposes `value`, `waitingToSync` (listener served from cache and pending or tracked writes), `loadFailed`, `ref()` and `track(write)`. A listener error with code `aborted` counts as a sign-out shutdown and isn't reported.
-- Its users are `ProfileData` (`profiles/{uid}`) and the notes Feature (`users/{uid}/notes`).
-- The glossary defines **Live data** as "The signed-in user's Firestore data, kept up to date on this device, ...".
-- `signOutAndClearCache` terminates Firestore and clears its IndexedDB cache, then signs out. Public data cached signed in is dropped too.
-- Firestore uses `persistentLocalCache` with a multi-tab manager by default (`firestoreCache` setting). ADR 0003 keeps the SDK out of the initial bundle.
+1. **Term:** **Live data** widens to "Firestore data this device listens to, kept up to date, with whether changes are waiting to sync and whether loading failed". It covers the user's own, shared and public data, with one term and one module.
+2. **API:** `LiveDataOptions` takes exactly one of 2 keys, as a union type:
+   - `userRefFor(firestore, uid)`: today's `refFor`, renamed. Signed-in only, and it throws without a user. The uid is still read once, so it needs a guarded page.
+   - `refFor(firestore)`: no user needed, so it works on unguarded pages before `AuthSession` resolves.
+3. **Signal-driven query:** `listenTo(ref)` runs tracked. When a signal it reads changes, Live data stops the old listener and listens to the new query. `userRefFor` and `refFor` stay untracked.
+4. **Between queries:** `value` resets to `undefined` and `loadFailed` to `false`, and the old listener's `fromCache` and pending-write flags clear. There's no new loading flag.
+5. **Tracked writes:** the count of unconfirmed writes carries over a query change.
+6. **Lifecycle:** unchanged. Sign-in doesn't reload, and listeners continue with the new token. Sign-out still clears the cache and reloads. A signed-out visitor's cache persists, so public data works offline.
+7. **Rejected writes:** `track()` still reports them to `ErrorHandler` as bugs.
+8. **ADR:** none.
+9. **Notes becomes a shared board:**
+   - **Data:** a top-level `notes` collection, where each doc holds `authorUid`.
+   - **Reading:** anyone, signed out too. Notes' `signedInGuard` goes, so `/` shows notes to anonymous visitors.
+   - **Writing:** the composer shows only when signed in. Any signed-in user creates notes, but only the author edits or deletes one (`request.auth.uid == resource.data.authorUid`).
+   - **Filter:** a "mine / all" signal, offered only when signed in, switches `listenTo` between all notes and `where('authorUid', '==', uid)`.
+   - **Links:** signed out, notes links `/sign-in`; signed in, it links `/profile`.
+   - **Data service:** `NotesData` uses `refFor`. `ProfileData` only gets the `userRefFor` rename.
+10. **Tests:**
+    - `inject-live-data.integration.spec.ts`:
+      - Existing `describe`s use `userRefFor`, and "throws without a signed-in user" stays.
+      - A new `describe('of shared data')` uses `refFor` and covers listening signed out (rules allow public read) and a signed-in tracked write.
+      - A query whose signal changes: the old listener stops, `value` goes `undefined` and then shows the new query, and `loadFailed` resets.
+    - Notes rules tests cover public read, signed-in create, author-only edit/delete, and a rejected forged `authorUid`.
+    - Notes integration specs cover the filter switch.
+    - The seeders write to top-level `notes`.
+    - Notes' component tests cover the signed-out view (no composer, a sign-in link).
+11. **Docs:**
+    - `CONTEXT.md`: the widened **Live data** definition.
+    - `injectLiveData`'s doc comment: only `userRefFor` needs a guarded page.
+    - `docs/features.md` step 1: `userRefFor` vs `refFor`, and a `listenTo` that reads a signal. Its rules-test line covers shared data.
+    - `docs/agents/testing.md`: the new shared cases.
+12. **Release entry** (`baseline-v2.0.0`, see `.scratch/feature-start-page/` decision 9):
+    - **Sentence:** Live data covers shared and public data and queries that follow signals. Notes is now a public, shared board.
+    - **Project actions:**
+      - Rename `refFor` to `userRefFor` in every `injectLiveData()` call.
+      - Projects that kept the notes Feature: its data moved from `users/{uid}/notes` to `notes`, and there's no migration.
 
-## Decisions to settle
+## Acceptance
 
-- The term: does **Live data** widen to "Firestore data this device listens to", or does shared/public data get its own term?
-- The API shape: is `refFor` given a uid only when there is one (an optional uid, or a separate option or overload)? What happens when a ref needs a uid and nobody is signed in?
-- A query that follows a signal: does `listenTo` (or `refFor`) read signals, so Live data re-subscribes when they change? What do `value` and `waitingToSync` show between queries: the old value, `undefined`, or a loading flag?
-- Signed-out use: does Live data stay alive across sign-in and sign-out, given that sign-out reloads the page and clears the cache today?
-- Whether `track()` and `waitingToSync` stay as they are for shared writes, where rules may reject a write another user's change made invalid.
-- Tests: the existing Live data integration tests, plus signed-out and query-change cases. Docs: `docs/features.md` step 1 and the glossary.
+- [ ] `userRefFor` / `refFor` union and tracked `listenTo` in `inject-live-data.ts`, written test-first
+- [ ] `ProfileData` renamed to `userRefFor`. Its spec and fake are unchanged.
+- [ ] Notes is a shared board with public read, author-only edit/delete and a "mine / all" filter. Rules, seeders and specs are updated.
+- [ ] Docs (decision 11) and the release entry (decision 12)
+- [ ] `npm run lint`, `npm test`, `npm run test:integration` and `npm run build` pass. The initial bundle stays under budget (ADR 0003).
 
-## Release (settled)
+## Out of scope
 
-Part of `baseline-v2.0.0`, one tag for all 3 tickets (see `.scratch/feature-start-page/`, decision 9). The first ticket to merge creates `### baseline-v2.0.0` in `docs/upgrade-notes.md`. This ticket adds its own sentence to the summary paragraph and its own **Project action** steps. The tag goes on `main` after the third ticket merges.
-
-## Related
-
-- `.scratch/feature-start-page/` (the same Project's public start page) and `.scratch/sign-in-methods/`.
-- Out of scope: Firestore rules for shared data. A Feature writes them in its own rules fragment today.
+- Roles. A Project keeps them in its own documents and rules.
+- Choosing sign-in methods: `.scratch/sign-in-methods/`.
