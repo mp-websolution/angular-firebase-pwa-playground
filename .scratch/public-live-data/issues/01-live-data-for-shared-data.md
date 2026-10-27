@@ -23,7 +23,11 @@ The first Project, `tango-calendar-pwa`, has a public Calendar Feature. Anyone r
    - `userRefFor(firestore, uid)`: today's `refFor`, renamed. Signed-in only, and it throws without a user. The uid is still read once, so it needs a guarded page.
    - `refFor(firestore)`: no user needed, so it works on unguarded pages before `AuthSession` resolves.
 3. **Signal-driven query:** `listenTo(ref)` runs tracked. When a signal it reads changes, Live data stops the old listener and listens to the new query. `userRefFor` and `refFor` stay untracked.
-4. **Between queries:** `value` resets to `undefined` and `loadFailed` to `false`, and the old listener's `fromCache` and pending-write flags clear. There's no new loading flag.
+4. **Between queries:** `value` keeps the stale value until the new query's first snapshot arrives. A new `loading: Signal<boolean>` covers the gap:
+   - It's true before the very first load, and from a query change until that query's first snapshot.
+   - Any first snapshot ends it, including one served from the cache (`fromCache: true`).
+   - An error also ends it: `loading` goes `false` and `loadFailed` goes `true`, so the two never both hold.
+   - A query change resets `loadFailed` to `false` and `loading` to `true`, and clears the old listener's `fromCache` and pending-write flags.
 5. **Tracked writes:** the count of unconfirmed writes carries over a query change.
 6. **Lifecycle:** unchanged. Sign-in doesn't reload, and listeners continue with the new token. Sign-out still clears the cache and reloads. A signed-out visitor's cache persists, so public data works offline.
 7. **Rejected writes:** `track()` still reports them to `ErrorHandler` as bugs.
@@ -34,30 +38,31 @@ The first Project, `tango-calendar-pwa`, has a public Calendar Feature. Anyone r
    - **Writing:** the composer shows only when signed in. Any signed-in user creates notes, but only the author edits or deletes one (`request.auth.uid == resource.data.authorUid`).
    - **Filter:** a "mine / all" signal, offered only when signed in, switches `listenTo` between all notes and `where('authorUid', '==', uid)`.
    - **Links:** signed out, notes links `/sign-in`; signed in, it links `/profile`.
-   - **Data service:** `NotesData` uses `refFor`. `ProfileData` only gets the `userRefFor` rename.
+   - **Data service:** `NotesData` uses `refFor` and exposes `loading`, and the board dims its list while it's true (e.g. during a "mine / all" switch). `ProfileData` only gets the `userRefFor` rename and doesn't expose `loading`, since its query never changes.
 10. **Tests:**
     - `inject-live-data.integration.spec.ts`:
       - Existing `describe`s use `userRefFor`, and "throws without a signed-in user" stays.
       - A new `describe('of shared data')` uses `refFor` and covers listening signed out (rules allow public read) and a signed-in tracked write.
-      - A query whose signal changes: the old listener stops, `value` goes `undefined` and then shows the new query, and `loadFailed` resets.
+      - `loading`: true before the first load. It's ended by a cached first snapshot, and also by an error, which sets `loadFailed`.
+      - A query whose signal changes: the old listener stops, `value` keeps the stale value and `loading` is true until the new query's first snapshot, and `loadFailed` resets.
     - Notes rules tests cover public read, signed-in create, author-only edit/delete, and a rejected forged `authorUid`.
     - Notes integration specs cover the filter switch.
     - The seeders write to top-level `notes`.
-    - Notes' component tests cover the signed-out view (no composer, a sign-in link).
+    - Notes' component tests cover the signed-out view (no composer, a sign-in link) and the dimmed list while `loading`.
 11. **Docs:**
     - `CONTEXT.md`: the widened **Live data** definition.
     - `injectLiveData`'s doc comment: only `userRefFor` needs a guarded page.
-    - `docs/features.md` step 1: `userRefFor` vs `refFor`, and a `listenTo` that reads a signal. Its rules-test line covers shared data.
+    - `docs/features.md` step 1: `userRefFor` vs `refFor`, a `listenTo` that reads a signal, and `loading`. Its rules-test line covers shared data.
     - `docs/agents/testing.md`: the new shared cases.
 12. **Release entry** (`baseline-v2.0.0`, see `.scratch/feature-start-page/` decision 9):
-    - **Sentence:** Live data covers shared and public data and queries that follow signals. Notes is now a public, shared board.
+    - **Sentence:** Live data covers shared and public data and queries that follow signals, and gains a `loading` signal. Notes is now a public, shared board.
     - **Project actions:**
       - Rename `refFor` to `userRefFor` in every `injectLiveData()` call.
       - Projects that kept the notes Feature: its data moved from `users/{uid}/notes` to `notes`, and there's no migration.
 
 ## Acceptance
 
-- [ ] `userRefFor` / `refFor` union and tracked `listenTo` in `inject-live-data.ts`, written test-first
+- [ ] `userRefFor` / `refFor` union, tracked `listenTo` and `loading` in `inject-live-data.ts`, written test-first
 - [ ] `ProfileData` renamed to `userRefFor`. Its spec and fake are unchanged.
 - [ ] Notes is a shared board with public read, author-only edit/delete and a "mine / all" filter. Rules, seeders and specs are updated.
 - [ ] Docs (decision 11) and the release entry (decision 12)
