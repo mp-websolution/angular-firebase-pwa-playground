@@ -28,4 +28,4 @@ Code style lives in `CODING_STANDARDS.md`, which overrides the `angular-develope
 
 ### Branches and pull requests
 
-Implement each ticket on its own branch off `main`, named `<spec-slug>/<NN>-<short-slug>` after the ticket file (e.g. `profile/03-avatar` for `.scratch/profile/issues/03-avatar-upload.md`). The work reaches `main` only through a pull request, even when a skill says to commit to the current branch. The description opens with the ticket it implements (`Implements ticket 03 (.scratch/profile/issues/03-avatar-upload.md).`), then has three sections: `## What` (one bullet per change, naming the ADRs it follows), `## Tests / CI` and `## Verified locally` (the checks you ran).
+Implement each ticket on its own branch off `main`, named `<spec-slug>/<NN>-<short-slug>` after the ticket file (e.g. `profile/03-avatar` for `.scratch/profile/issues/03-avatar-upload.md`). The work reaches `main` only through a pull request, even when a skill says to commit to the current branch. Write the description with the `/mattpocock-skills:pr` skill.
