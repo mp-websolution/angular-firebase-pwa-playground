@@ -9,7 +9,7 @@ Every file belongs to one of four groups. `scripts/baseline-config.json` lists t
 | Group | Files | Who changes them |
 |---|---|---|
 | Feature files | Every Feature's folder (including its rules fragments), the Feature seeders, the Feature route list. | The Project. A Baseline release changes them only in the notes reference Feature. |
-| Project-owned files | The app identity, the production environment config, the web app manifest, the page head, the icon sources and rendered icons, the README, the Project glossary, the Project ADR folder, the Project agents file and the Dependabot config. | The Project. The Template ships a starting version and changes it only with an entry here. |
+| Project-owned files | The app identity and sign-in methods, the production environment config, the web app manifest, the page head, the icon sources and rendered icons, the README, the Project glossary, the Project ADR folder, the Project agents file and the Dependabot config. | The Project. The Template ships a starting version and changes it only with an entry here. |
 | Shared files | The npm manifest and lockfile. | Both. An entry here says how to resolve conflicts. |
 | Baseline files | Everything else. | Only the Template. A Project that changes one has Baseline drift. |
 
@@ -78,6 +78,14 @@ A Project deletes the notes reference Feature once (`docs/features.md`, "What a 
 4. **Read the entry.** If the release changed the notes Feature to show a new way of building Features, its entry says what your own Features should change to match.
 
 ## Releases
+
+### baseline-v2.0.0
+
+A Project picks its sign-in methods; `/sign-up` exists only with passwords.
+
+**Project action:**
+
+- New Project-owned `src/app-identity/sign-in-methods.ts`: keep `['password', 'google']` or set your own, and match the console's providers (see the [Baseline manual's Authentication step](baseline-manual.md#3-authentication)).
 
 ### baseline-v1.0.0
 

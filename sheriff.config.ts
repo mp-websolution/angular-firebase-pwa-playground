@@ -33,7 +33,7 @@ export const config: SheriffConfig = {
     'app-identity': noDependencies,
     'baseline:firebase': noDependencies,
     'baseline:browser': noDependencies,
-    'baseline:auth': ['baseline:firebase', 'baseline:browser'],
+    'baseline:auth': ['baseline:firebase', 'baseline:browser', 'app-identity'],
     'baseline:live-data': ['baseline:auth', 'baseline:firebase'],
     'baseline:profile': ['baseline:auth', 'baseline:live-data', 'baseline:firebase'],
     'baseline:pwa': 'baseline:browser',
