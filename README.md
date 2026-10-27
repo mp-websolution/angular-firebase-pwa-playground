@@ -33,14 +33,16 @@ No Firebase project or credentials are needed: development runs against the `dem
 
 | Command | What it does |
 |---|---|
-| `npm start` | Starts the Auth, Firestore and Storage emulators with the Emulator UI (http://localhost:4000), seeds them, then serves the app (http://localhost:4200). |
+| `npm start` | Assembles the rules, starts the Auth, Firestore and Storage emulators with the Emulator UI (http://localhost:4000), seeds them, then serves the app (http://localhost:4200). |
+| `npm run rules:assemble` | Assembles the deployed rules into `assembled-rules/` (gitignored): `firestore.rules` and `storage.rules` with every Feature's fragments inserted (see [Features](#features)). `npm start`, `npm run test:integration` and the deploy call it. |
 | `npm run seed` | Runs every seeder in `scripts/seed/`. Only works inside the emulators; `npm start` calls it. |
 | `npm test` | Component tests. No emulators needed. |
 | `npm run test:sheriff` | Sheriff tests (`sheriff-tests/`): lint fixture files with the real ESLint config and check that Sheriff's module boundaries (ADRs 0005–0007) hold. No emulators needed. |
-| `npm run test:integration` | Integration tests (`*.integration.spec.ts`), including the security-rules tests, inside the emulators. |
+| `npm run test:scripts` | Script tests (`script-tests/`): run the repo's scripts against throwaway fixtures in `script-tests/.fixtures/`. No emulators needed. |
+| `npm run test:integration` | Assembles the rules, then runs the integration tests (`*.integration.spec.ts`), including the security-rules tests, inside the emulators. |
 | `npm run lint` / `npm run format` | ESLint / Prettier. CI runs `npm run check` and `npm run test:integration`. |
 | `npm run build` | Production build into `dist/browser/`. |
-| `npm run check` | Every check that needs no emulator, in CI's order: Sheriff tests, lint, format check, component tests once, production build. Stops at the first failure. |
+| `npm run check` | Every check that needs no emulator, in CI's order: Sheriff tests, script tests, lint, format check, component tests once, production build. Stops at the first failure. |
 | `npm run deps:graph` | Prints Sheriff's JSON export of the project: each file's module, tags and imports. |
 | `npm run icons` | Renders the app icons from `scripts/icons/` (see [App icons](#app-icons)). |
 
@@ -54,14 +56,13 @@ Production builds need the production project's web config in `src/environments/
 
 ## Features
 
-`docs/features.md` has the full steps and explains why a Feature's Firestore code stays behind its lazy route. In short, every Feature lives in `src/app/features/`, and everything else in `src/app/` is Baseline. A Feature owns four things, all modelled on the notes Feature:
+`docs/features.md` has the full steps and explains why a Feature's Firestore code stays behind its lazy route. In short, every Feature lives in `src/app/features/`, and everything else in `src/app/` is Baseline. A Feature owns 3 things, all modelled on the notes Feature:
 
 1. Its route entry in `src/app/features/features.routes.ts` (home links to it by its title).
-2. Its folder, e.g. `src/app/features/notes/`.
-3. Its delimited section in `firestore.rules` (and `storage.rules` if needed).
-4. Its seeder, e.g. `scripts/seed/feature-notes.mjs`.
+2. Its folder, e.g. `src/app/features/notes/`, including its rules fragments, e.g. `notes.firestore.rules` (and `<name>.storage.rules` if needed). `npm run rules:assemble` inserts them into the Baseline's `firestore.rules` and `storage.rules`.
+3. Its seeder, e.g. `scripts/seed/feature-notes.mjs`.
 
-**Add** one by copying those four from the notes Feature and renaming. **Remove** one by deleting them, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
+**Add** one by copying those 3 from the notes Feature and renaming. **Remove** one by deleting them, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
 
 ## App icons
 
@@ -86,8 +87,8 @@ Every manual step a new project needs, in order. None of them are scripted.
 In the [Firebase console](https://console.firebase.google.com):
 
 1. Create a project. Google Analytics isn't used.
-2. **Firestore Database** → Create database, location `europe-west3` (Frankfurt), production mode. The deploy replaces its rules with `firestore.rules`.
-3. **Storage** → Get started, location `europe-west3`. New Storage buckets need the pay-as-you-go Blaze plan; set a budget alert in Google Cloud billing. The deploy replaces its rules with `storage.rules`.
+2. **Firestore Database** → Create database, location `europe-west3` (Frankfurt), production mode. The deploy replaces its rules with the assembled `assembled-rules/firestore.rules`.
+3. **Storage** → Get started, location `europe-west3`. New Storage buckets need the pay-as-you-go Blaze plan; set a budget alert in Google Cloud billing. The deploy replaces its rules with the assembled `assembled-rules/storage.rules`.
 4. Project settings → Your apps → add a **Web app** (no Firebase Hosting). Its config object is the web config for [section 4](#4-web-config).
 
 The location of Firestore and Storage can't be changed later.

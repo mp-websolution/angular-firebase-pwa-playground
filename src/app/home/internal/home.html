@@ -1,5 +1,5 @@
 <main class="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-4 p-6">
-  <h1 class="text-3xl font-bold tracking-tight">Angular Firebase PWA Playground</h1>
+  <h1 class="text-3xl font-bold tracking-tight">{{ appIdentity.name }}</h1>
   @if (session.user(); as user) {
     <p class="text-slate-600">Signed in as {{ user.email ?? user.displayName }}</p>
   }
@@ -14,9 +14,9 @@
       Sign out
     </button>
   </div>
-  @if (featureRoutes.length > 0) {
+  @if (featureLinks.length > 0) {
     <nav aria-label="Features" class="flex gap-4">
-      @for (feature of featureRoutes; track feature.path) {
+      @for (feature of featureLinks; track feature.path) {
         <a class="underline" [routerLink]="'/' + feature.path">{{ feature.title }}</a>
       }
     </nav>

@@ -1,9 +1,9 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "assembled-rules/firestore.rules"
   },
   "storage": {
-    "rules": "storage.rules"
+    "rules": "assembled-rules/storage.rules"
   },
   "emulators": {
     "auth": { "port": 9099 },
