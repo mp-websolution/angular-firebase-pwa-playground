@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { SignIn } from './internal/sign-in/sign-in';
-import { passwordListedGuard } from './internal/sign-in-methods';
+import { passwordListedGuard } from './internal/password-listed-guard';
 import { signedOutGuard } from './internal/signed-out-guard';
 import { SignUp } from './internal/sign-up/sign-up';
 

@@ -121,7 +121,7 @@ The location of Firestore and Storage can't be changed later.
 `src/app-identity/sign-in-methods.ts` lists the sign-in methods the app offers, in page order: `'password'` (email/password, with the `/sign-up` page), `'google'`, or both. The Template's `['password', 'google']` offers both. Nothing checks the list against the console at runtime, and the emulators accept every method, so match them by hand:
 
 1. **Authentication** → Sign-in method: enable exactly the providers in the list: **Email/Password** for `'password'`, **Google** for `'google'`. Leave Email/Password off when `'password'` isn't listed, so nobody can create a password account through the Auth API. Google still creates an account on first sign-in; it gets no rights beyond what the Project's rules give it.
-2. **Authentication** → Settings → **Authorized domains**: add the production domain (the deploy domain, ADR 0002), e.g. `playground.example.com`. Without it Google sign-in fails there. (`localhost` is already listed.)
+2. **Authentication** → Settings → **Authorized domains**: add the production domain (the deploy domain, [ADR 0002](adr/0002-ftp-deploy-instead-of-firebase-hosting.md)), e.g. `playground.example.com`. Without it Google sign-in fails there. (`localhost` is already listed.)
 
 Locally, Google sign-in goes to the Auth emulator's fake account picker, never to Google.
 

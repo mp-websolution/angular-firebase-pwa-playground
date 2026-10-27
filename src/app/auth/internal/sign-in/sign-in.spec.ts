@@ -4,7 +4,7 @@ import { renderApp } from '../../../testing/render-app';
 import { Credentials } from '../../credentials.model';
 import { FakeAuthSession } from '../../../testing/fake-auth-session';
 import { SignInMethods } from '../../../../app-identity/sign-in-methods';
-import { SIGN_IN_METHODS } from '../sign-in-methods';
+import { SIGN_IN_METHODS } from '../../sign-in-methods-token';
 
 const ada: Credentials = { email: 'ada@example.com', password: 'correct-horse' };
 
