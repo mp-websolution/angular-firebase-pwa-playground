@@ -33,5 +33,6 @@ The first Project, `tango-calendar-pwa`, has a public, anonymous Calendar Featur
 
 ## Out of scope
 
-- Reading shared or public Firestore data signed out (Live data covers only the signed-in user's `users/{uid}` data). The Project is still deciding whether that needs a Baseline change or stays inside the Feature, and will open its own ticket if it does.
-- Turning off public sign-up and translating Baseline pages.
+- Reading shared or public Firestore data signed out: `.scratch/public-live-data/`.
+- Choosing sign-in methods and turning off public sign-up: `.scratch/sign-in-methods/`.
+- Translating Baseline pages.
