@@ -81,7 +81,7 @@ A Project deletes the notes reference Feature once (`docs/features.md`, "What a 
 
 ### baseline-v2.0.0
 
-A Feature is now the start page at `/`, set by the required `startPage` in the Feature route list, and the Baseline's home page is gone: sign-out moves to the profile page, and signing in, signing up and signing out all end at `/` (ADR 0009). A Project picks its sign-in methods; `/sign-up` exists only with passwords. Live data covers shared and public data and queries that follow signals, and gains a `loading` signal. Notes is now a public, shared board.
+A Feature is now the start page at `/`, set by the required `startPage` in the Feature route list, and the home page is gone, with sign-out on the profile page and every sign-in, sign-up and sign-out ending at `/` (ADR 0009); a Project also picks its sign-in methods, and `/sign-up` exists only with passwords. Live data covers shared and public data, follows signals in `listenTo` and gains `loading`, and the notes reference Feature is now a public, shared board.
 
 **Project action:**
 
