@@ -73,11 +73,21 @@ If a release changes `.github/dependabot.yml`, keep the Project's version, witho
 A Project deletes the notes reference Feature once (`docs/features.md`, "What a Feature owns"). A release that changes it then conflicts with that deletion, or brings part of it back. Keep it deleted:
 
 1. **Modify/delete conflicts** (`deleted by us`) on files in `src/app/features/notes/` or on `scripts/seed/feature-notes.mjs`: delete them again with `git rm <file>`.
-2. **A conflict in the Feature route list** (`src/app/features/features.routes.ts`): keep the Project's list, without a `notes` entry.
+2. **A conflict in the Feature route list** (`src/app/features/features.routes.ts`): keep the Project's list, with its own `startPage` and without a notes entry.
 3. **Files that came back without a conflict:** a release that adds a file to the notes Feature brings it into the merge cleanly. Before committing (or in a commit after the merge), check that `src/app/features/notes/` and `scripts/seed/feature-notes.mjs` don't exist, and `git rm -r` what does.
 4. **Read the entry.** If the release changed the notes Feature to show a new way of building Features, its entry says what your own Features should change to match.
 
 ## Releases
+
+### baseline-v2.0.0
+
+A Feature is now the start page at `/`, set by the required `startPage` in the Feature route list, and the Baseline's home page is gone: sign-out moves to the profile page, and signing in, signing up and signing out all end at `/` (ADR 0009).
+
+**Project action:**
+
+- In `src/app/features/features.routes.ts`, export `startPage`, `{ title, loadChildren }` without a `path`, pointing at the Feature that should own `/`, and take that Feature's entry out of `featureRoutes`. Give its children paths that no Baseline page or other Feature uses.
+- Home is gone, and with it the Features navigation: link `/profile` from a Feature where people need it, and other Features as literals.
+- Sign-out is on the profile page.
 
 ### baseline-v1.0.0
 

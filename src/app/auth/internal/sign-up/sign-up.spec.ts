@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { renderApp } from '../../../testing/render-app';
 import { Credentials } from '../../credentials.model';
 import { FakeAuthSession } from '../../../testing/fake-auth-session';
+import { standInStartPage } from '../../../testing/stand-in-start-page';
 
 async function signUp({ email, password }: Credentials) {
   const user = userEvent.setup();
@@ -12,8 +13,8 @@ async function signUp({ email, password }: Credentials) {
 }
 
 describe('SignUp', () => {
-  it('creates an account and opens home', async () => {
-    await renderApp('/sign-up');
+  it('creates an account and opens the start page', async () => {
+    await renderApp('/sign-up', { startPage: standInStartPage });
 
     await signUp({ email: 'grace@example.com', password: 'correct-horse' });
 

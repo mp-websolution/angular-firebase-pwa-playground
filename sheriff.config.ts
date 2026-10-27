@@ -18,7 +18,6 @@ export const config: SheriffConfig = {
     'src/app/live-data': 'baseline:live-data',
     'src/app/profile': 'baseline:profile',
     'src/app/pwa': 'baseline:pwa',
-    'src/app/home': 'baseline:home',
     'src/app/testing': 'testing',
     'src/app/features': 'feature-route-list',
     'src/app/features/<feature>': 'feature',
@@ -37,9 +36,7 @@ export const config: SheriffConfig = {
     'baseline:live-data': ['baseline:auth', 'baseline:firebase'],
     'baseline:profile': ['baseline:auth', 'baseline:live-data', 'baseline:firebase'],
     'baseline:pwa': 'baseline:browser',
-    'baseline:home': ['baseline:auth', 'feature-route-list', 'app-identity'],
     'feature-route-list': 'feature',
-    // Not home: it imports the Feature route list, so Feature → home would close a cycle.
     feature: [
       'baseline:firebase',
       'baseline:browser',

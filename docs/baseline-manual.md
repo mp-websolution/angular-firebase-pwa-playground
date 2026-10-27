@@ -9,7 +9,7 @@ This manual is a Baseline file: only the Template changes it, and a Project read
 The repo is a **Playground** (terms from `CONTEXT.md`): the **Baseline** plus any **Features**.
 
 - The **Baseline** is the minimal shell every Project inherits: sign-in (email/password and Google), the user profile with avatar, Firebase wiring, PWA behaviour (offline shell, update prompt), tests, CI and the deploy pipeline. It never depends on a Feature.
-- A **Feature** is a self-contained piece of the app beside the Baseline, in `src/app/features/`. The notes page (`/notes`) is the example. Deleting a Feature leaves the Baseline intact. In the Playground a Feature is usually thrown away once tried; in a Project the Features are the product.
+- A **Feature** is a self-contained piece of the app beside the Baseline, in `src/app/features/`. The notes page is the example, and the Template's start page at `/`. Deleting a Feature leaves the Baseline intact. In the Playground a Feature is usually thrown away once tried; in a Project the Features are the product.
 - As the **Template**, the repo is the source of every **Project**: see [Setup](#setup-from-zero-to-live). Changes flow one way, from the Template to Projects through **Baseline releases** ([ADR 0008](adr/0008-projects-keep-merging-baseline-releases.md), [upgrade notes](upgrade-notes.md)). A Project merges each one as described in [Syncing Baseline releases](syncing-baseline-releases.md).
 
 The Baseline's non-obvious choices are recorded as ADRs in [`docs/adr/`](adr/). A Project records its own decisions in `docs/project/adr/`, numbered from 0001 on its own (see [Docs](#docs)).
@@ -57,11 +57,11 @@ Production builds need the production project's web config in `src/environments/
 
 `docs/features.md` has the full steps and explains why a Feature's Firestore code stays behind its lazy route. In short, every Feature lives in `src/app/features/`, and everything else in `src/app/` is Baseline. A Feature owns 3 things, all modelled on the notes Feature:
 
-1. Its route entry in `src/app/features/features.routes.ts` (home links to it by its title).
+1. Its route entry in `src/app/features/features.routes.ts`, whose `title` is the page title: `startPage` for the one Feature at `/`, which is required, or an entry in `featureRoutes`. Features link `/profile` and `/` as literals: the Baseline has no home page (ADR 0009).
 2. Its folder, e.g. `src/app/features/notes/`, including its rules fragments, e.g. `notes.firestore.rules` (and `<name>.storage.rules` if needed). `npm run rules:assemble` inserts them into the Baseline's `firestore.rules` and `storage.rules`.
 3. Its seeder, e.g. `scripts/seed/feature-notes.mjs`.
 
-**Add** one by copying those 3 from the notes Feature and renaming. **Remove** one by deleting them, keeping at least one Feature, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
+**Add** one by copying those 3 from the notes Feature and renaming. **Remove** one by deleting them, keeping at least one Feature and pointing `startPage` at another Feature first if it was the start page, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
 
 ## App icons
 
@@ -101,7 +101,7 @@ A Project is created by cloning the Template with its history and keeping the Te
 
    The Project's CI finds the Baseline release it last merged among the Project's own tags, so every merged release is pushed to `origin` too.
 4. Run `npm ci` and `npm start` to check that it works locally.
-5. Make it the Project's own, in Project-owned files only (the file groups are in the [upgrade notes](upgrade-notes.md#file-groups)): replace `README.md` with the Project's front page, set the app's name in `src/app-identity/app-identity.ts`, `public/manifest.webmanifest` (`name` and `short_name`) and the `<title>` in `src/index.html`, its colours in the same two files, and its icons (see [App icons](#app-icons)). Delete the `github-actions` entry from `.github/dependabot.yml`: the Template's copy adds it so the Template bumps the actions in its workflows, and a Project gets those bumps with Baseline releases (see [Updates](#updates)). Add the Project's first Feature (see [Adding a Feature](features.md#adding-a-feature)) before deleting the notes Feature (see [Removing a Feature](features.md#removing-a-feature)), or in the same PR: home's test fails without a Feature. The Project's own terms, decisions and agent instructions go in `docs/project/` (see [Docs](#docs)).
+5. Make it the Project's own, in Project-owned files only (the file groups are in the [upgrade notes](upgrade-notes.md#file-groups)): replace `README.md` with the Project's front page, set the app's name in `src/app-identity/app-identity.ts`, `public/manifest.webmanifest` (`name` and `short_name`) and the `<title>` in `src/index.html`, its colours in the same two files, and its icons (see [App icons](#app-icons)). Delete the `github-actions` entry from `.github/dependabot.yml`: the Template's copy adds it so the Template bumps the actions in its workflows, and a Project gets those bumps with Baseline releases (see [Updates](#updates)). Add the Project's first Feature (see [Adding a Feature](features.md#adding-a-feature)) and point `startPage` at it, before deleting the notes Feature (see [Removing a Feature](features.md#removing-a-feature)), or in the same PR: `startPage` is required. The Project's own terms, decisions and agent instructions go in `docs/project/` (see [Docs](#docs)).
 
 From then on, the Project merges each new Baseline release as described in [Syncing Baseline releases](syncing-baseline-releases.md).
 

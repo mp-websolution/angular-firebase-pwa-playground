@@ -1,5 +1,5 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   FormField,
   FormRoot,
@@ -8,6 +8,8 @@ import {
   form,
   validate,
 } from '@angular/forms/signals';
+import { AuthSession } from '../../../auth/auth-session';
+import { messageOf } from '../../../auth/auth-session-error';
 import { ProfileData } from '../../profile-data';
 
 // Same limits as the Storage rules. No SVG: it can carry scripts.
@@ -25,6 +27,8 @@ interface ProfileModel {
 })
 export class EditProfile {
   protected readonly profileData = inject(ProfileData);
+  readonly #session = inject(AuthSession);
+  readonly #router = inject(Router);
 
   readonly #profileModel = linkedSignal<string, ProfileModel>({
     source: () => this.profileData.profile()?.displayName ?? '',
@@ -76,6 +80,23 @@ export class EditProfile {
     } catch {
       this.avatarStatus.set('failed');
     }
+  }
+
+  protected readonly signingOut = signal(false);
+  protected readonly signOutError = signal('');
+
+  protected async signOut(): Promise<void> {
+    this.signOutError.set('');
+    this.signingOut.set(true);
+    try {
+      await this.#session.signOut();
+    } catch (error) {
+      this.signOutError.set(messageOf(error));
+      return;
+    } finally {
+      this.signingOut.set(false);
+    }
+    await this.#router.navigateByUrl('/');
   }
 
   async #updateDisplayName(): Promise<TreeValidationResult> {

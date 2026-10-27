@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { renderApp } from '../../../testing/render-app';
 import { Credentials } from '../../credentials.model';
 import { FakeAuthSession } from '../../../testing/fake-auth-session';
+import { standInStartPage } from '../../../testing/stand-in-start-page';
 
 const ada: Credentials = { email: 'ada@example.com', password: 'correct-horse' };
 
@@ -14,8 +15,11 @@ async function signIn({ email, password }: Credentials) {
 }
 
 describe('SignIn', () => {
-  it('signs in with email and password and opens home', async () => {
-    await renderApp('/sign-in', { session: new FakeAuthSession({ accounts: [ada] }) });
+  it('signs in with email and password and opens the start page', async () => {
+    await renderApp('/sign-in', {
+      session: new FakeAuthSession({ accounts: [ada] }),
+      startPage: standInStartPage,
+    });
 
     await signIn(ada);
 
@@ -25,6 +29,7 @@ describe('SignIn', () => {
   it('stays in the app when the return URL points to another site', async () => {
     await renderApp('/sign-in?returnUrl=https%3A%2F%2Fevil.example.com', {
       session: new FakeAuthSession({ accounts: [ada] }),
+      startPage: standInStartPage,
     });
 
     await signIn(ada);
@@ -42,7 +47,7 @@ describe('SignIn', () => {
 
   it('signs in when the same details are sent again after a failure', async () => {
     const session = new FakeAuthSession({ accounts: [ada], offline: true });
-    await renderApp('/sign-in', { session });
+    await renderApp('/sign-in', { session, startPage: standInStartPage });
     await signIn(ada);
     expect(await screen.findByRole('alert')).toHaveTextContent("Can't reach the server.");
 
@@ -79,9 +84,10 @@ describe('SignIn', () => {
     expect(await screen.findByText('Enter a valid email address.')).toBeVisible();
   });
 
-  it('signs in with Google and opens home', async () => {
+  it('signs in with Google and opens the start page', async () => {
     await renderApp('/sign-in', {
       session: new FakeAuthSession({ googlePopup: { email: 'ada@gmail.com' } }),
+      startPage: standInStartPage,
     });
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Sign in with Google' }));
