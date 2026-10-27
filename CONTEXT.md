@@ -29,7 +29,7 @@ The one Feature mounted at `/`, set by `startPage` in the Feature route list. Th
 _Avoid_: Home, landing page, index page
 
 **Live data**:
-The signed-in user's Firestore data, kept up to date on this device, with whether changes are waiting to sync and whether loading failed.
+Firestore data this device listens to, kept up to date, with whether changes are waiting to sync and whether loading failed. It covers the user's own data, shared data and public data.
 _Avoid_: Realtime data, synced data, store
 
 **Project**:

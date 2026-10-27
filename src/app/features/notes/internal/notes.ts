@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AuthSession } from '../../../auth/auth-session';
 import { NoteForm } from './note-form';
 import { NotesData } from './notes-data';
 
@@ -9,6 +10,7 @@ import { NotesData } from './notes-data';
   templateUrl: './notes.html',
 })
 export class Notes {
+  protected readonly session = inject(AuthSession);
   protected readonly notesData = inject(NotesData);
 
   protected readonly editingId = signal<string | undefined>(undefined);

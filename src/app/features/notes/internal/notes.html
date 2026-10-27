@@ -1,20 +1,48 @@
 <main class="mx-auto flex min-h-screen max-w-xl flex-col gap-6 p-6">
   <h1 class="text-3xl font-bold tracking-tight">Notes</h1>
+  @let signedIn = !!session.user();
   @if (notesData.loadFailed()) {
     <p role="alert" class="text-red-700">
-      Your notes couldn't be loaded. Reload the page to try again.
+      The notes couldn't be loaded. Reload the page to try again.
     </p>
   } @else if (notesData.notes(); as notes) {
-    <app-note-form label="New note" submitLabel="Add note" [noteSubmit]="createNote" />
-    <p role="status" class="text-slate-600">
-      @if (notesData.waitingToSync()) {
-        Saved on this device. It syncs to your account once you're online.
-      }
-    </p>
+    @if (signedIn) {
+      <app-note-form label="New note" submitLabel="Add note" [noteSubmit]="createNote" />
+      <p role="status" class="text-slate-600">
+        @if (notesData.waitingToSync()) {
+          Saved on this device. It syncs to your account once you're online.
+        }
+      </p>
+      <fieldset class="flex gap-4">
+        <legend class="sr-only">Show</legend>
+        <label class="flex items-center gap-1">
+          <input
+            type="radio"
+            name="notes-filter"
+            [checked]="notesData.filter() === 'all'"
+            (change)="notesData.setFilter('all')"
+          />
+          All
+        </label>
+        <label class="flex items-center gap-1">
+          <input
+            type="radio"
+            name="notes-filter"
+            [checked]="notesData.filter() === 'mine'"
+            (change)="notesData.setFilter('mine')"
+          />
+          Mine
+        </label>
+      </fieldset>
+    }
     @if (notes.length === 0) {
-      <p class="text-slate-600">No notes yet.</p>
+      <p class="text-slate-600" [class.opacity-50]="notesData.loading()">No notes yet.</p>
     } @else {
-      <ul class="flex flex-col gap-3">
+      <ul
+        class="flex flex-col gap-3 transition-opacity"
+        [class.opacity-50]="notesData.loading()"
+        [attr.aria-busy]="notesData.loading()"
+      >
         @for (note of notes; track note.id) {
           <li
             class="flex flex-col gap-2 rounded border border-slate-200 p-3"
@@ -38,29 +66,35 @@
               </app-note-form>
             } @else {
               <p class="whitespace-pre-wrap" [id]="'note-' + note.id">{{ note.text }}</p>
-              <div class="flex gap-2">
-                <button
-                  type="button"
-                  class="rounded border border-slate-300 px-3 py-1 font-medium"
-                  (click)="editingId.set(note.id)"
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  class="rounded border border-slate-300 px-3 py-1 font-medium"
-                  (click)="notesData.delete(note.id)"
-                >
-                  Delete
-                </button>
-              </div>
+              @if (note.mine) {
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    class="rounded border border-slate-300 px-3 py-1 font-medium"
+                    (click)="editingId.set(note.id)"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded border border-slate-300 px-3 py-1 font-medium"
+                    (click)="notesData.delete(note.id)"
+                  >
+                    Delete
+                  </button>
+                </div>
+              }
             }
           </li>
         }
       </ul>
     }
   } @else {
-    <p class="text-slate-600">Loading your notes…</p>
+    <p class="text-slate-600">Loading notes…</p>
   }
-  <a routerLink="/profile" class="underline">Profile</a>
+  @if (signedIn) {
+    <a routerLink="/profile" class="underline">Profile</a>
+  } @else if (session.resolved()) {
+    <a routerLink="/sign-in" class="underline">Sign in</a>
+  }
 </main>

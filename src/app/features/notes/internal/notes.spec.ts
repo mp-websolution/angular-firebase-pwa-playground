@@ -34,12 +34,112 @@ describe('Notes', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
   });
 
-  it('sends signed-out visitors to sign-in', async () => {
+  it("shows signed-out visitors everyone's notes, with no way to add, change or filter them", async () => {
+    await renderApp('/', {
+      providers: [
+        {
+          provide: NotesData,
+          useValue: new FakeNotesData({ notes: [{ text: 'Buy milk', mine: false }] }),
+        },
+      ],
+    });
+
+    const note = await screen.findByRole('listitem', { name: 'Buy milk' });
+
+    expect(note).toBeVisible();
+    expect(within(note).queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('New note')).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Profile' })).not.toBeInTheDocument();
+  });
+
+  it('links signed-out visitors to sign-in', async () => {
     await renderApp('/', {
       providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
     });
 
+    await userEvent.setup().click(await screen.findByRole('link', { name: 'Sign in' }));
+
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
+  });
+
+  it('offers no sign-in link while the session is being restored', async () => {
+    const session = new FakeAuthSession({ restoring: 'ada@example.com' });
+    await renderApp('/', {
+      session,
+      providers: [{ provide: NotesData, useValue: new FakeNotesData() }],
+    });
+    await screen.findByRole('heading', { level: 1, name: 'Notes' });
+
+    expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
+    session.finishRestoring();
+    expect(await screen.findByRole('link', { name: 'Profile' })).toBeVisible();
+  });
+
+  it('offers to change or delete only your own notes', async () => {
+    await renderApp('/', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [
+        {
+          provide: NotesData,
+          useValue: new FakeNotesData({ notes: [{ text: 'Call Ada', mine: false }, 'Buy milk'] }),
+        },
+      ],
+    });
+
+    const graces = await screen.findByRole('listitem', { name: 'Call Ada' });
+    const mine = screen.getByRole('listitem', { name: 'Buy milk' });
+
+    expect(within(graces).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(mine).getByRole('button', { name: 'Edit' })).toBeVisible();
+    expect(within(mine).getByRole('button', { name: 'Delete' })).toBeVisible();
+  });
+
+  it('shows only your own notes once switched to mine, and everyone again once back to all', async () => {
+    await renderApp('/', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [
+        {
+          provide: NotesData,
+          useValue: new FakeNotesData({ notes: [{ text: 'Call Ada', mine: false }, 'Buy milk'] }),
+        },
+      ],
+    });
+    const user = userEvent.setup();
+    const graces = await screen.findByRole('listitem', { name: 'Call Ada' });
+    expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
+
+    await user.click(screen.getByRole('radio', { name: 'Mine' }));
+
+    await waitFor(() => expect(graces).not.toBeInTheDocument());
+    expect(screen.getByRole('listitem', { name: 'Buy milk' })).toBeVisible();
+
+    await user.click(screen.getByRole('radio', { name: 'All' }));
+
+    expect(await screen.findByRole('listitem', { name: 'Call Ada' })).toBeVisible();
+  });
+
+  it('says it is loading the notes, then marks the list busy while a filter switch loads', async () => {
+    const notes = new FakeNotesData({
+      notes: [{ text: 'Call Ada', mine: false }, 'Buy milk'],
+      slowLoading: true,
+    });
+    await renderApp('/', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      providers: [{ provide: NotesData, useValue: notes }],
+    });
+    expect(await screen.findByText('Loading notes…')).toBeVisible();
+    notes.finishLoading();
+    const list = await screen.findByRole('list');
+    expect(list).toHaveAttribute('aria-busy', 'false');
+
+    await userEvent.setup().click(screen.getByRole('radio', { name: 'Mine' }));
+
+    await waitFor(() => expect(list).toHaveAttribute('aria-busy', 'true'));
+    expect(within(list).getByRole('listitem', { name: 'Call Ada' })).toBeVisible();
+    notes.finishLoading();
+    await waitFor(() => expect(list).toHaveAttribute('aria-busy', 'false'));
+    expect(within(list).queryByRole('listitem', { name: 'Call Ada' })).not.toBeInTheDocument();
   });
 
   it('lists the notes, newest first', async () => {
@@ -74,7 +174,7 @@ describe('Notes', () => {
     });
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      "Your notes couldn't be loaded. Reload the page to try again.",
+      "The notes couldn't be loaded. Reload the page to try again.",
     );
   });
 
