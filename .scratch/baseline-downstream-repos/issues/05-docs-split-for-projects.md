@@ -6,7 +6,7 @@
 
 **Blocked by:** 04 (Projects and Baseline releases defined)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
 - [ ] The Baseline manual holds today's README content; the README is a short intro linking to it
 - [ ] Setup creates a Project by clone + `upstream` remote and warns against "Use this template"
