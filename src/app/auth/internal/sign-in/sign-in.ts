@@ -5,7 +5,7 @@ import { messageOf } from '../../auth-session-error';
 import { CredentialsForm } from '../credentials-form';
 import { Credentials } from '../../credentials.model';
 import { injectReturnUrl } from '../return-url';
-import { SIGN_IN_METHODS } from '../sign-in-methods';
+import { SIGN_IN_METHODS } from '../../sign-in-methods-token';
 
 @Component({
   selector: 'app-sign-in',

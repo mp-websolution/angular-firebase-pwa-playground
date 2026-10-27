@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
-import { Routes } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
+import { Router, Routes } from '@angular/router';
 import { screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { renderApp } from '../testing/render-app';
 import { signedInGuard } from './auth-guards';
 import { Credentials } from './credentials.model';
 import { FakeAuthSession } from '../testing/fake-auth-session';
-import { SIGN_IN_METHODS } from './internal/sign-in-methods';
+import { SIGN_IN_METHODS } from './sign-in-methods-token';
 
 @Component({ template: '<h1>Deep page</h1>' })
 class DeepPage {}
@@ -95,5 +96,6 @@ describe('auth guards', () => {
     });
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Start page' })).toBeVisible();
+    expect(TestBed.inject(Router).url).toBe('/');
   });
 });
