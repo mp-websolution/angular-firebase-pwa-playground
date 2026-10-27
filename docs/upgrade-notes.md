@@ -86,7 +86,7 @@ A Feature is now the start page at `/`, set by the required `startPage` in the F
 **Project action:**
 
 - In `src/app/features/features.routes.ts`, export `startPage`, `{ title, loadChildren }` without a `path`, pointing at the Feature that should own `/`, and take that Feature's entry out of `featureRoutes`. Give its children paths that no Baseline page or other Feature uses.
-- Home is gone, and with it the Features navigation: link `/profile` from a Feature where people need it, and other Features as literals.
+- Home is gone, and with it the Features navigation and the only page that showed the app's name: link `/profile` from a Feature where people need it, and other Features as literals. A Feature that shows the app's name reads it from `src/app-identity/app-identity.ts`.
 - Sign-out is on the profile page.
 
 ### baseline-v1.0.0

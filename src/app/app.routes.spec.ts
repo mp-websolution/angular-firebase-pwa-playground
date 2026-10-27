@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { screen } from '@testing-library/angular';
 import { FakeAuthSession } from './testing/fake-auth-session';
 import { renderApp } from './testing/render-app';
@@ -37,9 +39,10 @@ describe('app routes', () => {
     },
   );
 
-  it('opens the start page for a URL nothing matches', async () => {
+  it('redirects a URL nothing matches to the start page at /', async () => {
     await renderApp('/no-such-page', { startPage: standInStartPage });
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Start page' })).toBeVisible();
+    expect(TestBed.inject(Router).url).toBe('/');
   });
 });

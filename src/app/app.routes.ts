@@ -8,13 +8,15 @@ export interface StartPage {
   loadChildren: LoadChildren;
 }
 
-/** The app's routes with `start` at `/`; tests pass a stand-in start page. */
+/**
+ * The app's routes with `start` at `/`; tests pass a stand-in start page. The start page goes last, so
+ * every other path wins a clash and its chunk loads only when nothing else matched (ADR 0009).
+ */
 export function routesWithStartPage(start: StartPage): Routes {
   return [
     ...profileRoutes,
     ...authRoutes,
     ...featureRoutes,
-    // Last, so every other path wins a clash and its chunk loads only when nothing else matched (ADR 0009).
     { path: '', ...start },
     { path: '**', redirectTo: '' },
   ];
