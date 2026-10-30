@@ -12,15 +12,19 @@ function newEmail() {
   return `session-${crypto.randomUUID()}@example.com`;
 }
 
-function signInWithGoogleAccountAsPopupWould(account: {
+function signInWithGoogleAccountAsPopupWould({
+  avatarUrl,
+  ...account
+}: {
   email: string;
-  picture?: string;
+  avatarUrl?: string;
   sub?: string;
 }) {
   const idTokenAuthEmulatorAccepts = JSON.stringify({
     sub: crypto.randomUUID(),
     email_verified: true,
     ...account,
+    picture: avatarUrl,
   });
   return signInWithCredential(
     TestBed.inject(FIREBASE_AUTH),
@@ -85,11 +89,11 @@ describe('AuthSession against the Auth emulator', () => {
 
   it("gives a Google user their Google account's photo as their avatar", async () => {
     const session = TestBed.inject(AuthSession);
-    const picture = 'https://lh3.googleusercontent.com/a/ada-photo';
+    const avatarUrl = 'https://lh3.googleusercontent.com/a/ada-photo';
 
-    await signInWithGoogleAccountAsPopupWould({ email: newEmail(), picture });
+    await signInWithGoogleAccountAsPopupWould({ email: newEmail(), avatarUrl });
 
-    await vi.waitFor(() => expect(session.user()).toMatchObject({ avatarUrl: picture }));
+    await vi.waitFor(() => expect(session.user()).toMatchObject({ avatarUrl }));
   });
 
   it('follows a change to the Google photo when the user signs in again', async () => {
@@ -97,14 +101,14 @@ describe('AuthSession against the Auth emulator', () => {
     const account = { email: newEmail(), sub: crypto.randomUUID() };
     await signInWithGoogleAccountAsPopupWould({
       ...account,
-      picture: 'https://lh3.googleusercontent.com/a/old',
+      avatarUrl: 'https://lh3.googleusercontent.com/a/old',
     });
     await signOutAsAnotherTabWould();
-    const newPicture = 'https://lh3.googleusercontent.com/a/new';
+    const newAvatarUrl = 'https://lh3.googleusercontent.com/a/new';
 
-    await signInWithGoogleAccountAsPopupWould({ ...account, picture: newPicture });
+    await signInWithGoogleAccountAsPopupWould({ ...account, avatarUrl: newAvatarUrl });
 
-    await vi.waitFor(() => expect(session.user()).toMatchObject({ avatarUrl: newPicture }));
+    await vi.waitFor(() => expect(session.user()).toMatchObject({ avatarUrl: newAvatarUrl }));
   });
 
   it('gives a Google user without a photo no avatar', async () => {
