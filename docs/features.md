@@ -31,7 +31,7 @@ Removing those 3 leaves the Baseline building and its tests green while at least
    - `internal/testing/` holds an in-memory fake of that service for component tests.
    - Link the Baseline's pages and other Features as literals, e.g. `routerLink="/profile"` (where sign-out is) and `routerLink="/"` for the start page. There is no home page or navigation shell.
 2. Add an entry to `featureRoutes` in `src/app/features/features.routes.ts` with a `path`, `loadChildren` and a `title`, which sets the page title. Or make it the start page: point `startPage` at it, with `loadChildren` and a `title` but no `path`, and move the previous start page into `featureRoutes` with a path, or remove it. The start page is mounted after every other route, so a Baseline path or another Feature's path always wins a clash: give its children paths of their own (ADR 0009).
-3. Store per-user data under `users/{uid}/<collection>`, open to its owner only, and shared data in a top-level `<collection>` whose documents name their author, as notes' `authorUid` does. Write the rules in `<name>.firestore.rules` at the top of the Feature's folder (and `<name>.storage.rules` for files). See "Rules fragments" below.
+3. Store per-user data under `users/{uid}/<collection>`, open to its owner only, and shared data in a top-level `<collection>` whose documents name their author, as notes' `authorUid` does. Write the rules in `<name>.firestore.rules` at the top of the Feature's folder. See "Rules fragments" below.
 4. Add `scripts/seed/feature-<name>.mjs` for demo data.
 5. Write the tests (see `docs/agents/testing.md`):
    - Component tests render through `renderApp` and pass the fake with `providers: [{ provide: NotesData, useValue: new FakeNotesData(...) }]`. `renderApp` has no default for a Feature's service, so the Baseline's tests never depend on one.
@@ -39,10 +39,10 @@ Removing those 3 leaves the Baseline building and its tests green while at least
 
 ## Rules fragments
 
-Firestore and Storage rules have no include mechanism, so `npm run rules:assemble` (`scripts/assemble-rules.mjs`) builds the deployed rules. For each service it takes the Baseline's `firestore.rules` or `storage.rules` and replaces its marker line with every Feature's fragment, in Feature-name order, each between `Feature: <name>` comments. The result goes to `assembled-rules/`, which is gitignored and is what `firebase.json` points to. `npm start`, `npm run test:integration` and the deploy assemble the rules first, so never edit `assembled-rules/`.
+Firestore rules have no include mechanism, so `npm run rules:assemble` (`scripts/assemble-rules.mjs`) builds the deployed rules. It takes the Baseline's `firestore.rules` and replaces its marker line with every Feature's fragment, in Feature-name order, each between `Feature: <name>` comments. The result goes to `assembled-rules/`, which is gitignored and is what `firebase.json` points to. `npm start`, `npm run test:integration` and the deploy assemble the rules first, so never edit `assembled-rules/`.
 
-- A fragment holds `match` blocks for the inside of the documents match (Firestore) or the bucket match (Storage), written without indentation. It can call the Baseline's rule functions, e.g. `isSignedInAsOwner` and `isTrimmedTextOfLength`.
-- Name it `<name>.firestore.rules` or `<name>.storage.rules`, at the top of the Feature's folder, next to `<name>.routes.ts`. A Storage fragment is optional.
+- A fragment holds `match` blocks for the inside of the documents match, written without indentation. It can call the Baseline's rule functions, e.g. `isSignedInAsOwner` and `isTrimmedTextOfLength`.
+- Name it `<name>.firestore.rules`, at the top of the Feature's folder, next to `<name>.routes.ts`.
 - The assembly fails on a fragment named after anything but its folder, in a folder without a routes file, or of a Feature whose name isn't lowercase letters and hyphens.
 
 ## Keep Firestore behind the lazy route

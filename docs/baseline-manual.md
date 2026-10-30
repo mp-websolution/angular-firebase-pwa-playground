@@ -8,7 +8,7 @@ This manual is a Baseline file: only the Template changes it, and a Project read
 
 The repo is a **Playground** (terms from `CONTEXT.md`): the **Baseline** plus any **Features**.
 
-- The **Baseline** is the minimal shell every Project inherits: sign-in (email/password, Google or both, as the Project picks), the user profile with avatar, Firebase wiring, PWA behaviour (offline shell, update prompt), tests, CI and the deploy pipeline. It never depends on a Feature.
+- The **Baseline** is the minimal shell every Project inherits: sign-in (email/password, Google or both, as the Project picks), the user profile, Firebase wiring, PWA behaviour (offline shell, update prompt), tests, CI and the deploy pipeline. It never depends on a Feature.
 - A **Feature** is a self-contained piece of the app beside the Baseline, in `src/app/features/`. The notes page is the example, and the Template's start page at `/`. Deleting a Feature leaves the Baseline intact. In the Playground a Feature is usually thrown away once tried; in a Project the Features are the product.
 - As the **Template**, the repo is the source of every **Project**: see [Setup](#setup-from-zero-to-live). Changes flow one way, from the Template to Projects through **Baseline releases** ([ADR 0008](adr/0008-projects-keep-merging-baseline-releases.md), [upgrade notes](upgrade-notes.md)). A Project merges each one as described in [Syncing Baseline releases](syncing-baseline-releases.md).
 
@@ -30,8 +30,8 @@ No Firebase project or credentials are needed: development runs against the `dem
 
 | Command | What it does |
 |---|---|
-| `npm start` | Assembles the rules, starts the Auth, Firestore and Storage emulators with the Emulator UI (http://localhost:4000), seeds them, then serves the app (http://localhost:4200). |
-| `npm run rules:assemble` | Assembles the deployed rules into `assembled-rules/` (gitignored): `firestore.rules` and `storage.rules` with every Feature's fragments inserted (see [Features](#features)). `npm start`, `npm run test:integration` and the deploy call it. |
+| `npm start` | Assembles the rules, starts the Auth and Firestore emulators with the Emulator UI (http://localhost:4000), seeds them, then serves the app (http://localhost:4200). |
+| `npm run rules:assemble` | Assembles the deployed rules into `assembled-rules/` (gitignored): `firestore.rules` with every Feature's fragments inserted (see [Features](#features)). `npm start`, `npm run test:integration` and the deploy call it. |
 | `npm run seed` | Runs every seeder in `scripts/seed/`. Only works inside the emulators; `npm start` calls it. |
 | `npm test` | Component tests. No emulators needed. |
 | `npm run test:sheriff` | Sheriff tests (`sheriff-tests/`): lint fixture files with the real ESLint config and check that Sheriff's module boundaries (ADRs 0005–0007) hold. No emulators needed. |
@@ -58,7 +58,7 @@ Production builds need the production project's web config in `src/environments/
 `docs/features.md` has the full steps and explains why a Feature's Firestore code stays behind its lazy route. In short, every Feature lives in `src/app/features/`, and everything else in `src/app/` is Baseline. A Feature owns 3 things, all modelled on the notes Feature:
 
 1. Its route entry in `src/app/features/features.routes.ts`, whose `title` is the page title: `startPage` for the one Feature at `/`, which is required, or an entry in `featureRoutes`. Features link `/profile` and `/` as literals: the Baseline has no home page (ADR 0009).
-2. Its folder, e.g. `src/app/features/notes/`, including its rules fragments, e.g. `notes.firestore.rules` (and `<name>.storage.rules` if needed). `npm run rules:assemble` inserts them into the Baseline's `firestore.rules` and `storage.rules`.
+2. Its folder, e.g. `src/app/features/notes/`, including its rules fragments, e.g. `notes.firestore.rules`. `npm run rules:assemble` inserts them into the Baseline's `firestore.rules`.
 3. Its seeder, e.g. `scripts/seed/feature-notes.mjs`.
 
 **Add** one by copying those 3 from the notes Feature and renaming. **Remove** one by deleting them, keeping at least one Feature and pointing `startPage` at another Feature first if it was the start page, then run `npm run lint`, `npm test`, `npm run test:integration` and `npm run build`.
@@ -111,10 +111,9 @@ In the [Firebase console](https://console.firebase.google.com):
 
 1. Create a project. Google Analytics isn't used.
 2. **Firestore Database** → Create database, location `europe-west3` (Frankfurt), production mode. The deploy replaces its rules with the assembled `assembled-rules/firestore.rules`.
-3. **Storage** → Get started, location `europe-west3`. New Storage buckets need the pay-as-you-go Blaze plan; set a budget alert in Google Cloud billing. The deploy replaces its rules with the assembled `assembled-rules/storage.rules`.
-4. Project settings → Your apps → add a **Web app** (no Firebase Hosting). Its config object is the web config for [section 4](#4-web-config).
+3. Project settings → Your apps → add a **Web app** (no Firebase Hosting). Its config object is the web config for [section 4](#4-web-config).
 
-The location of Firestore and Storage can't be changed later.
+Firestore's location can't be changed later. The Baseline uses only Auth and Firestore, so the project runs on the free Spark plan. A Project that needs to store files wires up Cloud Storage itself, in its own code.
 
 ### 3. Authentication
 
@@ -164,13 +163,13 @@ Settings → Rules → Rulesets. Nobody pushes to `main` directly, admins includ
 
 Merge a PR to `main` (e.g. the web config from step 4). The **Deploy** workflow runs the checks, deploys the rules, then uploads the app. Then:
 
-1. Open the production domain, sign in with each listed method (create an account first for `'password'`) and upload an avatar.
+1. Open the production domain, sign in with each listed method (create an account first for `'password'`) and change the display name on the profile page.
 2. Confirm the service-account roles in [Deploy](#deploy).
 3. Check that the app installs as a PWA (Chrome's address bar offers it).
 
 ## Deploy
 
-`.github/workflows/deploy.yml` deploys to production on every merge to `main`. To deploy a release tag by hand (e.g. from a `release/*` branch, or to roll back), run the **Deploy** workflow from `main` in the Actions tab and enter the tag (`vX.Y.Z`). Each run re-runs the PR checks (`.github/workflows/checks.yml`), deploys the Firestore and Storage rules, then uploads the build over FTP, all from the same commit. Deploys run one at a time; while one runs, only the newest waiting run is kept, so a waiting rollback is cancelled if a merge to `main` comes after it.
+`.github/workflows/deploy.yml` deploys to production on every merge to `main`. To deploy a release tag by hand (e.g. from a `release/*` branch, or to roll back), run the **Deploy** workflow from `main` in the Actions tab and enter the tag (`vX.Y.Z`). Each run re-runs the PR checks (`.github/workflows/checks.yml`), deploys the Firestore rules, then uploads the build over FTP, all from the same commit. Deploys run one at a time; while one runs, only the newest waiting run is kept, so a waiting rollback is cancelled if a merge to `main` comes after it.
 
 Before the first deploy:
 

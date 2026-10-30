@@ -1,6 +1,6 @@
 # FTP deploy to existing webspace instead of Firebase Hosting
 
-The frontend is deployed via FTP (`SamKirkland/FTP-Deploy-Action`) to webspace that is already paid for together with the domain and email, instead of Firebase Hosting. Firebase serves as backend only (Auth, Firestore, Storage); rules and indexes are deployed separately with `firebase deploy`.
+The frontend is deployed via FTP (`SamKirkland/FTP-Deploy-Action`) to webspace that is already paid for together with the domain and email, instead of Firebase Hosting. Firebase serves as backend only (Auth, Firestore); rules and indexes are deployed separately with `firebase deploy`.
 
 ## Consequences
 
