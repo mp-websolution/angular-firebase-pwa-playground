@@ -25,7 +25,15 @@ export class EditProfile {
   protected readonly profileData = inject(ProfileData);
   readonly #session = inject(AuthSession);
 
-  protected readonly photoUrl = computed(() => this.#session.user()?.photoUrl);
+  readonly #brokenAvatarUrl = signal<string | null>(null);
+  protected readonly avatarUrl = computed(() => {
+    const url = this.#session.user()?.avatarUrl;
+    return url === this.#brokenAvatarUrl() ? null : url;
+  });
+
+  protected showPlaceholderInsteadOf(brokenUrl: string): void {
+    this.#brokenAvatarUrl.set(brokenUrl);
+  }
 
   readonly #profileModel = linkedSignal<string, ProfileModel>({
     source: () => this.profileData.profile()?.displayName ?? '',

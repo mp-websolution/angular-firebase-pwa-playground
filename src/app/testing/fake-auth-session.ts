@@ -23,7 +23,7 @@ export interface FakeAuthSessionOptions {
 
 interface GoogleAccount {
   email: string;
-  /** The account's photo; without one, the user has none. */
+  /** The account's photo, which becomes the user's avatar; without one, the user has none. */
   photoUrl?: string;
 }
 
@@ -109,7 +109,7 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
       throw new AuthSessionError('popup-closed');
     }
     const { email, photoUrl = null } = this.#googlePopup;
-    this.#user.set({ ...fakeUserWithEmail(email), photoUrl });
+    this.#user.set({ ...fakeUserWithEmail(email), avatarUrl: photoUrl });
   }
 
   /** Stands in for loading the start page afresh after sign-out; `renderApp` navigates to `/`. */
@@ -125,5 +125,5 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
 }
 
 function fakeUserWithEmail(email: string): SessionUser {
-  return { uid: `uid-${email}`, email, displayName: null, photoUrl: null };
+  return { uid: `uid-${email}`, email, displayName: null, avatarUrl: null };
 }
