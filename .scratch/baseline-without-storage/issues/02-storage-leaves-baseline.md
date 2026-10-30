@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (`ProfileData` uses the Storage token until then)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
 ## What to build
 

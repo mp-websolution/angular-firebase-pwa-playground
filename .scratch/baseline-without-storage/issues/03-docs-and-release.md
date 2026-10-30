@@ -4,7 +4,7 @@
 
 **Blocked by:** none (docs only)
 
-**Status:** ready-for-agent
+**Status:** agent-done
 
 ## What to build
 
