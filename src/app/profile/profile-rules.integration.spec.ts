@@ -72,12 +72,6 @@ describe('Firestore rules for profiles', () => {
     await assertSucceeds(updateDoc(profileAs(ada, ada), { displayName: 'x'.repeat(50) }));
   });
 
-  it('rejects an avatar URL, which a profile no longer has', async () => {
-    const avatarUrl = 'https://example.com/avatars/ada.png';
-    await assertFails(setDoc(profileAs(grace, grace), { displayName: 'Grace', avatarUrl }));
-    await assertFails(updateDoc(profileAs(ada, ada), { avatarUrl }));
-  });
-
   it('rejects fields a profile does not have', async () => {
     await assertFails(setDoc(profileAs(grace, grace), { displayName: 'Grace', admin: true }));
     await assertFails(updateDoc(profileAs(ada, ada), { admin: true }));

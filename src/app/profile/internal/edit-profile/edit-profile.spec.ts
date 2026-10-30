@@ -258,7 +258,7 @@ describe('EditProfile', () => {
     expect(photo).toHaveAttribute('referrerpolicy', 'no-referrer');
   });
 
-  it('shows no image to a Google user whose account has no photo', async () => {
+  it('shows the placeholder circle and no photo to a Google user whose account has none', async () => {
     await renderApp('/profile', {
       session: new FakeAuthSession({ googlePopup: { email: 'ada@gmail.com' } }),
       profile: new FakeProfileData({ displayName: 'Ada' }),
@@ -268,28 +268,27 @@ describe('EditProfile', () => {
       .setup()
       .click(await screen.findByRole('button', { name: 'Sign in with Google' }));
 
-    expect(await screen.findByLabelText('Display name')).toBeVisible();
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(await screen.findByRole('img', { name: 'No photo' })).toBeVisible();
+    expect(screen.queryByRole('img', { name: 'Your photo' })).not.toBeInTheDocument();
   });
 
-  it('shows no image to an email and password user', async () => {
+  it('shows the placeholder circle and no photo to an email and password user', async () => {
     await renderApp('/profile', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({ displayName: 'Ada' }),
     });
 
-    expect(await screen.findByLabelText('Display name')).toBeVisible();
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(await screen.findByRole('img', { name: 'No photo' })).toBeVisible();
+    expect(screen.queryByRole('img', { name: 'Your photo' })).not.toBeInTheDocument();
   });
 
-  it('offers no avatar upload', async () => {
-    await renderApp('/profile', {
+  it('offers no file to upload', async () => {
+    const { container } = await renderApp('/profile', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData(),
     });
 
     expect(await screen.findByLabelText('Display name')).toBeVisible();
-    expect(screen.queryByLabelText(/avatar|photo/i)).not.toBeInTheDocument();
-    expect(screen.queryByText('Save a display name first.')).not.toBeInTheDocument();
+    expect(container.querySelector('input[type="file"]')).not.toBeInTheDocument();
   });
 });

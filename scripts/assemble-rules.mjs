@@ -1,29 +1,23 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 
-const services = ['firestore'];
 const marker = '// Feature rules: inserted here by scripts/assemble-rules.mjs';
 const featuresFolder = 'src/app/features';
 const featureName = /^[a-z]+(-[a-z]+)*$/;
 const outputFolder = 'assembled-rules';
 
 const features = await featuresInNameOrder();
-const rulesToAssemble = [];
-for (const service of services) {
-  const source = await sourceWithOneMarkerOrRefuse(service);
-  rulesToAssemble.push({ service, source, fragments: await fragmentsOrRefuse(features, service) });
-}
+const source = await sourceWithOneMarkerOrRefuse();
+const fragments = await fragmentsOrRefuse(features);
 await mkdir(outputFolder, { recursive: true });
-for (const { service, source, fragments } of rulesToAssemble) {
-  await writeFile(`${outputFolder}/${service}.rules`, withFragmentsAtMarker(source, fragments));
-  const names = fragments.map(({ feature }) => feature);
-  console.log(`Assembled ${outputFolder}/${service}.rules: Baseline + [${names.join(', ')}].`);
-}
+await writeFile(`${outputFolder}/firestore.rules`, withFragmentsAtMarker(source, fragments));
+const names = fragments.map(({ feature }) => feature);
+console.log(`Assembled ${outputFolder}/firestore.rules: Baseline + [${names.join(', ')}].`);
 
-async function sourceWithOneMarkerOrRefuse(service) {
-  const source = await readFile(`${service}.rules`, 'utf8');
+async function sourceWithOneMarkerOrRefuse() {
+  const source = await readFile('firestore.rules', 'utf8');
   const markerLines = source.split('\n').filter((line) => line.trim() === marker);
   if (markerLines.length !== 1) {
-    refuse(`${service}.rules needs exactly one line "${marker}".`);
+    refuse(`firestore.rules needs exactly one line "${marker}".`);
   }
   return source;
 }
@@ -36,13 +30,13 @@ async function featuresInNameOrder() {
     .sort();
 }
 
-async function fragmentsOrRefuse(features, service) {
+async function fragmentsOrRefuse(features) {
   const fragments = [];
   for (const feature of features) {
     const folder = `${featuresFolder}/${feature}`;
     const files = await readdir(folder);
-    const fragment = `${feature}.${service}.rules`;
-    const misnamed = files.find((file) => file.endsWith(`.${service}.rules`) && file !== fragment);
+    const fragment = `${feature}.firestore.rules`;
+    const misnamed = files.find((file) => file.endsWith('.firestore.rules') && file !== fragment);
     if (misnamed) {
       refuse(`${folder}/${misnamed} is not named after its Feature: rename it to ${fragment}.`);
     }

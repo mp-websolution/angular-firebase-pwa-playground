@@ -12,15 +12,15 @@ function newEmail() {
   return `session-${crypto.randomUUID()}@example.com`;
 }
 
-function signInWithGoogleAccountAsThePopupWould(account: { email: string; picture?: string }) {
-  const idTokenTheAuthEmulatorAccepts = JSON.stringify({
+function signInWithGoogleAccountAsPopupWould(account: { email: string; picture?: string }) {
+  const idTokenAuthEmulatorAccepts = JSON.stringify({
     sub: crypto.randomUUID(),
     email_verified: true,
     ...account,
   });
   return signInWithCredential(
     TestBed.inject(FIREBASE_AUTH),
-    GoogleAuthProvider.credential(idTokenTheAuthEmulatorAccepts),
+    GoogleAuthProvider.credential(idTokenAuthEmulatorAccepts),
   );
 }
 
@@ -83,7 +83,7 @@ describe('AuthSession against the Auth emulator', () => {
     const session = TestBed.inject(AuthSession);
     const picture = 'https://lh3.googleusercontent.com/a/ada-photo';
 
-    await signInWithGoogleAccountAsThePopupWould({ email: newEmail(), picture });
+    await signInWithGoogleAccountAsPopupWould({ email: newEmail(), picture });
 
     await vi.waitFor(() => expect(session.user()).toMatchObject({ photoUrl: picture }));
   });
@@ -92,7 +92,7 @@ describe('AuthSession against the Auth emulator', () => {
     const session = TestBed.inject(AuthSession);
     const email = newEmail();
 
-    await signInWithGoogleAccountAsThePopupWould({ email });
+    await signInWithGoogleAccountAsPopupWould({ email });
 
     await vi.waitFor(() => expect(session.user()).toMatchObject({ email, photoUrl: null }));
   });

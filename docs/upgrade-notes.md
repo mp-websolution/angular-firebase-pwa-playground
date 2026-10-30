@@ -87,6 +87,7 @@ The Baseline no longer uses Cloud Storage, so a Project's Firebase project needs
 
 - Remove any use of the `FIREBASE_STORAGE` token, `ProfileData.uploadAvatar()` or the profile's `avatarUrl`. A Feature's `<name>.storage.rules` is no longer assembled or deployed: a Project that stores files wires up Storage itself.
 - In `src/environments/environment.ts`, remove `storageBucket` (optional: the Baseline ignores it).
+- In `package.json`, `test:integration` starts only the Auth and Firestore emulators (`--only auth,firestore`): take the Baseline's script, keeping any change of the Project's own.
 - Code that builds a `SessionUser`, e.g. a Feature's tests, adds `photoUrl` (`string | null`).
 
 ### baseline-v2.0.0
