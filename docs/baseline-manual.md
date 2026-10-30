@@ -113,7 +113,7 @@ In the [Firebase console](https://console.firebase.google.com):
 2. **Firestore Database** → Create database, location `europe-west3` (Frankfurt), production mode. The deploy replaces its rules with the assembled `assembled-rules/firestore.rules`.
 3. Project settings → Your apps → add a **Web app** (no Firebase Hosting). Its config object is the web config for [section 4](#4-web-config).
 
-Firestore's location can't be changed later. The Baseline uses only Auth and Firestore, so the project runs on the free Spark plan.
+Firestore's location can't be changed later. The Baseline uses only Auth and Firestore, so the Firebase project runs on the free Spark plan.
 
 ### 3. Authentication
 
