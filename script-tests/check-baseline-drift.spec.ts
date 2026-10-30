@@ -52,6 +52,7 @@ describe('checking for Baseline drift (npm run baseline:check-drift)', () => {
         'scripts/seed/feature-todo.mjs': 'export {};\n',
         'src/app-identity/app-identity.ts': "export const appName = 'Todo';\n",
         'README.md': '# Todo\n',
+        'docs/project/later.md': '# Later\n',
         'package.json': '{ "name": "template", "dependencies": {} }\n',
       },
       'Build the todo Project',
