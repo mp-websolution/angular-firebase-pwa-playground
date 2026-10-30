@@ -1,5 +1,5 @@
 import { ComponentFixture } from '@angular/core/testing';
-import { screen } from '@testing-library/angular';
+import { fireEvent, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { FakeAuthSession } from '../../../testing/fake-auth-session';
 import { renderApp } from '../../../testing/render-app';
@@ -242,7 +242,7 @@ describe('EditProfile', () => {
     );
   });
 
-  it('shows the photo of the Google account the user signed in with', async () => {
+  it('shows the photo of the Google account the user signed in with as their avatar', async () => {
     const photoUrl = 'https://lh3.googleusercontent.com/a/ada-photo';
     await renderApp('/profile', {
       session: new FakeAuthSession({ googlePopup: { email: 'ada@gmail.com', photoUrl } }),
@@ -253,12 +253,32 @@ describe('EditProfile', () => {
       .setup()
       .click(await screen.findByRole('button', { name: 'Sign in with Google' }));
 
-    const photo = await screen.findByRole('img', { name: 'Your photo' });
-    expect(photo).toHaveAttribute('src', photoUrl);
-    expect(photo).toHaveAttribute('referrerpolicy', 'no-referrer');
+    const avatar = await screen.findByRole('img', { name: 'Your avatar' });
+    expect(avatar).toHaveAttribute('src', photoUrl);
+    expect(avatar).toHaveAttribute('referrerpolicy', 'no-referrer');
   });
 
-  it('shows the placeholder circle and no photo to a Google user whose account has none', async () => {
+  it('shows the placeholder circle when the avatar fails to load', async () => {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({
+        googlePopup: {
+          email: 'ada@gmail.com',
+          photoUrl: 'https://lh3.googleusercontent.com/a/gone',
+        },
+      }),
+      profile: new FakeProfileData({ displayName: 'Ada' }),
+    });
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: 'Sign in with Google' }));
+
+    fireEvent.error(await screen.findByRole('img', { name: 'Your avatar' }));
+
+    expect(await screen.findByRole('img', { name: 'No avatar' })).toBeVisible();
+    expect(screen.queryByRole('img', { name: 'Your avatar' })).not.toBeInTheDocument();
+  });
+
+  it('shows the placeholder circle and no avatar to a Google user whose account has none', async () => {
     await renderApp('/profile', {
       session: new FakeAuthSession({ googlePopup: { email: 'ada@gmail.com' } }),
       profile: new FakeProfileData({ displayName: 'Ada' }),
@@ -268,18 +288,18 @@ describe('EditProfile', () => {
       .setup()
       .click(await screen.findByRole('button', { name: 'Sign in with Google' }));
 
-    expect(await screen.findByRole('img', { name: 'No photo' })).toBeVisible();
-    expect(screen.queryByRole('img', { name: 'Your photo' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('img', { name: 'No avatar' })).toBeVisible();
+    expect(screen.queryByRole('img', { name: 'Your avatar' })).not.toBeInTheDocument();
   });
 
-  it('shows the placeholder circle and no photo to an email and password user', async () => {
+  it('shows the placeholder circle and no avatar to an email and password user', async () => {
     await renderApp('/profile', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData({ displayName: 'Ada' }),
     });
 
-    expect(await screen.findByRole('img', { name: 'No photo' })).toBeVisible();
-    expect(screen.queryByRole('img', { name: 'Your photo' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('img', { name: 'No avatar' })).toBeVisible();
+    expect(screen.queryByRole('img', { name: 'Your avatar' })).not.toBeInTheDocument();
   });
 
   it('offers no file to upload', async () => {

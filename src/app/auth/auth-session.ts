@@ -3,6 +3,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import {
   GoogleAuthProvider,
   User,
+  UserInfo,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -102,8 +103,15 @@ function previousUserNoLongerSignedIn(previousUid: string | undefined, user: Use
   return !!previousUid && previousUid !== user?.uid;
 }
 
-function toSessionUser({ uid, email, displayName, photoURL }: User): SessionUser {
-  return { uid, email, displayName, photoUrl: photoURL };
+function toSessionUser({ uid, email, displayName, providerData }: User): SessionUser {
+  return { uid, email, displayName, avatarUrl: googlePhotoAsOfLastSignIn(providerData) };
+}
+
+function googlePhotoAsOfLastSignIn(providerData: UserInfo[]): string | null {
+  return (
+    providerData.find(({ providerId }) => providerId === GoogleAuthProvider.PROVIDER_ID)
+      ?.photoURL ?? null
+  );
 }
 
 const reasonByFirebaseCode: Record<string, AuthFailure> = {

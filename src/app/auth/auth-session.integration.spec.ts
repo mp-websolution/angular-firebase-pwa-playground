@@ -12,7 +12,11 @@ function newEmail() {
   return `session-${crypto.randomUUID()}@example.com`;
 }
 
-function signInWithGoogleAccountAsPopupWould(account: { email: string; picture?: string }) {
+function signInWithGoogleAccountAsPopupWould(account: {
+  email: string;
+  picture?: string;
+  sub?: string;
+}) {
   const idTokenAuthEmulatorAccepts = JSON.stringify({
     sub: crypto.randomUUID(),
     email_verified: true,
@@ -79,30 +83,45 @@ describe('AuthSession against the Auth emulator', () => {
     expect(session.user()).toMatchObject({ email });
   });
 
-  it("gives a Google user their Google account's photo", async () => {
+  it("gives a Google user their Google account's photo as their avatar", async () => {
     const session = TestBed.inject(AuthSession);
     const picture = 'https://lh3.googleusercontent.com/a/ada-photo';
 
     await signInWithGoogleAccountAsPopupWould({ email: newEmail(), picture });
 
-    await vi.waitFor(() => expect(session.user()).toMatchObject({ photoUrl: picture }));
+    await vi.waitFor(() => expect(session.user()).toMatchObject({ avatarUrl: picture }));
   });
 
-  it('gives a Google user without a photo none', async () => {
+  it('follows a change to the Google photo when the user signs in again', async () => {
+    const session = TestBed.inject(AuthSession);
+    const account = { email: newEmail(), sub: crypto.randomUUID() };
+    await signInWithGoogleAccountAsPopupWould({
+      ...account,
+      picture: 'https://lh3.googleusercontent.com/a/old',
+    });
+    await signOutAsAnotherTabWould();
+    const newPicture = 'https://lh3.googleusercontent.com/a/new';
+
+    await signInWithGoogleAccountAsPopupWould({ ...account, picture: newPicture });
+
+    await vi.waitFor(() => expect(session.user()).toMatchObject({ avatarUrl: newPicture }));
+  });
+
+  it('gives a Google user without a photo no avatar', async () => {
     const session = TestBed.inject(AuthSession);
     const email = newEmail();
 
     await signInWithGoogleAccountAsPopupWould({ email });
 
-    await vi.waitFor(() => expect(session.user()).toMatchObject({ email, photoUrl: null }));
+    await vi.waitFor(() => expect(session.user()).toMatchObject({ email, avatarUrl: null }));
   });
 
-  it('gives an email and password user no photo', async () => {
+  it('gives an email and password user no avatar', async () => {
     const session = TestBed.inject(AuthSession);
 
     await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
 
-    expect(session.user()).toMatchObject({ photoUrl: null });
+    expect(session.user()).toMatchObject({ avatarUrl: null });
   });
 
   it('signs in an existing user with email and password', async () => {

@@ -81,14 +81,15 @@ A Project deletes the notes reference Feature once (`docs/features.md`, "What a 
 
 ### baseline-v3.0.0
 
-The Baseline no longer uses Cloud Storage, so a Project's Firebase project needs only Auth and Firestore and runs on the free Spark plan. The profile page drops the avatar upload and shows the user's Google account photo instead, from the session user's new `photoUrl`.
+The Baseline no longer uses Cloud Storage, so a Project's Firebase project needs only Auth and Firestore and runs on the free Spark plan. The profile page drops the avatar upload and shows the user's Google account photo as their avatar instead, from the session user's new `avatarUrl`, or the grey circle without one.
 
 **Project action:**
 
-- Remove any use of the `FIREBASE_STORAGE` token, `ProfileData.uploadAvatar()` or the profile's `avatarUrl`. A Feature's `<name>.storage.rules` is no longer assembled or deployed: a Project that stores files wires up Storage itself.
+- Remove any use of the `FIREBASE_STORAGE` token, `ProfileData.uploadAvatar()`, the profile's `avatarUrl` or `FakeProfileData`'s `avatarUrl` option.
+- Delete any Feature's `<name>.storage.rules`: it is no longer assembled or deployed.
 - In `src/environments/environment.ts`, remove `storageBucket` (optional: the Baseline ignores it).
 - In `package.json`, `test:integration` starts only the Auth and Firestore emulators (`--only auth,firestore`): take the Baseline's script, keeping any change of the Project's own.
-- Code that builds a `SessionUser`, e.g. a Feature's tests, adds `photoUrl` (`string | null`).
+- Code that builds a `SessionUser`, e.g. a Feature's tests, adds `avatarUrl` (`string | null`).
 
 ### baseline-v2.0.0
 
