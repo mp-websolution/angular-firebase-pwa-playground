@@ -79,6 +79,16 @@ A Project deletes the notes reference Feature once (`docs/features.md`, "What a 
 
 ## Releases
 
+### baseline-v3.0.0
+
+The Baseline no longer uses Cloud Storage, so a Project's Firebase project needs only Auth and Firestore and runs on the free Spark plan. The profile page drops the avatar upload and shows the user's Google account photo instead, from the session user's new `photoUrl`.
+
+**Project action:**
+
+- Remove any use of the `FIREBASE_STORAGE` token, `ProfileData.uploadAvatar()` or the profile's `avatarUrl`. A Feature's `<name>.storage.rules` is no longer assembled or deployed: a Project that stores files wires up Storage itself.
+- In `src/environments/environment.ts`, remove `storageBucket` (optional: the Baseline ignores it).
+- Code that builds a `SessionUser`, e.g. a Feature's tests, adds `photoUrl` (`string | null`).
+
 ### baseline-v2.0.0
 
 A Feature is now the start page at `/`, set by the required `startPage` in the Feature route list, and the home page is gone, with sign-out on the profile page and every sign-in, sign-up and sign-out ending at `/` (ADR 0009); a Project also picks its sign-in methods, and `/sign-up` exists only with passwords. Live data covers shared and public data, follows signals in `listenTo` and gains `loading`, and the notes reference Feature is now a public, shared board.
