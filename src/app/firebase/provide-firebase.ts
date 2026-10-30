@@ -9,7 +9,6 @@ import { FirebaseApp, deleteApp, initializeApp } from 'firebase/app';
 import { Auth, connectAuthEmulator, getAuth, signOut } from 'firebase/auth';
 // Type-only: a value import would pull the Firestore SDK into the initial bundle.
 import type { Firestore } from 'firebase/firestore';
-import { FirebaseStorage, connectStorageEmulator, getStorage } from 'firebase/storage';
 import type { FirebaseSettings } from './firebase-settings.model';
 
 const FIREBASE_SETTINGS = new InjectionToken<FirebaseSettings>('FIREBASE_SETTINGS');
@@ -24,16 +23,14 @@ export type LoadFirestore = () => Promise<Firestore>;
 
 export const FIREBASE_AUTH = new InjectionToken<Auth>('FIREBASE_AUTH');
 export const FIRESTORE = new InjectionToken<LoadFirestore>('FIRESTORE');
-export const FIREBASE_STORAGE = new InjectionToken<FirebaseStorage>('FIREBASE_STORAGE');
 
-/** Initialises the Firebase app once and exposes Auth, Firestore and Storage through injection tokens. */
+/** Initialises the Firebase app once and exposes Auth and Firestore through injection tokens. */
 export function provideFirebase(settings: FirebaseSettings): EnvironmentProviders {
   return makeEnvironmentProviders([
     { provide: FIREBASE_SETTINGS, useValue: settings },
     { provide: FIREBASE_APP, useFactory: createApp },
     { provide: FIREBASE_AUTH, useFactory: createAuth },
     { provide: FIRESTORE, useFactory: createFirestoreLoader },
-    { provide: FIREBASE_STORAGE, useFactory: createStorage },
   ]);
 }
 
@@ -97,13 +94,4 @@ function createFirestoreLoader(): LoadFirestore {
     throw error;
   };
   return () => (pendingFirestore ??= load().catch(forgetTheFailureSoTheNextCallRetries));
-}
-
-function createStorage(): FirebaseStorage {
-  const { emulators } = inject(FIREBASE_SETTINGS);
-  const storage = getStorage(inject(FIREBASE_APP));
-  if (emulators) {
-    connectStorageEmulator(storage, emulators.host, emulators.storagePort);
-  }
-  return storage;
 }

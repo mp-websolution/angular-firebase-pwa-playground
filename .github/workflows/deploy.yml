@@ -86,14 +86,14 @@ jobs:
       - name: Assemble the rules from the Baseline and every Feature's fragments, as the integration tests did
         run: npm run rules:assemble
 
-      - name: Deploy the Firestore and Storage rules first, to fail on a setup mistake before anything reaches the webspace
+      - name: Deploy the Firestore rules first, to fail on a setup mistake before anything reaches the webspace
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           PROJECT_ID: ${{ steps.project.outputs.id }}
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-service-account.json"
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$GOOGLE_APPLICATION_CREDENTIALS"
-          npx firebase deploy --only firestore:rules,storage --project "$PROJECT_ID" --non-interactive
+          npx firebase deploy --only firestore:rules --project "$PROJECT_ID" --non-interactive
 
       # Plain FTP, knowingly (ADR 0002).
       - name: Upload the app over FTP
