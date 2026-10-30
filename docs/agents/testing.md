@@ -28,9 +28,6 @@ Each collection's rules get a `*-rules.integration.spec.ts` beside its data-acce
 - Act as a user through `authenticatedContext(uid)` or `unauthenticatedContext()`, using the modular SDK on `context.firestore()`, and check with `assertSucceeds` / `assertFails`.
 - Cover the owner being allowed, other users and signed-out visitors being denied, and every data check in the rules. For shared data, e.g. notes, cover who may read (signed out too, if public), signed-in users creating, only the author changing or deleting, and a forged author rejected.
 
-Storage paths follow the same pattern, e.g. `src/app/profile/avatar-rules.integration.spec.ts`: `initializeTestEnvironment` with `storage: {}`, files at fresh paths per test, and ``context.storage(`gs://${storageBucket}`)`` so the bucket matches the app's. Run these files in Node (`// @vitest-environment node`): in jsdom, Storage's Node build sends jsdom's Blobs, which Node's `fetch` can't, so every upload fails before the rules see it. Integration tests that need TestBed stay in jsdom and swap in Node's `Blob` instead (see `profile-data.integration.spec.ts`).
-
-
 ## Sheriff tests
 
 Prove a module boundary (a Sheriff dependency or encapsulation rule) with a row in `sheriff-tests/sheriff-rules.spec.ts` and run `npm run test:sheriff`. Don't verify it with a throwaway violating import.
