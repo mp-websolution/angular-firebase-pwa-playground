@@ -1,18 +1,14 @@
-import { Service, inject } from '@angular/core';
+import { Service } from '@angular/core';
 import { doc, setDoc } from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { FIREBASE_STORAGE } from '../firebase/provide-firebase';
 import { injectLiveData } from '../live-data/inject-live-data';
 import { Profile } from './profile.model';
 
 @Service()
 export class ProfileData {
-  readonly #storage = inject(FIREBASE_STORAGE);
   readonly #live = injectLiveData({
     userRefFor: (firestore, uid) => doc(firestore, 'profiles', uid),
     map: (snapshot): Profile => ({
       displayName: snapshot.get('displayName') ?? '',
-      avatarUrl: snapshot.get('avatarUrl'),
     }),
   });
 
@@ -22,17 +18,5 @@ export class ProfileData {
 
   async updateDisplayName(displayName: string): Promise<void> {
     this.#live.track(setDoc(await this.#live.ref(), { displayName }, { merge: true }));
-  }
-
-  async uploadAvatar(image: Blob): Promise<void> {
-    const profileRef = await this.#live.ref();
-    const avatarUrl = await this.#storeAvatarWhereOnlyItsOwnerMayWrite(profileRef.id, image);
-    this.#live.track(setDoc(profileRef, { avatarUrl }, { merge: true }));
-  }
-
-  async #storeAvatarWhereOnlyItsOwnerMayWrite(uid: string, image: Blob): Promise<string> {
-    const avatarRef = ref(this.#storage, `avatars/${uid}`);
-    await uploadBytes(avatarRef, image);
-    return getDownloadURL(avatarRef);
   }
 }

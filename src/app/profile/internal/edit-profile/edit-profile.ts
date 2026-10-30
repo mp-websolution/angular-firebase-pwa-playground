@@ -12,10 +12,6 @@ import { AuthSession } from '../../../auth/auth-session';
 import { messageOf } from '../../../auth/auth-session-error';
 import { ProfileData } from '../../profile-data';
 
-// Same limits as the Storage rules. No SVG: it can carry scripts.
-const avatarTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
-const maxAvatarBytes = 2 * 1024 * 1024;
-
 interface ProfileModel {
   displayName: string;
 }
@@ -28,6 +24,8 @@ interface ProfileModel {
 export class EditProfile {
   protected readonly profileData = inject(ProfileData);
   readonly #session = inject(AuthSession);
+
+  protected readonly photoUrl = computed(() => this.#session.user()?.photoUrl);
 
   readonly #profileModel = linkedSignal<string, ProfileModel>({
     source: () => this.profileData.profile()?.displayName ?? '',
@@ -52,35 +50,6 @@ export class EditProfile {
     () => this.#savedDisplayName() === this.#profileModel().displayName,
   );
 
-  protected readonly avatarAccept = avatarTypes.join(',');
-  protected readonly avatarStatus = signal<
-    'idle' | 'wrong-type' | 'too-large' | 'uploading' | 'failed'
-  >('idle');
-
-  protected async uploadAvatar(event: Event): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const image = input.files?.[0];
-    this.#letSameFileBePickedAgain(input);
-    if (!image) {
-      return;
-    }
-    if (!avatarTypes.includes(image.type)) {
-      this.avatarStatus.set('wrong-type');
-      return;
-    }
-    if (image.size > maxAvatarBytes) {
-      this.avatarStatus.set('too-large');
-      return;
-    }
-    this.avatarStatus.set('uploading');
-    try {
-      await this.profileData.uploadAvatar(image);
-      this.avatarStatus.set('idle');
-    } catch {
-      this.avatarStatus.set('failed');
-    }
-  }
-
   protected readonly signingOut = signal(false);
   protected readonly signOutError = signal('');
 
@@ -102,10 +71,6 @@ export class EditProfile {
     this.#showWhatGetsStoredAndFollowTheStoredNameAgain(displayName);
     await this.profileData.updateDisplayName(displayName);
     this.#savedDisplayName.set(displayName);
-  }
-
-  #letSameFileBePickedAgain(input: HTMLInputElement): void {
-    input.value = '';
   }
 
   #showWhatGetsStoredAndFollowTheStoredNameAgain(displayName: string): void {
