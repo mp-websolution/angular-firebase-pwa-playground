@@ -9,7 +9,7 @@ Every file belongs to one of four groups. `scripts/baseline-config.json` lists t
 | Group | Files | Who changes them |
 |---|---|---|
 | Feature files | Every Feature's folder (including its rules fragments), the Feature seeders, the Feature route list. | The Project. A Baseline release changes them only in the notes reference Feature. |
-| Project-owned files | The app identity and sign-in methods, the production environment config, the web app manifest, the page head, the icon sources and rendered icons, the README, the Project glossary, the Project ADR folder, the Project agents file and the Dependabot config. | The Project. The Template ships a starting version and changes it only with an entry here. |
+| Project-owned files | The app identity and sign-in methods, the production environment config, the web app manifest, the page head, the icon sources and rendered icons, the README, the Project docs folder (`docs/project/`: its glossary, ADRs, agents file and any other docs of its own) and the Dependabot config. | The Project. The Template ships a starting version and changes it only with an entry here. |
 | Shared files | The npm manifest and lockfile. | Both. An entry here says how to resolve conflicts. |
 | Baseline files | Everything else. | Only the Template. A Project that changes one has Baseline drift. |
 
@@ -78,6 +78,14 @@ A Project deletes the notes reference Feature once (`docs/features.md`, "What a 
 4. **Read the entry.** If the release changed the notes Feature to show a new way of building Features, its entry says what your own Features should change to match.
 
 ## Releases
+
+### baseline-v3.0.1
+
+The drift check counts every file under `docs/project/` as Project-owned, as the Baseline manual already said, not only its glossary, ADRs and agents file. A Project can keep other docs of its own there, e.g. ideas deferred past its first release.
+
+**Project action:**
+
+None.
 
 ### baseline-v3.0.0
 

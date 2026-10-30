@@ -225,7 +225,7 @@ Paths are from the repo root. The README and everything under `docs/project/` ar
 | `scripts/baseline-config.json` | The file patterns of the groups (everything else is Baseline), the `.scratch/` pattern the drift check ignores, and the Template's repository name. |
 | `CONTEXT-MAP.md`, `CONTEXT.md` | The context map, and the Baseline glossary (**Playground**, **Template**, **Baseline**, **Feature**, **Project**, **Baseline release** and more). |
 | `docs/adr/` | The Baseline ADRs: why each non-obvious choice was made and what was rejected. |
-| `docs/project/` | The Project's glossary (`CONTEXT.md`), ADRs (`adr/`, numbered on their own) and agent instructions (`AGENTS.md`). Empty in the Template. |
+| `docs/project/` | The Project's glossary (`CONTEXT.md`), ADRs (`adr/`, numbered on their own), agent instructions (`AGENTS.md`) and any other docs of its own. Empty in the Template. |
 | `AGENTS.md` | Entry point that tells AI agents how to use the skills in this repo. |
 | `docs/agents/` | What `AGENTS.md` points to: how tests are written, the local issue tracker under `.scratch/`, the triage labels, and how agents use the glossaries and ADRs. |
 | `CODING_STANDARDS.md` | Code style rules that reviews check. They override the `angular-developer` skill where they disagree. |
