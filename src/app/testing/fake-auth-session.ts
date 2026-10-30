@@ -21,7 +21,7 @@ export interface FakeAuthSessionOptions {
   offline?: boolean;
 }
 
-export interface GoogleAccount {
+interface GoogleAccount {
   email: string;
   /** The account's photo; without one, the user has none. */
   photoUrl?: string;

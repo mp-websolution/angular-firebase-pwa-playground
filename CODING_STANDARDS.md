@@ -26,12 +26,12 @@ Names and tests carry the documentation. A comment that explains code marks a mi
 - **Match name length to scope.** Give functions long names in a small scope (`#` methods, module-local functions) and short ones in a large scope (public API). Give variables the inverse: short when they live a few lines, descriptive when they span a module or class. Keep existing public names (`injectLiveData`, `track`, `ref`, the `AuthSession` commands, service signals), so interfaces and fakes stay put, and rename variables only in code you touch anyway. In this example, the public method and the module constant travel far, the private method is called once, and `m` lives for one expression:
 
   ```ts
-  export const maxNoteLength = 1000;
+  export const slowEmulatorTimeout = { timeout: 5_000 };
 
-  create(text: string): Promise<void>
-  #uidWithoutRelisteningWhenSignOutShutsFirestore(): string | undefined
+  signOut(): Promise<void>
+  #reloadSoNoPageKeepsShowingTheirDataAndFirestoreRestarts(): void
 
-  import('./notes/notes.routes').then((m) => m.notesRoutes)
+  import('./internal/edit-profile/edit-profile').then((m) => m.EditProfile)
   ```
 
 - **Drop filler words from names.** Leave out articles (`the`, `a`, `an`) and linking verbs (`is`, `are`, `be`) when the name reads the same without them: `previousUserNoLongerSignedIn`, not `thePreviousUserIsNoLongerSignedIn`. Keep the `is`/`has` prefix of a boolean (`isOffline`), because without it the name reads as a noun. Trim existing names only in code you touch anyway.

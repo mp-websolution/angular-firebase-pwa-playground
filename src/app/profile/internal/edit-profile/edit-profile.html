@@ -5,15 +5,15 @@
       Your profile couldn't be loaded. Reload the page to try again.
     </p>
   } @else if (profileData.profile(); as profile) {
-    @if (photoUrl(); as photoUrl) {
+    @if (photoUrl(); as url) {
       <img
         alt="Your photo"
         class="size-20 rounded-full object-cover"
         referrerpolicy="no-referrer"
-        [src]="photoUrl"
+        [src]="url"
       />
     } @else {
-      <div class="size-20 rounded-full bg-slate-200"></div>
+      <div role="img" aria-label="No photo" class="size-20 rounded-full bg-slate-200"></div>
     }
     <form class="flex flex-col gap-4" [formRoot]="profileForm">
       @let displayNameField = profileForm.displayName();
