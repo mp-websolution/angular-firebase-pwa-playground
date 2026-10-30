@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { FirebaseError } from 'firebase/app';
-import { signOut } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithCredential, signOut } from 'firebase/auth';
 import { environment } from '../../environments/environment';
 import { FIREBASE_AUTH, provideFirebase } from '../firebase/provide-firebase';
 import { RELOAD_PAGE } from '../browser/reload-page';
@@ -10,6 +10,18 @@ import { enablePersistentCacheInJsdom, signOutForTheNextTest } from '../testing/
 
 function newEmail() {
   return `session-${crypto.randomUUID()}@example.com`;
+}
+
+function signInWithGoogleAccountAsThePopupWould(account: { email: string; picture?: string }) {
+  const idTokenTheAuthEmulatorAccepts = JSON.stringify({
+    sub: crypto.randomUUID(),
+    email_verified: true,
+    ...account,
+  });
+  return signInWithCredential(
+    TestBed.inject(FIREBASE_AUTH),
+    GoogleAuthProvider.credential(idTokenTheAuthEmulatorAccepts),
+  );
 }
 
 function signOutAsAnotherTabWould() {
@@ -65,6 +77,32 @@ describe('AuthSession against the Auth emulator', () => {
     await session.signUpWithEmail({ email, password: 'correct-horse' });
 
     expect(session.user()).toMatchObject({ email });
+  });
+
+  it("gives a Google user their Google account's photo", async () => {
+    const session = TestBed.inject(AuthSession);
+    const picture = 'https://lh3.googleusercontent.com/a/ada-photo';
+
+    await signInWithGoogleAccountAsThePopupWould({ email: newEmail(), picture });
+
+    await vi.waitFor(() => expect(session.user()).toMatchObject({ photoUrl: picture }));
+  });
+
+  it('gives a Google user without a photo none', async () => {
+    const session = TestBed.inject(AuthSession);
+    const email = newEmail();
+
+    await signInWithGoogleAccountAsThePopupWould({ email });
+
+    await vi.waitFor(() => expect(session.user()).toMatchObject({ email, photoUrl: null }));
+  });
+
+  it('gives an email and password user no photo', async () => {
+    const session = TestBed.inject(AuthSession);
+
+    await session.signUpWithEmail({ email: newEmail(), password: 'correct-horse' });
+
+    expect(session.user()).toMatchObject({ photoUrl: null });
   });
 
   it('signs in an existing user with email and password', async () => {
