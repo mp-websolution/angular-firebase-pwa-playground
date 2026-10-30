@@ -1,10 +1,6 @@
 import { readdir } from 'node:fs/promises';
 
-const emulatorHosts = [
-  'FIREBASE_AUTH_EMULATOR_HOST',
-  'FIRESTORE_EMULATOR_HOST',
-  'FIREBASE_STORAGE_EMULATOR_HOST',
-];
+const emulatorHosts = ['FIREBASE_AUTH_EMULATOR_HOST', 'FIRESTORE_EMULATOR_HOST'];
 const loopbackHostnames = ['127.0.0.1', 'localhost', '[::1]'];
 const seedDir = new URL('./seed/', import.meta.url);
 

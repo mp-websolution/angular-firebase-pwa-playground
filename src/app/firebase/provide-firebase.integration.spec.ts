@@ -2,18 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { getApp } from 'firebase/app';
 import { Firestore, doc, getDoc, getFirestore, terminate } from 'firebase/firestore';
-import { getDownloadURL, ref } from 'firebase/storage';
 import { environment } from '../../environments/environment';
 import {
   FIREBASE_AUTH,
-  FIREBASE_STORAGE,
   FIRESTORE,
   provideFirebase,
   signOutAndClearCache,
 } from './provide-firebase';
 import { enablePersistentCacheInJsdom, signOutForTheNextTest } from '../testing/emulator-setup';
-
-const { emulators } = environment.firebase;
 
 const emulatorSpecificRuleTrace = expect.stringContaining("false for 'get' @ L");
 
@@ -50,21 +46,6 @@ describe('provideFirebase against the emulators', () => {
         code: 'permission-denied',
         message: emulatorSpecificRuleTrace,
       });
-    });
-
-    it('is answered by the Storage emulator, whose default rules deny reads', async () => {
-      const fetchSpy = vi.spyOn(globalThis, 'fetch');
-      onTestFinished(() => {
-        fetchSpy.mockRestore();
-      });
-
-      await expect(
-        getDownloadURL(ref(TestBed.inject(FIREBASE_STORAGE), 'probe.txt')),
-      ).rejects.toMatchObject({ code: 'storage/unauthorized' });
-      expect(fetchSpy).toHaveBeenCalledWith(
-        expect.stringMatching(`^http://${emulators?.host}:${emulators?.storagePort}/`),
-        expect.anything(),
-      );
     });
 
     it('loads Firestore again on the next call after loading it failed', async () => {

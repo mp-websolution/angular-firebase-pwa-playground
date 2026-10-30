@@ -8,7 +8,7 @@
     "test": "ng test",
     "test:sheriff": "vitest run sheriff-tests",
     "test:scripts": "vitest run script-tests",
-    "test:integration": "npm run rules:assemble && firebase emulators:exec --only auth,firestore,storage \"ng test --configuration=integration --watch=false\"",
+    "test:integration": "npm run rules:assemble && firebase emulators:exec --only auth,firestore \"ng test --configuration=integration --watch=false\"",
     "seed": "node scripts/seed.mjs",
     "rules:assemble": "node scripts/assemble-rules.mjs",
     "baseline:update": "node scripts/update-baseline.mjs",

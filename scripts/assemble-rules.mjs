@@ -1,6 +1,6 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 
-const services = ['firestore', 'storage'];
+const services = ['firestore'];
 const marker = '// Feature rules: inserted here by scripts/assemble-rules.mjs';
 const featuresFolder = 'src/app/features';
 const featureName = /^[a-z]+(-[a-z]+)*$/;

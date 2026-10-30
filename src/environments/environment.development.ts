@@ -8,13 +8,11 @@ export const environment: Environment = {
       apiKey: 'demo-api-key',
       authDomain: 'demo-playground.firebaseapp.com',
       projectId: 'demo-playground',
-      storageBucket: 'demo-playground.appspot.com',
     },
     emulators: {
       host: '127.0.0.1',
       authPort: emulators.auth.port,
       firestorePort: emulators.firestore.port,
-      storagePort: emulators.storage.port,
     },
   },
 };
