@@ -301,14 +301,4 @@ describe('EditProfile', () => {
     expect(await screen.findByRole('img', { name: 'No avatar' })).toBeVisible();
     expect(screen.queryByRole('img', { name: 'Your avatar' })).not.toBeInTheDocument();
   });
-
-  it('offers no file to upload', async () => {
-    const { container } = await renderApp('/profile', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile: new FakeProfileData(),
-    });
-
-    expect(await screen.findByLabelText('Display name')).toBeVisible();
-    expect(container.querySelector('input[type="file"]')).not.toBeInTheDocument();
-  });
 });

@@ -2,6 +2,8 @@
 
 How tests are written here (ADR 0004). For component tests this guide replaces the `angular-developer` skill's `testing-fundamentals.md`, `component-harnesses.md` and `router-testing.md`.
 
+Test what the code does, not what it no longer does. A removal is guarded by the type checker, or by a test of the behaviour that remains (e.g. profile rules accept only `displayName`), not by a test that the removed thing is absent.
+
 ## Component tests
 
 A component test renders the whole app through the router and drives it the way a user would.
