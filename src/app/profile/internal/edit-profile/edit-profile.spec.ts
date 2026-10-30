@@ -243,9 +243,9 @@ describe('EditProfile', () => {
   });
 
   it('shows the photo of the Google account the user signed in with as their avatar', async () => {
-    const photoUrl = 'https://lh3.googleusercontent.com/a/ada-photo';
+    const avatarUrl = 'https://lh3.googleusercontent.com/a/ada-photo';
     await renderApp('/profile', {
-      session: new FakeAuthSession({ googlePopup: { email: 'ada@gmail.com', photoUrl } }),
+      session: new FakeAuthSession({ googlePopup: { email: 'ada@gmail.com', avatarUrl } }),
       profile: new FakeProfileData({ displayName: 'Ada' }),
     });
 
@@ -254,7 +254,7 @@ describe('EditProfile', () => {
       .click(await screen.findByRole('button', { name: 'Sign in with Google' }));
 
     const avatar = await screen.findByRole('img', { name: 'Your avatar' });
-    expect(avatar).toHaveAttribute('src', photoUrl);
+    expect(avatar).toHaveAttribute('src', avatarUrl);
     expect(avatar).toHaveAttribute('referrerpolicy', 'no-referrer');
   });
 
@@ -263,7 +263,7 @@ describe('EditProfile', () => {
       session: new FakeAuthSession({
         googlePopup: {
           email: 'ada@gmail.com',
-          photoUrl: 'https://lh3.googleusercontent.com/a/gone',
+          avatarUrl: 'https://lh3.googleusercontent.com/a/gone',
         },
       }),
       profile: new FakeProfileData({ displayName: 'Ada' }),
