@@ -12,13 +12,19 @@ export interface FakeAuthSessionOptions {
   /** Starts with this email/password account signed in. */
   signedInAs?: string;
   /** What happens in the Google popup: the user picks this account, or closes it (the default). */
-  googlePopup?: { email: string } | 'closed';
+  googlePopup?: GoogleAccount | 'closed';
   /** Starts unresolved, as if restoring this user's session until `finishRestoring()`. */
   restoring?: string;
   /** Sign-out fails as if other tabs kept the cache from being deleted. */
   otherTabsOpen?: boolean;
   /** Email sign-in and sign-up fail as if the server were unreachable, until `reconnect()`. */
   offline?: boolean;
+}
+
+export interface GoogleAccount {
+  email: string;
+  /** The account's photo; without one, the user has none. */
+  photoUrl?: string;
 }
 
 export class FakeAuthSession implements PublicApi<AuthSession> {
@@ -31,7 +37,7 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
   readonly resolved = this.#resolved.asReadonly();
 
   readonly #passwords = new Map<string, string>();
-  readonly #googlePopup: { email: string } | 'closed';
+  readonly #googlePopup: GoogleAccount | 'closed';
   readonly #restoring?: string;
   readonly #otherTabsOpen: boolean;
   #offline: boolean;
@@ -102,7 +108,8 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
     if (this.#googlePopup === 'closed') {
       throw new AuthSessionError('popup-closed');
     }
-    this.#user.set(fakeUserWithEmail(this.#googlePopup.email));
+    const { email, photoUrl = null } = this.#googlePopup;
+    this.#user.set({ ...fakeUserWithEmail(email), photoUrl });
   }
 
   /** Stands in for loading the start page afresh after sign-out; `renderApp` navigates to `/`. */
@@ -118,5 +125,5 @@ export class FakeAuthSession implements PublicApi<AuthSession> {
 }
 
 function fakeUserWithEmail(email: string): SessionUser {
-  return { uid: `uid-${email}`, email, displayName: null };
+  return { uid: `uid-${email}`, email, displayName: null, photoUrl: null };
 }

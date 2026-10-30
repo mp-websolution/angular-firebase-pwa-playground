@@ -102,8 +102,8 @@ function previousUserNoLongerSignedIn(previousUid: string | undefined, user: Use
   return !!previousUid && previousUid !== user?.uid;
 }
 
-function toSessionUser({ uid, email, displayName }: User): SessionUser {
-  return { uid, email, displayName };
+function toSessionUser({ uid, email, displayName, photoURL }: User): SessionUser {
+  return { uid, email, displayName, photoUrl: photoURL };
 }
 
 const reasonByFirebaseCode: Record<string, AuthFailure> = {
