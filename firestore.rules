@@ -22,17 +22,12 @@ service cloud.firestore {
       allow create, update: if isSignedInAsOwner(uid) && isValidProfile(request.resource.data);
 
       function isValidProfile(profile) {
-        return profile.keys().hasOnly(['displayName', 'avatarUrl'])
-          && isValidDisplayName(profile.displayName)
-          && hasNoAvatarUrlOrATextOne(profile);
+        return profile.keys().hasOnly(['displayName'])
+          && isValidDisplayName(profile.displayName);
       }
 
       function isValidDisplayName(displayName) {
         return isTrimmedTextOfLength(displayName, 2, 50);
-      }
-
-      function hasNoAvatarUrlOrATextOne(profile) {
-        return !('avatarUrl' in profile) || profile.avatarUrl is string;
       }
     }
 

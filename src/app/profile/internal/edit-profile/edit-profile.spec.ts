@@ -1,5 +1,5 @@
 import { ComponentFixture } from '@angular/core/testing';
-import { screen, waitForElementToBeRemoved } from '@testing-library/angular';
+import { screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { FakeAuthSession } from '../../../testing/fake-auth-session';
 import { renderApp } from '../../../testing/render-app';
@@ -12,12 +12,6 @@ async function changeDisplayName(displayName: string) {
   await user.type(screen.getByLabelText('Display name'), displayName);
   await user.click(screen.getByRole('button', { name: 'Save' }));
 }
-
-function pickedFile(name: string, type: string, size = 1024) {
-  return new File([new Uint8Array(size)], name, { type });
-}
-
-const userWhoCanSwitchFileDialogToAllFiles = () => userEvent.setup({ applyAccept: false });
 
 function waitForRenderingSinceNothingChangesToFind(fixture: ComponentFixture<unknown>) {
   return fixture.whenStable();
@@ -248,188 +242,54 @@ describe('EditProfile', () => {
     );
   });
 
-  it('shows the avatar', async () => {
+  it('shows the photo of the Google account the user signed in with', async () => {
+    const photoUrl = 'https://lh3.googleusercontent.com/a/ada-photo';
     await renderApp('/profile', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile: new FakeProfileData({
-        displayName: 'Ada',
-        avatarUrl: 'https://storage.example/avatars/ada.png',
-      }),
+      session: new FakeAuthSession({ googlePopup: { email: 'ada@gmail.com', photoUrl } }),
+      profile: new FakeProfileData({ displayName: 'Ada' }),
     });
 
-    expect(await screen.findByRole('img', { name: 'Your avatar' })).toHaveAttribute(
-      'src',
-      'https://storage.example/avatars/ada.png',
-    );
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: 'Sign in with Google' }));
+
+    const photo = await screen.findByRole('img', { name: 'Your photo' });
+    expect(photo).toHaveAttribute('src', photoUrl);
+    expect(photo).toHaveAttribute('referrerpolicy', 'no-referrer');
   });
 
-  it('asks for a display name before an avatar can be uploaded', async () => {
+  it('shows no image to a Google user whose account has no photo', async () => {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ googlePopup: { email: 'ada@gmail.com' } }),
+      profile: new FakeProfileData({ displayName: 'Ada' }),
+    });
+
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: 'Sign in with Google' }));
+
+    expect(await screen.findByLabelText('Display name')).toBeVisible();
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  it('shows no image to an email and password user', async () => {
+    await renderApp('/profile', {
+      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
+      profile: new FakeProfileData({ displayName: 'Ada' }),
+    });
+
+    expect(await screen.findByLabelText('Display name')).toBeVisible();
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  it('offers no avatar upload', async () => {
     await renderApp('/profile', {
       session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
       profile: new FakeProfileData(),
     });
 
-    expect(await screen.findByText('Save a display name first.')).toBeVisible();
-    expect(screen.getByLabelText('Avatar')).toBeDisabled();
-  });
-
-  it('offers the avatar upload once a display name is saved', async () => {
-    await renderApp('/profile', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile: new FakeProfileData(),
-    });
-
-    await changeDisplayName('Ada');
-
-    expect(await screen.findByRole('status')).toHaveTextContent('Saved.');
-    expect(screen.getByLabelText('Avatar')).toBeEnabled();
+    expect(await screen.findByLabelText('Display name')).toBeVisible();
+    expect(screen.queryByLabelText(/avatar|photo/i)).not.toBeInTheDocument();
     expect(screen.queryByText('Save a display name first.')).not.toBeInTheDocument();
-  });
-
-  it('uploads an avatar and shows it', async () => {
-    await renderApp('/profile', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile: new FakeProfileData({ displayName: 'Ada' }),
-    });
-
-    await userEvent
-      .setup()
-      .upload(await screen.findByLabelText('Avatar'), pickedFile('ada.png', 'image/png'));
-
-    expect(await screen.findByRole('img', { name: 'Your avatar' })).toHaveAttribute(
-      'src',
-      'https://storage.example/avatars/ada.png',
-    );
-  });
-
-  it('accepts an image of exactly 2 MB', async () => {
-    await renderApp('/profile', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile: new FakeProfileData({ displayName: 'Ada' }),
-    });
-
-    await userEvent
-      .setup()
-      .upload(
-        await screen.findByLabelText('Avatar'),
-        pickedFile('ada.png', 'image/png', 2 * 1024 * 1024),
-      );
-
-    expect(await screen.findByRole('img', { name: 'Your avatar' })).toHaveAttribute(
-      'src',
-      'https://storage.example/avatars/ada.png',
-    );
-  });
-
-  it('says an image larger than 2 MB is too large, instead of uploading it', async () => {
-    const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile,
-    });
-
-    await userEvent
-      .setup()
-      .upload(
-        await screen.findByLabelText('Avatar'),
-        pickedFile('ada.png', 'image/png', 2 * 1024 * 1024 + 1),
-      );
-
-    expect(await screen.findByText('Choose an image of at most 2 MB.')).toBeVisible();
-    expect(screen.getByLabelText('Avatar')).toBeInvalid();
-    expect(profile.profile()?.avatarUrl).toBeUndefined();
-  });
-
-  it.each([
-    ['ada.jpg', 'image/jpeg'],
-    ['ada.webp', 'image/webp'],
-    ['ada.gif', 'image/gif'],
-  ])('accepts %s as an avatar', async (name, type) => {
-    await renderApp('/profile', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile: new FakeProfileData({ displayName: 'Ada' }),
-    });
-
-    await userEvent.setup().upload(await screen.findByLabelText('Avatar'), pickedFile(name, type));
-
-    expect(await screen.findByRole('img', { name: 'Your avatar' })).toHaveAttribute(
-      'src',
-      `https://storage.example/avatars/${name}`,
-    );
-  });
-
-  it.each([
-    ['notes.txt', 'text/plain'],
-    ['logo.svg', 'image/svg+xml'],
-  ])('asks for a PNG, JPEG, WebP or GIF instead of uploading %s', async (name, type) => {
-    const profile = new FakeProfileData({ displayName: 'Ada' });
-    await renderApp('/profile', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile,
-    });
-    const user = userWhoCanSwitchFileDialogToAllFiles();
-
-    await user.upload(await screen.findByLabelText('Avatar'), pickedFile(name, type));
-
-    expect(await screen.findByText('Choose a PNG, JPEG, WebP or GIF image.')).toBeVisible();
-    expect(screen.getByLabelText('Avatar')).toBeInvalid();
-    expect(profile.profile()?.avatarUrl).toBeUndefined();
-  });
-
-  it('shows that the avatar is uploading until it is done', async () => {
-    const profile = new FakeProfileData({ displayName: 'Ada', slowUpload: true });
-    await renderApp('/profile', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile,
-    });
-
-    await userEvent
-      .setup()
-      .upload(await screen.findByLabelText('Avatar'), pickedFile('ada.png', 'image/png'));
-
-    expect(await screen.findByText('Uploading…')).toBeVisible();
-    expect(screen.getByLabelText('Avatar')).toBeDisabled();
-
-    profile.finishUpload();
-
-    await waitForElementToBeRemoved(() => screen.queryByText('Uploading…'));
-    expect(screen.getByRole('img', { name: 'Your avatar' })).toBeVisible();
-    expect(screen.getByLabelText('Avatar')).toBeEnabled();
-  });
-
-  it("says so when the avatar can't be uploaded", async () => {
-    await renderApp('/profile', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile: new FakeProfileData({ displayName: 'Ada', uploadFails: true }),
-    });
-
-    await userEvent
-      .setup()
-      .upload(await screen.findByLabelText('Avatar'), pickedFile('ada.png', 'image/png'));
-
-    expect(
-      await screen.findByText(
-        "Your avatar couldn't be uploaded. Check your connection and try again.",
-      ),
-    ).toBeVisible();
-    expect(screen.queryByRole('img', { name: 'Your avatar' })).not.toBeInTheDocument();
-  });
-
-  it('uploads the same image again when picked again, e.g. to retry', async () => {
-    const profile = new FakeProfileData({ displayName: 'Ada', slowUpload: true });
-    await renderApp('/profile', {
-      session: new FakeAuthSession({ signedInAs: 'ada@example.com' }),
-      profile,
-    });
-    const user = userEvent.setup();
-    const image = pickedFile('ada.png', 'image/png');
-    await user.upload(await screen.findByLabelText('Avatar'), image);
-    const uploading = await screen.findByText('Uploading…');
-    profile.finishUpload();
-    await waitForElementToBeRemoved(uploading);
-
-    await user.upload(screen.getByLabelText('Avatar'), image);
-
-    expect(await screen.findByText('Uploading…')).toBeVisible();
   });
 });
